@@ -31,4 +31,5 @@ jobs:
       - run: node --test tests/test_floor_spawn_probe.mjs
       - run: node --test tests/test_jump_spawn_handoff.mjs
       - run: node --test tests/test_floor_tile_plan.mjs
+      - run: node --test tests/test_floor_render.mjs
       - run: python tools/swf_probe.py game.swf --output /tmp/swf_original.json
