@@ -20,4 +20,5 @@ jobs:
       - run: node --test tests/test_battle_settlement_probe.mjs
       - run: node --test tests/test_encounter_start_probe.mjs
       - run: node --test tests/test_battle_timeline_probe.mjs
+      - run: node --test tests/test_encounter_pipeline_probe.mjs
       - run: python tools/swf_probe.py game.swf --output /tmp/swf_original.json
