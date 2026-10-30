@@ -34,7 +34,7 @@ export function stepMoveArrow(snapshot, arrowId) {
   }
   if (Object.hasOwn(keyDoors,tile)) {
     const key=keyDoors[tile];
-    if (state.keys[key] === 0) return {state,event:'locked_'+key+'_door'};
+    if (state.keys[key] <= 0) return {state,event:'locked_'+key+'_door'};
     state.keys[key]--; grid[nr][nc]=0;
     return {state,event:'open_'+key+'_door'};
   }
