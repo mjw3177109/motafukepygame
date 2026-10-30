@@ -38,8 +38,8 @@ def main() -> None:
     out.mkdir(parents=True, exist_ok=True)
     metadata = probe(swf.read_bytes())
     (out / "swf_header.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+    # SWF header is parsed by swf_probe; this FFDec build rejects -header.
     tasks = [
-        ("header", ["-header", str(swf)]),
         ("tags", ["-dumpSWF", str(swf)]),
     ]
     if not args.metadata_only:
