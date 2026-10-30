@@ -1,0 +1,59 @@
+[
+  {
+    "name":"pickup_blocks_until_explicit_text_cleanup",
+    "tile":6,
+    "actions":[{"type":"arrow","arrow_id":2},{"type":"arrow","arrow_id":2},{"type":"text_frame32"},{"type":"arrow","arrow_id":2},{"type":"text_cleanup"},{"type":"arrow","arrow_id":2}],
+    "events":["pickup_yellow_key","input_blocked","text_ready_for_cleanup","input_blocked","text_removed","move"],
+    "position":[5,6],"key_flag":1,"display_text":0,"yellow":1,"game_over_requested":false
+  },
+  {
+    "name":"boss_text_keeps_input_locked",
+    "tile":0,
+    "flags":{"display_text":1,"key_flag":0,"boss_kills":1},
+    "actions":[{"type":"text_frame32"},{"type":"text_cleanup"},{"type":"arrow","arrow_id":2}],
+    "events":["text_ready_for_cleanup","text_removed","input_blocked"],
+    "position":[5,5],"key_flag":0,"display_text":0,"yellow":0,"game_over_requested":false
+  },
+  {
+    "name":"floor26_zero_only_requests_ending",
+    "tile":0,
+    "flags":{"display_text":1,"key_flag":0,"floor26_cell_3_5":0},
+    "actions":[{"type":"text_frame32"},{"type":"text_cleanup"}],
+    "events":["text_ready_for_cleanup","game_over_requested"],
+    "position":[5,5],"key_flag":1,"display_text":0,"yellow":0,"game_over_requested":true
+  },
+  {
+    "name":"reject_input_after_ending_request",
+    "tile":0,
+    "flags":{"display_text":1,"key_flag":0,"floor26_cell_3_5":0},
+    "actions":[{"type":"text_frame32"},{"type":"text_cleanup"},{"type":"arrow","arrow_id":2}],
+    "error":"game_over requested"
+  },
+  {
+    "name":"reject_premature_cleanup",
+    "tile":0,
+    "actions":[{"type":"text_cleanup"}],
+    "error":"cleanup requires"
+  },
+  {
+    "name":"reject_missing_floor26_source",
+    "tile":0,
+    "flags":{"display_text":1,"key_flag":0},
+    "omit_floor26_cell":true,
+    "actions":[{"type":"text_frame32"},{"type":"text_cleanup"}],
+    "error":"cleanup requires"
+  },
+  {
+    "name":"reject_unsupported_door_completion",
+    "tile":0,
+    "actions":[{"type":"door_frame32"}],
+    "error":"unsupported action type"
+  },
+  {
+    "name":"reject_text_roll_injection",
+    "tile":0,
+    "flags":{"display_text":1,"key_flag":0},
+    "actions":[{"type":"text_frame32","critical_rolls":[199]}],
+    "error":"text sprite actions"
+  }
+]
