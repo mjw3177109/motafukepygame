@@ -24,6 +24,10 @@ jobs:
         with:
           python-version: '3.11'
       - run: python tools/extract_swf.py --swf game.swf --ffdec FFDec/ffdec.jar --out .swf_audit
+      - name: Extract original map and monster tables
+        run: |
+          SWF_SHA=$(python -c 'import json; print(json.load(open(".swf_audit/manifest.json"))["original"]["sha256"])')
+          python tools/extract_original_tables.py --script .swf_audit/export/scripts/frame_4346/DoAction.as --swf-sha256 "$SWF_SHA" --out .swf_audit/original_tables.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
