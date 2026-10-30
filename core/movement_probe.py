@@ -40,7 +40,10 @@ def step_move_arrow(snapshot: dict, arrow_id: int) -> dict:
     tile = grid[nr][nc]
     if type(tile) is not int:
         raise ValueError("tile must be an integer")
-    if tile == 0:
+    if tile in (0, 97, 98, 99):
+        # Flash Move_arrow permits all four tiles; only an old 99 is erased.
+        if grid[row][col] in (0, 99):
+            grid[row][col] = 0
         state["row"], state["col"] = nr, nc
         return {"state": state, "event": "move"}
     if tile == 1:

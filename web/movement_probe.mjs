@@ -22,7 +22,9 @@ export function stepMoveArrow(snapshot, arrowId) {
   if (nr < 0 || nr > 10 || nc < 0 || nc > 10) return {state,event:'boundary'};
   const tile = grid[nr][nc];
   if (!Number.isInteger(tile)) throw new Error('tile must be an integer');
-  if (tile === 0) {
+  if ([0,97,98,99].includes(tile)) {
+    // Flash Move_arrow erases the previous cell only if it was 0 or 99.
+    if (grid[row][col] === 0 || grid[row][col] === 99) grid[row][col]=0;
     state.row=nr; state.col=nc;
     return {state,event:'move'};
   }

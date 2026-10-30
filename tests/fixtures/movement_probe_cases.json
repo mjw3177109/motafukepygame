@@ -1,23 +1,384 @@
 [
-  {"name":"flash_1_is_left","arrow":1,"tile":0,"event":"move","position":[5,4]},
-  {"name":"flash_2_is_right","arrow":2,"tile":0,"event":"move","position":[5,6]},
-  {"name":"flash_3_is_up","arrow":3,"tile":0,"event":"move","position":[4,5]},
-  {"name":"flash_4_is_down","arrow":4,"tile":0,"event":"move","position":[6,5]},
-  {"name":"wall","arrow":1,"tile":1,"event":"wall","position":[5,5]},
-  {"name":"yellow_key","arrow":2,"tile":6,"event":"pickup_yellow_key","position":[5,5],"key_delta":{"yellow":1},"cleared":true},
-  {"name":"blue_key","arrow":2,"tile":7,"event":"pickup_blue_key","position":[5,5],"key_delta":{"blue":1},"cleared":true},
-  {"name":"red_key","arrow":2,"tile":8,"event":"pickup_red_key","position":[5,5],"key_delta":{"red":1},"cleared":true},
-  {"name":"yellow_door_locked","arrow":2,"tile":2,"event":"locked_yellow_door","position":[5,5]},
-  {"name":"yellow_door_negative_keys","arrow":2,"tile":2,"keys":{"yellow":-1},"event":"locked_yellow_door","position":[5,5]},
-  {"name":"yellow_door_open","arrow":2,"tile":2,"keys":{"yellow":1},"event":"open_yellow_door","position":[5,5],"key_delta":{"yellow":-1},"cleared":true},
-  {"name":"blue_door_open","arrow":2,"tile":3,"keys":{"blue":1},"event":"open_blue_door","position":[5,5],"key_delta":{"blue":-1},"cleared":true},
-  {"name":"red_door_open","arrow":2,"tile":4,"keys":{"red":1},"event":"open_red_door","position":[5,5],"key_delta":{"red":-1},"cleared":true},
-  {"name":"blue_gem","arrow":2,"tile":9,"event":"pickup_defense_3","position":[5,5],"stat_delta":{"defense":3},"cleared":true},
-  {"name":"red_gem","arrow":2,"tile":10,"event":"pickup_attack_3","position":[5,5],"stat_delta":{"attack":3},"cleared":true},
-  {"name":"small_potion","arrow":2,"tile":11,"event":"pickup_hp_200","position":[5,5],"stat_delta":{"hp":200},"cleared":true},
-  {"name":"large_potion","arrow":2,"tile":12,"event":"pickup_hp_500","position":[5,5],"stat_delta":{"hp":500},"cleared":true},
-  {"name":"boundary_up","arrow":3,"tile":0,"start":[0,5],"event":"boundary","position":[0,5]},
-  {"name":"unsupported_stairs","arrow":2,"tile":13,"error":true},
-  {"name":"unsupported_monster","arrow":2,"tile":40,"error":true},
-  {"name":"unsupported_special_passage","arrow":2,"tile":97,"error":true}
+  {
+    "name": "flash_1_is_left",
+    "arrow": 1,
+    "tile": 0,
+    "event": "move",
+    "position": [
+      5,
+      4
+    ]
+  },
+  {
+    "name": "flash_2_is_right",
+    "arrow": 2,
+    "tile": 0,
+    "event": "move",
+    "position": [
+      5,
+      6
+    ]
+  },
+  {
+    "name": "flash_3_is_up",
+    "arrow": 3,
+    "tile": 0,
+    "event": "move",
+    "position": [
+      4,
+      5
+    ]
+  },
+  {
+    "name": "flash_4_is_down",
+    "arrow": 4,
+    "tile": 0,
+    "event": "move",
+    "position": [
+      6,
+      5
+    ]
+  },
+  {
+    "name": "wall",
+    "arrow": 1,
+    "tile": 1,
+    "event": "wall",
+    "position": [
+      5,
+      5
+    ]
+  },
+  {
+    "name": "yellow_key",
+    "arrow": 2,
+    "tile": 6,
+    "event": "pickup_yellow_key",
+    "position": [
+      5,
+      5
+    ],
+    "key_delta": {
+      "yellow": 1
+    },
+    "cleared": true
+  },
+  {
+    "name": "blue_key",
+    "arrow": 2,
+    "tile": 7,
+    "event": "pickup_blue_key",
+    "position": [
+      5,
+      5
+    ],
+    "key_delta": {
+      "blue": 1
+    },
+    "cleared": true
+  },
+  {
+    "name": "red_key",
+    "arrow": 2,
+    "tile": 8,
+    "event": "pickup_red_key",
+    "position": [
+      5,
+      5
+    ],
+    "key_delta": {
+      "red": 1
+    },
+    "cleared": true
+  },
+  {
+    "name": "yellow_door_locked",
+    "arrow": 2,
+    "tile": 2,
+    "event": "locked_yellow_door",
+    "position": [
+      5,
+      5
+    ]
+  },
+  {
+    "name": "yellow_door_negative_keys",
+    "arrow": 2,
+    "tile": 2,
+    "keys": {
+      "yellow": -1
+    },
+    "event": "locked_yellow_door",
+    "position": [
+      5,
+      5
+    ]
+  },
+  {
+    "name": "yellow_door_open",
+    "arrow": 2,
+    "tile": 2,
+    "keys": {
+      "yellow": 1
+    },
+    "event": "open_yellow_door",
+    "position": [
+      5,
+      5
+    ],
+    "key_delta": {
+      "yellow": -1
+    },
+    "cleared": true
+  },
+  {
+    "name": "blue_door_open",
+    "arrow": 2,
+    "tile": 3,
+    "keys": {
+      "blue": 1
+    },
+    "event": "open_blue_door",
+    "position": [
+      5,
+      5
+    ],
+    "key_delta": {
+      "blue": -1
+    },
+    "cleared": true
+  },
+  {
+    "name": "red_door_open",
+    "arrow": 2,
+    "tile": 4,
+    "keys": {
+      "red": 1
+    },
+    "event": "open_red_door",
+    "position": [
+      5,
+      5
+    ],
+    "key_delta": {
+      "red": -1
+    },
+    "cleared": true
+  },
+  {
+    "name": "blue_gem",
+    "arrow": 2,
+    "tile": 9,
+    "event": "pickup_defense_3",
+    "position": [
+      5,
+      5
+    ],
+    "stat_delta": {
+      "defense": 3
+    },
+    "cleared": true
+  },
+  {
+    "name": "red_gem",
+    "arrow": 2,
+    "tile": 10,
+    "event": "pickup_attack_3",
+    "position": [
+      5,
+      5
+    ],
+    "stat_delta": {
+      "attack": 3
+    },
+    "cleared": true
+  },
+  {
+    "name": "small_potion",
+    "arrow": 2,
+    "tile": 11,
+    "event": "pickup_hp_200",
+    "position": [
+      5,
+      5
+    ],
+    "stat_delta": {
+      "hp": 200
+    },
+    "cleared": true
+  },
+  {
+    "name": "large_potion",
+    "arrow": 2,
+    "tile": 12,
+    "event": "pickup_hp_500",
+    "position": [
+      5,
+      5
+    ],
+    "stat_delta": {
+      "hp": 500
+    },
+    "cleared": true
+  },
+  {
+    "name": "boundary_up",
+    "arrow": 3,
+    "tile": 0,
+    "start": [
+      0,
+      5
+    ],
+    "event": "boundary",
+    "position": [
+      0,
+      5
+    ]
+  },
+  {
+    "name": "unsupported_stairs",
+    "arrow": 2,
+    "tile": 13,
+    "error": true
+  },
+  {
+    "name": "unsupported_monster",
+    "arrow": 2,
+    "tile": 40,
+    "error": true
+  },
+  {
+    "name": "passable_marker_97",
+    "arrow": 2,
+    "tile": 97,
+    "event": "move",
+    "position": [
+      5,
+      6
+    ],
+    "target_after": 97
+  },
+  {
+    "name": "passable_marker_98",
+    "arrow": 2,
+    "tile": 98,
+    "event": "move",
+    "position": [
+      5,
+      6
+    ],
+    "target_after": 98
+  },
+  {
+    "name": "passable_marker_99",
+    "arrow": 2,
+    "tile": 99,
+    "event": "move",
+    "position": [
+      5,
+      6
+    ],
+    "target_after": 99
+  },
+  {
+    "name": "old_99_cleared_on_successful_move",
+    "arrow": 2,
+    "tile": 0,
+    "origin_tile": 99,
+    "event": "move",
+    "position": [
+      5,
+      6
+    ],
+    "origin_after": 0
+  },
+  {
+    "name": "old_97_preserved_on_successful_move",
+    "arrow": 2,
+    "tile": 0,
+    "origin_tile": 97,
+    "event": "move",
+    "position": [
+      5,
+      6
+    ],
+    "origin_after": 97
+  },
+  {
+    "name": "old_98_preserved_on_successful_move",
+    "arrow": 2,
+    "tile": 0,
+    "origin_tile": 98,
+    "event": "move",
+    "position": [
+      5,
+      6
+    ],
+    "origin_after": 98
+  },
+  {
+    "name": "old_99_cleared_entering_97",
+    "arrow": 2,
+    "tile": 97,
+    "origin_tile": 99,
+    "event": "move",
+    "position": [
+      5,
+      6
+    ],
+    "origin_after": 0,
+    "target_after": 97
+  },
+  {
+    "name": "old_99_cleared_entering_99",
+    "arrow": 2,
+    "tile": 99,
+    "origin_tile": 99,
+    "event": "move",
+    "position": [
+      5,
+      6
+    ],
+    "origin_after": 0,
+    "target_after": 99
+  },
+  {
+    "name": "old_99_not_cleared_by_wall",
+    "arrow": 2,
+    "tile": 1,
+    "origin_tile": 99,
+    "event": "wall",
+    "position": [
+      5,
+      5
+    ],
+    "origin_after": 99
+  },
+  {
+    "name": "old_99_not_cleared_at_boundary",
+    "arrow": 3,
+    "tile": 0,
+    "start": [
+      0,
+      5
+    ],
+    "origin_tile": 99,
+    "event": "boundary",
+    "position": [
+      0,
+      5
+    ],
+    "origin_after": 99
+  },
+  {
+    "name": "passable_marker_97_up",
+    "arrow": 3,
+    "tile": 97,
+    "event": "move",
+    "position": [
+      4,
+      5
+    ],
+    "target_after": 97
+  }
 ]

@@ -15,6 +15,8 @@ def make_state(case):
     nr,nc=row+dr,col+dc
     if 0 <= nr < 11 and 0 <= nc < 11:
         grid[nr][nc]=case['tile']
+    if 'origin_tile' in case:
+        grid[row][col]=case['origin_tile']
     keys={'yellow':0,'blue':0,'red':0}
     keys.update(case.get('keys',{}))
     return {'grid':grid,'row':row,'col':col,'hp':1000,'attack':10,'defense':10,'keys':keys}
@@ -41,6 +43,11 @@ class MovementProbeTests(unittest.TestCase):
                 if case.get('cleared'):
                     dr,dc=DELTAS[case['arrow']]
                     self.assertEqual(out['grid'][state['row']+dr][state['col']+dc],0)
+                if 'origin_after' in case:
+                    self.assertEqual(out['grid'][state['row']][state['col']],case['origin_after'])
+                if 'target_after' in case:
+                    dr,dc=DELTAS[case['arrow']]
+                    self.assertEqual(out['grid'][state['row']+dr][state['col']+dc],case['target_after'])
                 self.assertEqual(json.dumps(state,sort_keys=True),original)
 
     def test_reject_non_original_grid(self):
