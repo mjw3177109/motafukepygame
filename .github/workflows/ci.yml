@@ -27,4 +27,5 @@ jobs:
       - run: node --test tests/test_door_lifecycle_probe.mjs
       - run: node --test tests/test_jump_selection_probe.mjs
       - run: node --test tests/test_jump_lifecycle_probe.mjs
+      - run: node --test tests/test_jump_turn_replay.mjs
       - run: python tools/swf_probe.py game.swf --output /tmp/swf_original.json

@@ -1,0 +1,34 @@
+[
+  {
+    "name": "up_wrap_then_confirm_and_cleanup_requires_floor_redraw",
+    "world": {"key_flag": 0, "display_list": 0, "display_jump": 1, "display_text": 0, "display_buy": 0, "now_line": 4, "max_line": 21},
+    "cursor": {"now_move_id": 1, "moves_x": 120, "moves_y": 200, "move_x": 40},
+    "actions": [{"type": "up"}, {"type": "confirm"}, {"type": "cleanup"}],
+    "events": ["jump_cursor_moved", "jump_confirm_accepted", "jump_confirm_cleanup"],
+    "expected_floor": 20, "expected_index": 20, "expected_mode": 0, "expected_key": 0, "expected_x": 200, "expected_y": 350, "floor_refresh_pending": true
+  },
+  {
+    "name": "rejected_confirm_still_requests_redraw",
+    "world": {"key_flag": 0, "display_list": 0, "display_jump": 1, "display_text": 0, "display_buy": 0, "now_line": 4, "max_line": 9},
+    "cursor": {"now_move_id": 9, "moves_x": 120, "moves_y": 200, "move_x": 40},
+    "actions": [{"type": "confirm"}, {"type": "cleanup"}],
+    "events": ["jump_confirm_rejected", "jump_confirm_cleanup"],
+    "expected_floor": 4, "expected_index": 9, "expected_mode": 0, "expected_key": 0, "expected_x": 120, "expected_y": 200, "floor_refresh_pending": true
+  },
+  {
+    "name": "down_wrap_then_cancel_restores_input_without_redraw",
+    "world": {"key_flag": 0, "display_list": 0, "display_jump": 1, "display_text": 0, "display_buy": 0, "now_line": 4, "max_line": 21},
+    "cursor": {"now_move_id": 20, "moves_x": 200, "moves_y": 350, "move_x": 40},
+    "actions": [{"type": "down"}, {"type": "cancel"}, {"type": "cleanup"}],
+    "events": ["jump_cursor_moved", "jump_cancel_requested", "jump_cancel_cleanup"],
+    "expected_floor": 4, "expected_index": 1, "expected_mode": 0, "expected_key": 1, "expected_x": 120, "expected_y": 200, "floor_refresh_pending": false
+  },
+  {
+    "name": "cancel_from_sprite_state_three",
+    "world": {"key_flag": 0, "display_list": 0, "display_jump": 3, "display_text": 0, "display_buy": 0, "now_line": 4, "max_line": 21},
+    "cursor": {"now_move_id": 3, "moves_x": 120, "moves_y": 260, "move_x": 40},
+    "actions": [{"type": "cancel"}, {"type": "cleanup"}],
+    "events": ["jump_cancel_requested", "jump_cancel_cleanup"],
+    "expected_floor": 4, "expected_index": 3, "expected_mode": 0, "expected_key": 1, "expected_x": 120, "expected_y": 260, "floor_refresh_pending": false
+  }
+]
