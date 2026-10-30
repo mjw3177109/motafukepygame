@@ -1,0 +1,33 @@
+name: SWF Original Audit
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/mota112-swf-audit-foundation]
+    paths:
+      - 'game.swf'
+      - 'FFDec/**'
+      - 'tools/**'
+      - '.github/workflows/swf-audit.yml'
+permissions:
+  contents: read
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python tools/extract_swf.py --swf game.swf --ffdec FFDec/ffdec.jar --out .swf_audit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: original-flash-audit
+          path: .swf_audit/
+          retention-days: 14
+          if-no-files-found: warn
