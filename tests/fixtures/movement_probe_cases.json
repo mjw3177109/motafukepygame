@@ -8,6 +8,7 @@
   {"name":"blue_key","arrow":2,"tile":7,"event":"pickup_blue_key","position":[5,5],"key_delta":{"blue":1},"cleared":true},
   {"name":"red_key","arrow":2,"tile":8,"event":"pickup_red_key","position":[5,5],"key_delta":{"red":1},"cleared":true},
   {"name":"yellow_door_locked","arrow":2,"tile":2,"event":"locked_yellow_door","position":[5,5]},
+  {"name":"yellow_door_negative_keys","arrow":2,"tile":2,"keys":{"yellow":-1},"event":"locked_yellow_door","position":[5,5]},
   {"name":"yellow_door_open","arrow":2,"tile":2,"keys":{"yellow":1},"event":"open_yellow_door","position":[5,5],"key_delta":{"yellow":-1},"cleared":true},
   {"name":"blue_door_open","arrow":2,"tile":3,"keys":{"blue":1},"event":"open_blue_door","position":[5,5],"key_delta":{"blue":-1},"cleared":true},
   {"name":"red_door_open","arrow":2,"tile":4,"keys":{"red":1},"event":"open_red_door","position":[5,5],"key_delta":{"red":-1},"cleared":true},
