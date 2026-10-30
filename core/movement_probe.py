@@ -52,7 +52,7 @@ def step_move_arrow(snapshot: dict, arrow_id: int) -> dict:
         return {"state": state, "event": "pickup_" + key + "_key"}
     if tile in KEY_DOORS:
         key = KEY_DOORS[tile]
-        if state["keys"][key] == 0:
+        if state["keys"][key] <= 0:
             return {"state": state, "event": "locked_" + key + "_door"}
         state["keys"][key] -= 1
         grid[nr][nc] = 0
