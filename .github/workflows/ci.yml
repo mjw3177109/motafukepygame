@@ -16,4 +16,5 @@ jobs:
       - run: python -m unittest discover -s tests -v
       - run: node --test tests/test_movement_probe.mjs
       - run: node --test tests/test_combat_probe.mjs
+      - run: node --test tests/test_battle_frame_probe.mjs
       - run: python tools/swf_probe.py game.swf --output /tmp/swf_original.json
