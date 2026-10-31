@@ -33,7 +33,7 @@ class SpriteFrameAuditTests(unittest.TestCase):
         workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/swf-audit.yml").read_text()
         self.assertEqual(workflow.count("      - 'data/original_sprite_frame_anchors.json'"), 2)
         self.assertEqual(workflow.count("      - 'tests/test_audit_swf_sprite_frames.py'"), 2)
-        self.assertIn("python tools/audit_swf_sprite_frames.py --tags", workflow)
+        self.assertIn("python -m tools.audit_swf_sprite_frames --tags", workflow)
         self.assertIn(".swf_audit/swf_sprite_frames.json", workflow)
 
     def test_matching_source_frames_are_counted(self):

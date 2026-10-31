@@ -7,7 +7,7 @@ Evidence: `game.swf` SHA256 `04b317b7fd9d32c5b083c993e99a3eea527f392e5fc938d2392
 Run after `trace_swf_symbols.py`:
 
 ```bash
-python tools/audit_swf_sprite_frames.py \
+python -m tools.audit_swf_sprite_frames \
   --tags .swf_audit/ffdec_tags.log \
   --trace .swf_audit/swf_symbol_trace.json \
   --anchors data/original_sprite_frame_anchors.json \
