@@ -1,6 +1,6 @@
 """Dependency-free unit tests for controlled SVG sampling experiment helpers."""
 import unittest
-from tools.experiment_svg_image_rendering import make_variant, pixel_counts
+from tools.experiment_svg_image_rendering import make_variant, pixel_counts, registration_offsets
 
 SVG = b'<svg xmlns="http://www.w3.org/2000/svg"><image href="data:image/png;base64,AA==" /></svg>'
 
@@ -39,6 +39,26 @@ class SamplingExperimentTests(unittest.TestCase):
         self.assertEqual(result['different_alpha_pixels'], 1)
         self.assertEqual(result['difference_bounds_xywh'], [2, 3, 1, 1])
         self.assertIsNone(pixel_counts(bytes(a), bytes(a))['difference_bounds_xywh'])
+
+    def test_fractional_registration_axes_isolated(self):
+        self.assertEqual(registration_offsets(15.95, 15.95), {
+            'pinned': (15.95, 15.95), 'snap-x': (16.0, 15.95),
+            'snap-y': (15.95, 16.0), 'snap-xy': (16.0, 16.0)})
+
+    def test_registration_preserves_distinct_axes(self):
+        offsets = registration_offsets(15.2, 16.8)
+        self.assertEqual(offsets['snap-x'], (15.0, 16.8))
+        self.assertEqual(offsets['snap-y'], (15.2, 17.0))
+        self.assertEqual(offsets['snap-xy'], (15.0, 17.0))
+
+    def test_integer_registration_is_noop(self):
+        offsets = registration_offsets(16, 16)
+        self.assertEqual(set(offsets.values()), {(16.0, 16.0)})
+
+    def test_invalid_registration_rejected(self):
+        for bad in (float('nan'), float('inf'), float('-inf'), True, '15.95', None):
+            with self.subTest(bad=repr(bad)), self.assertRaisesRegex(ValueError, 'finite'):
+                registration_offsets(bad, 15.95)
 
     def test_pixel_length_rejected(self):
         with self.assertRaisesRegex(ValueError, '64x64'):
