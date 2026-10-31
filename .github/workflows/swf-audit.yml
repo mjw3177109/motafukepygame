@@ -32,6 +32,7 @@ on:
       - 'tests/test_smoke_original_static_render.py'
       - 'tests/test_smoke_original_browser_static.py'
       - 'tests/test_audit_dual_raster_pixels.py'
+      - 'tests/test_audit_svg_sampling.py'
       - '.github/workflows/swf-audit.yml'
   pull_request:
     paths:
@@ -63,6 +64,7 @@ on:
       - 'tests/test_smoke_original_static_render.py'
       - 'tests/test_smoke_original_browser_static.py'
       - 'tests/test_audit_dual_raster_pixels.py'
+      - 'tests/test_audit_svg_sampling.py'
       - '.github/workflows/swf-audit.yml'
 permissions:
   contents: read
@@ -101,6 +103,9 @@ jobs:
       - name: Verify original Shape RECT and static sprite registration offsets
         run: |
           python -m tools.audit_shape_registration --tags .swf_audit/ffdec_tags.log --manifest .swf_audit/manifest.json --trace .swf_audit/swf_symbol_trace.json --placements .swf_audit/swf_sprite_placements.json --export-root .swf_audit/export --anchors data/original_shape_registration_anchors.json --out .swf_audit/shape_registration_report.json
+      - name: Inventory source-hashed FFDec SVG pattern and embedded image sampling
+        run: |
+          python -m tools.audit_svg_sampling --manifest .swf_audit/manifest.json --registration .swf_audit/shape_registration_report.json --export-root .swf_audit/export --out .swf_audit/svg_sampling_report.json
       - name: Render original FFDec static SVGs with real headless Pygame
         run: |
           python -m pip install --disable-pip-version-check 'pygame==2.6.1' 'CairoSVG==2.8.2'
@@ -130,6 +135,7 @@ jobs:
             .swf_audit/swf_sprite_frames.json
             .swf_audit/swf_sprite_placements.json
             .swf_audit/shape_registration_report.json
+            .swf_audit/svg_sampling_report.json
             .swf_audit/export_archive_report.json
             .swf_audit/static_preview/*.png
             .swf_audit/static_preview/report.json
