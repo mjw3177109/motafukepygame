@@ -49,3 +49,36 @@ test('missing bytes and empty image rejected',async()=>{
   const g=fixture();g.decodeSvg=async()=>null;
   await assert.rejects(loadVerifiedStaticAssets(g),/returned no image/);
 });
+
+import {decodeBrowserSvg} from '../web/static_svg_assets.mjs';
+
+test('Blob SVG fast path does not allocate object URL',async()=>{
+  const expected={bitmap:true};
+  const image=await decodeBrowserSvg(new TextEncoder().encode('<svg/>'),{
+    createBitmap:async()=>expected,
+    createUrl:()=>{throw Error('unexpected fallback');}
+  });
+  assert.equal(image,expected);
+});
+test('Chromium SVG pattern decode fallback uses decoded Image and releases URL',async()=>{
+  const calls=[],image={decode:async()=>{calls.push('decoded');}};
+  const result=await decodeBrowserSvg(new TextEncoder().encode('<svg/>'),{
+    createBitmap:async()=>{throw Error('InvalidStateError: SVG pattern');},
+    createImage:()=>image,
+    createUrl:blob=>{assert.equal(blob.type,'image/svg+xml');return 'blob:source-svg';},
+    revokeUrl:url=>calls.push('revoke:'+url)
+  });
+  assert.equal(result,image);
+  assert.equal(image.src,'blob:source-svg');
+  assert.deepEqual(calls,['decoded','revoke:blob:source-svg']);
+});
+test('fallback decode failure still revokes object URL and fails closed',async()=>{
+  const calls=[];
+  await assert.rejects(decodeBrowserSvg(new Uint8Array([1,2]),{
+    createBitmap:async()=>{throw Error('unsupported');},
+    createImage:()=>({decode:async()=>{throw Error('bad SVG');}}),
+    createUrl:()=> 'blob:bad',
+    revokeUrl:url=>calls.push(url)
+  }),/bad SVG/);
+  assert.deepEqual(calls,['blob:bad']);
+});

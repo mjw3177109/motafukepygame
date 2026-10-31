@@ -7,11 +7,31 @@ async function readDefault(path) {
   if (!r.ok) throw new Error('SVG fetch failed');
   return new Uint8Array(await r.arrayBuffer());
 }
-async function decodeDefault(bytes) {
-  return createImageBitmap(new Blob([bytes],{type:'image/svg+xml'}));
+// Chromium cannot always decode FFDec's SVG <pattern> images from a Blob
+// through createImageBitmap; HTMLImageElement.decode() supports the same source.
+export async function decodeBrowserSvg(bytes, {
+  createBitmap = blob => createImageBitmap(blob),
+  createImage = () => new Image(),
+  createUrl = blob => URL.createObjectURL(blob),
+  revokeUrl = url => URL.revokeObjectURL(url)
+} = {}) {
+  const blob = new Blob([bytes],{type:'image/svg+xml'});
+  try {
+    return await createBitmap(blob);
+  } catch (_) {
+    const url = createUrl(blob);
+    try {
+      const image = createImage();
+      image.src = url;
+      await image.decode();
+      return image; // Canvas.drawImage accepts decoded HTMLImageElement.
+    } finally {
+      revokeUrl(url);
+    }
+  }
 }
 export async function loadVerifiedStaticAssets({report,anchors,manifest,
-  readSvg=readDefault,decodeSvg=decodeDefault}) {
+  readSvg=readDefault,decodeSvg=decodeBrowserSvg}) {
   if (![report,anchors,manifest,manifest?.original,anchors?.aliases,
       report?.verified_static_aliases,report?.shapes].every(obj) ||
       !Array.isArray(manifest.files) || anchors.schema_version!==1 ||
