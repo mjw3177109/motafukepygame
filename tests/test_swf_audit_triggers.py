@@ -44,9 +44,9 @@ class OriginalAuditTriggerTests(unittest.TestCase):
 
     def test_push_and_pr_filters_are_identical_and_unique(self):
         # A source-only change must never silently skip one of the two audits.
-        trigger_block = self.text.split('\\npermissions:', 1)[0]
-        push = trigger_block.split('\\n  push:', 1)[1].split('\\n  pull_request:', 1)[0]
-        pr = trigger_block.split('\\n  pull_request:', 1)[1]
+        trigger_block = self.text.split('\npermissions:', 1)[0]
+        push = trigger_block.split('\n  push:', 1)[1].split('\n  pull_request:', 1)[0]
+        pr = trigger_block.split('\n  pull_request:', 1)[1]
 
         def paths(section):
             return [line.strip()[3:-1] for line in section.splitlines()
