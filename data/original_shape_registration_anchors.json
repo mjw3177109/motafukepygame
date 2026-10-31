@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "swf_sha256": "04b317b7fd9d32c5b083c993e99a3eea527f392e5fc938d23928e953bb638db9",
+  "aliases": {
+    "mt_00": {
+      "shape_id": 222,
+      "origin_x": 15.95,
+      "origin_y": 15.95
+    },
+    "mt_01": {
+      "shape_id": 219,
+      "origin_x": 15.95,
+      "origin_y": 15.95
+    }
+  }
+}
