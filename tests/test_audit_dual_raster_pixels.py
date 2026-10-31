@@ -63,42 +63,82 @@ class DualRasterAuditTests(unittest.TestCase):
 
     def sample_reports(self):
         swf = 'a' * 64
+        pins = {'mt_00': 222, 'mt_01': 219}
         entries = {name: {'source_shape_id': sid, 'source_svg_sha256': 'b' * 64,
                           'canvas_wh': [64, 64], 'png': f'{name}.png'}
-                   for name, sid in [('mt_00', 222), ('mt_01', 219)]}
-        return ({'swf_sha256': swf, 'original_svg_raster_smoke': 'passed',
-                 'flash_pixel_parity_verified': False, 'sprites': entries},
-                {'swf_sha256': swf, 'original_html5_svg_raster_smoke': 'passed',
-                 'flash_pixel_parity_verified': False,
-                 'sprites': {k: dict(v) for k, v in entries.items()}})
+                   for name, sid in pins.items()}
+        pygame = {'swf_sha256': swf, 'original_svg_raster_smoke': 'passed',
+                  'flash_pixel_parity_verified': False, 'sprites': entries}
+        browser = {'swf_sha256': swf, 'original_html5_svg_raster_smoke': 'passed',
+                   'flash_pixel_parity_verified': False,
+                   'sprites': {k: dict(v) for k, v in entries.items()}}
+        registration = {'schema_version': 1, 'swf_sha256': swf,
+                        'registration_verified_for_static_aliases': True,
+                        'visual_parity_verified': False,
+                        'verified_static_aliases': {
+                            alias: {'shape_id': sid, 'source': f'shapes/{sid}.svg',
+                                    'sha256': 'b' * 64, 'origin_x': 15.95, 'origin_y': 15.95}
+                            for alias, sid in pins.items()}}
+        anchors = {'schema_version': 1, 'swf_sha256': swf,
+                   'aliases': {alias: {'shape_id': sid, 'origin_x': 15.95, 'origin_y': 15.95}
+                               for alias, sid in pins.items()}}
+        return pygame, browser, registration, anchors
 
     def test_verified_provenance(self):
-        p, b = self.sample_reports()
-        self.assertEqual(verify_reports(p, b), 'a' * 64)
+        p, b, registration, anchors = self.sample_reports()
+        self.assertEqual(verify_reports(p, b, registration, anchors), 'a' * 64)
 
     def test_rejects_missing_or_drifted_source(self):
         for field, value in [('swf_sha256', 'c' * 64),
                              ('original_html5_svg_raster_smoke', 'failed'),
                              ('flash_pixel_parity_verified', True)]:
-            p, b = self.sample_reports()
+            p, b, registration, anchors = self.sample_reports()
             b[field] = value
             with self.assertRaises(ValueError):
-                verify_reports(p, b)
-        p, b = self.sample_reports()
+                verify_reports(p, b, registration, anchors)
+        p, b, registration, anchors = self.sample_reports()
         b['sprites']['mt_00']['source_shape_id'] = 999
         with self.assertRaises(ValueError):
-            verify_reports(p, b)
+            verify_reports(p, b, registration, anchors)
 
     def test_rejects_missing_sprite_or_png_metadata(self):
-        p, b = self.sample_reports()
+        p, b, registration, anchors = self.sample_reports()
         b['sprites'].pop('mt_01')
         with self.assertRaises(ValueError):
-            verify_reports(p, b)
-        p, b = self.sample_reports()
+            verify_reports(p, b, registration, anchors)
+        p, b, registration, anchors = self.sample_reports()
         b['sprites']['mt_00']['png'] = '../mt_00.png'
         with self.assertRaises(ValueError):
-            verify_reports(p, b)
+            verify_reports(p, b, registration, anchors)
 
+
+    def test_rejects_jointly_forged_shape_id(self):
+        p, b, registration, anchors = self.sample_reports()
+        for report in (p, b):
+            report['sprites']['mt_00']['source_shape_id'] = 999
+        with self.assertRaisesRegex(ValueError, 'Shape/hash/registration mismatch'):
+            verify_reports(p, b, registration, anchors)
+
+    def test_rejects_jointly_forged_svg_hash(self):
+        p, b, registration, anchors = self.sample_reports()
+        for report in (p, b):
+            report['sprites']['mt_01']['source_svg_sha256'] = 'c' * 64
+        with self.assertRaisesRegex(ValueError, 'Shape/hash/registration mismatch'):
+            verify_reports(p, b, registration, anchors)
+
+    def test_rejects_independent_registration_or_anchor_drift(self):
+        for mutation in ('source', 'origin', 'swf', 'missing'):
+            p, b, registration, anchors = self.sample_reports()
+            if mutation == 'source':
+                registration['verified_static_aliases']['mt_00']['source'] = 'shapes/999.svg'
+            elif mutation == 'origin':
+                anchors['aliases']['mt_00']['origin_x'] = 0
+            elif mutation == 'swf':
+                anchors['swf_sha256'] = 'c' * 64
+            else:
+                registration.pop('registration_verified_for_static_aliases')
+            with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                verify_reports(p, b, registration, anchors)
 
 if __name__ == '__main__':
     unittest.main()

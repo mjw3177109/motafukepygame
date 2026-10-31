@@ -4,7 +4,7 @@ Scope: source-hashed FFDec mt_00 (Shape 222) and mt_01 (Shape 219) only. The new
 
 Run after both existing original-SVG smoke tests:
 
-    python -m tools.audit_dual_raster_pixels --pygame-dir .swf_audit/static_preview --browser-dir .swf_audit/browser_preview --out .swf_audit/dual_raster_pixel_report.json
+    python -m tools.audit_dual_raster_pixels --pygame-dir .swf_audit/static_preview --browser-dir .swf_audit/browser_preview --registration .swf_audit/shape_registration_report.json --anchors data/original_shape_registration_anchors.json --out .swf_audit/dual_raster_pixel_report.json
 
 Initial investigation of the verified 2026-10-31 source-hashed PNGs from commit 4052ccf3bd8f68fc46848b037ded3a288b3edd01:
 
@@ -22,3 +22,7 @@ This comparison is NOT against the Flash player and does not establish 1:1 visua
 A second inspection of the two archived 64x64 source PNG pairs localized **all 32 alpha mismatches per sprite** to the single left-edge column `x=16`, spanning `y=16..47`. In each pair, Pygame alpha is `255` and Chromium alpha is `243` on those 32 pixels; other columns have matching alpha. The audit now records `alpha_difference_bounds_xywh`, per-column counts and alpha-value-pair histograms, so future CI can expose changes without hardcoding a renderer-specific pixel count as a success criterion.
 
 The observed 243/255 coverage (~95.3%) is consistent with fractional SVG edge coverage near the separately measured 15.95px registration offset. **This is a hypothesis, not an established cause or a Flash reference.** Do not force alpha to 255, shift the sprite, or mark parity as passed without comparing original Flash output and source SVG path/pattern geometry.
+
+## Independent provenance binding (2026-10-31)
+
+The two renderer reports previously only checked that their claimed Shape IDs and SVG hashes agreed with each other. Two equally incorrect reports could pass that check. The audit now requires the separately FFDec-verified `shape_registration_report.json` and the committed SWF registration anchors; both renderer reports must match the pinned Shape ID, source SVG SHA256, SWF SHA256, and registration coordinates. Jointly forged IDs/hashes and drifted anchor/report data are regression-tested. This closes a source-evidence gate only; it does **not** prove the alpha-edge hypothesis, Flash pixel equivalence, gameplay parity, or completion.

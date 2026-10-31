@@ -83,7 +83,7 @@ def compare_rgba(left: bytes, right: bytes, width=64, height=64):
             'exact_rgba_equal': changed == 0}
 
 
-def verify_reports(pygame_report, browser_report):
+def verify_reports(pygame_report, browser_report, registration_report, anchors):
     if not isinstance(pygame_report, dict) or not isinstance(browser_report, dict):
         raise ValueError('missing raster reports')
     swf = pygame_report.get('swf_sha256')
@@ -98,8 +98,39 @@ def verify_reports(pygame_report, browser_report):
             pygame_report.get('flash_pixel_parity_verified') is not False or
             browser_report.get('flash_pixel_parity_verified') is not False):
         raise ValueError('missing verified original raster provenance')
+    # The two renderer reports are not independent proof of original provenance:
+    # both can agree on the same incorrect Shape ID or SVG hash. Bind them to
+    # the separately audited FFDec registration report and pinned SWF anchors.
+    if not isinstance(registration_report, dict) or not isinstance(anchors, dict):
+        raise ValueError('missing independent FFDec registration evidence')
+    original_aliases = registration_report.get('verified_static_aliases')
+    pinned_aliases = anchors.get('aliases')
+    if (registration_report.get('schema_version') != 1 or
+            anchors.get('schema_version') != 1 or
+            registration_report.get('swf_sha256') != swf or
+            anchors.get('swf_sha256') != swf or
+            registration_report.get('registration_verified_for_static_aliases') is not True or
+            registration_report.get('visual_parity_verified') is not False or
+            not isinstance(original_aliases, dict) or set(original_aliases) != set(ALIASES) or
+            not isinstance(pinned_aliases, dict) or set(pinned_aliases) != set(ALIASES)):
+        raise ValueError('original registration source/anchor mismatch')
     for alias in ALIASES:
         p, b = pygame_report['sprites'][alias], browser_report['sprites'][alias]
+        original, pin = original_aliases[alias], pinned_aliases[alias]
+        if not isinstance(original, dict) or not isinstance(pin, dict):
+            raise ValueError(f'invalid independent registration: {alias}')
+        shape = pin.get('shape_id')
+        source_hash = original.get('sha256')
+        if (type(shape) is not int or
+                original.get('shape_id') != shape or
+                original.get('source') != f'shapes/{shape}.svg' or
+                any(original.get(key) != pin.get(key) for key in ('origin_x', 'origin_y')) or
+                not isinstance(source_hash, str) or
+                not re.fullmatch(r'[0-9a-f]{64}', source_hash) or
+                p.get('source_shape_id') != shape or b.get('source_shape_id') != shape or
+                p.get('source_svg_sha256') != source_hash or
+                b.get('source_svg_sha256') != source_hash):
+            raise ValueError(f'original FFDec Shape/hash/registration mismatch: {alias}')
         if (p.get('source_shape_id') != b.get('source_shape_id') or
                 p.get('source_svg_sha256') != b.get('source_svg_sha256') or
                 p.get('canvas_wh') != list(SIZE) or b.get('canvas_wh') != list(SIZE) or
@@ -124,11 +155,13 @@ def read_verified_png(path, metadata):
     return rgba
 
 
-def run(pygame_dir, browser_dir, out_path):
+def run(pygame_dir, browser_dir, registration_path, anchors_path, out_path):
     pdir, bdir = Path(pygame_dir), Path(browser_dir)
     p = json.loads((pdir / 'report.json').read_text(encoding='utf-8'))
     b = json.loads((bdir / 'report.json').read_text(encoding='utf-8'))
-    swf = verify_reports(p, b)
+    registration = json.loads(Path(registration_path).read_text(encoding='utf-8'))
+    anchors = json.loads(Path(anchors_path).read_text(encoding='utf-8'))
+    swf = verify_reports(p, b, registration, anchors)
     results = {}
     for alias in ALIASES:
         left = read_verified_png(pdir / f'{alias}.png', p['sprites'][alias])
@@ -161,9 +194,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--pygame-dir', type=Path, required=True)
     parser.add_argument('--browser-dir', type=Path, required=True)
+    parser.add_argument('--registration', type=Path, required=True)
+    parser.add_argument('--anchors', type=Path, required=True)
     parser.add_argument('--out', type=Path, required=True)
     args = parser.parse_args()
-    run(args.pygame_dir, args.browser_dir, args.out)
+    run(args.pygame_dir, args.browser_dir, args.registration, args.anchors, args.out)
 
 
 if __name__ == '__main__':

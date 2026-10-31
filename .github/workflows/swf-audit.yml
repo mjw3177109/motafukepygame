@@ -98,7 +98,7 @@ jobs:
           python -m tools.smoke_original_browser_static --manifest .swf_audit/manifest.json --report .swf_audit/shape_registration_report.json --anchors data/original_shape_registration_anchors.json --pygame .swf_audit/static_preview/report.json --export-root .swf_audit/export --out-dir .swf_audit/browser_preview
       - name: Compare source-hashed Pygame and Chromium RGBA pixels (diagnostic only)
         run: |
-          python -m tools.audit_dual_raster_pixels --pygame-dir .swf_audit/static_preview --browser-dir .swf_audit/browser_preview --out .swf_audit/dual_raster_pixel_report.json
+          python -m tools.audit_dual_raster_pixels --pygame-dir .swf_audit/static_preview --browser-dir .swf_audit/browser_preview --registration .swf_audit/shape_registration_report.json --anchors data/original_shape_registration_anchors.json --out .swf_audit/dual_raster_pixel_report.json
       - name: Preserve case-distinct FFDec exports and verify archive bytes
         run: |
           python tools/package_swf_audit.py --manifest .swf_audit/manifest.json --export-root .swf_audit/export --archive .swf_audit/ffdec_export.tar.gz --report .swf_audit/export_archive_report.json
