@@ -33,11 +33,22 @@ jobs:
           python tools/verify_original_floors.py --committed data/original_floors.json --extracted .swf_audit/original_tables.json --export-root .swf_audit
       - name: Audit original floor sprite alias coverage (no false parity)
         run: python tools/audit_floor_assets.py --floors data/original_floors.json --manifest .swf_audit/manifest.json --out .swf_audit/floor_asset_coverage.json
+      - name: Preserve case-distinct FFDec exports and verify archive bytes
+        run: |
+          python tools/package_swf_audit.py --manifest .swf_audit/manifest.json --export-root .swf_audit/export --archive .swf_audit/ffdec_export.tar.gz --report .swf_audit/export_archive_report.json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: original-flash-audit
-          path: .swf_audit/
+          # Never upload raw export/: upload-artifact treats case-only filenames as duplicates.
+          path: |
+            .swf_audit/swf_header.json
+            .swf_audit/manifest.json
+            .swf_audit/original_tables.json
+            .swf_audit/floor_asset_coverage.json
+            .swf_audit/export_archive_report.json
+            .swf_audit/ffdec_*.log
+            .swf_audit/ffdec_export.tar.gz
           retention-days: 14
           if-no-files-found: error
           include-hidden-files: true
