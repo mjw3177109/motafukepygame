@@ -6,7 +6,19 @@ on:
     paths:
       - 'game.swf'
       - 'FFDec/**'
+      - 'data/original_floors.json'
+      - 'core/floor_tile_plan.py'
       - 'tools/**'
+      - 'tests/test_swf_audit_triggers.py'
+      - '.github/workflows/swf-audit.yml'
+  pull_request:
+    paths:
+      - 'game.swf'
+      - 'FFDec/**'
+      - 'data/original_floors.json'
+      - 'core/floor_tile_plan.py'
+      - 'tools/**'
+      - 'tests/test_swf_audit_triggers.py'
       - '.github/workflows/swf-audit.yml'
 permissions:
   contents: read
