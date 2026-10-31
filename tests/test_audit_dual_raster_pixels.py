@@ -10,6 +10,9 @@ class DualRasterAuditTests(unittest.TestCase):
         self.assertTrue(result['exact_rgba_equal'])
         self.assertEqual(result['different_rgba_pixels'], 0)
         self.assertIsNone(result['difference_bounds_xywh'])
+        self.assertIsNone(result['alpha_difference_bounds_xywh'])
+        self.assertEqual(result['alpha_difference_columns'], {})
+        self.assertEqual(result['alpha_value_pairs'], [])
 
     def test_rgb_and_alpha_separated(self):
         a = bytes([1, 2, 3, 255, 1, 2, 3, 255, 1, 2, 3, 255, 1, 2, 3, 255])
@@ -22,6 +25,28 @@ class DualRasterAuditTests(unittest.TestCase):
         self.assertEqual(result['alpha_only_different_pixels'], 1)
         self.assertEqual(result['max_abs_delta_rgba'], [1, 0, 1, 11])
         self.assertEqual(result['difference_bounds_xywh'], [0, 0, 2, 2])
+        self.assertEqual(result['alpha_difference_bounds_xywh'], [0, 0, 2, 2])
+        self.assertEqual(result['alpha_difference_columns'], {'0': 1, '1': 1})
+        self.assertEqual(result['alpha_value_pairs'], [
+            {'pygame_alpha': 255, 'chromium_alpha': 244, 'pixels': 1},
+            {'pygame_alpha': 255, 'chromium_alpha': 250, 'pixels': 1}])
+
+    def test_full_height_left_edge_alpha_strip(self):
+        # Synthetic geometry regression; source PNGs are separately hash-verified in CI.
+        width, height = 64, 64
+        a = bytearray([0, 0, 0, 0] * (width * height))
+        b = bytearray(a)
+        for y in range(16, 48):
+            for x in range(16, 48):
+                off = (y * width + x) * 4
+                a[off:off + 4] = bytes([80, 80, 80, 255])
+                b[off:off + 4] = bytes([80, 80, 80, 243 if x == 16 else 255])
+        result = compare_rgba(bytes(a), bytes(b), width, height)
+        self.assertEqual(result['different_alpha_pixels'], 32)
+        self.assertEqual(result['alpha_difference_bounds_xywh'], [16, 16, 1, 32])
+        self.assertEqual(result['alpha_difference_columns'], {'16': 32})
+        self.assertEqual(result['alpha_value_pairs'], [
+            {'pygame_alpha': 255, 'chromium_alpha': 243, 'pixels': 32}])
 
     def test_rejects_different_or_invalid_dimensions(self):
         with self.assertRaises(ValueError):

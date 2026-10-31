@@ -16,3 +16,9 @@ Initial investigation of the verified 2026-10-31 source-hashed PNGs from commit 
 Both have identical 32x32 alpha bounds at (16,16) and 1024 visible pixels, but 32 edge pixels differ in alpha. This is consistent with rasterizer/sampling differences, not proof of their cause; investigate embedded SVG pattern sampling, transforms and edge antialiasing using original export files before changing production rendering.
 
 This comparison is NOT against the Flash player and does not establish 1:1 visual, event, game or ending parity. It does not unlock Gymnasium/Kaggle. Pixel values can change across browser/CairoSVG versions, so the script records rather than pins mismatch counts. Retain the source PNGs and the new JSON report as CI artifacts for reproducible analysis.
+
+## Alpha-edge localization (2026-10-31)
+
+A second inspection of the two archived 64x64 source PNG pairs localized **all 32 alpha mismatches per sprite** to the single left-edge column `x=16`, spanning `y=16..47`. In each pair, Pygame alpha is `255` and Chromium alpha is `243` on those 32 pixels; other columns have matching alpha. The audit now records `alpha_difference_bounds_xywh`, per-column counts and alpha-value-pair histograms, so future CI can expose changes without hardcoding a renderer-specific pixel count as a success criterion.
+
+The observed 243/255 coverage (~95.3%) is consistent with fractional SVG edge coverage near the separately measured 15.95px registration offset. **This is a hypothesis, not an established cause or a Flash reference.** Do not force alpha to 255, shift the sprite, or mark parity as passed without comparing original Flash output and source SVG path/pattern geometry.

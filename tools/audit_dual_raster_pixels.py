@@ -37,6 +37,8 @@ def compare_rgba(left: bytes, right: bytes, width=64, height=64):
     max_delta = [0, 0, 0, 0]
     total_delta = [0, 0, 0, 0]
     positions = []
+    alpha_positions = []
+    alpha_pairs = {}
     for i in range(width * height):
         off = i * 4
         delta = [abs(left[off + c] - right[off + c]) for c in range(4)]
@@ -44,6 +46,10 @@ def compare_rgba(left: bytes, right: bytes, width=64, height=64):
         if has_rgb or has_alpha:
             changed += 1
             positions.append((i % width, i // width))
+        if has_alpha:
+            alpha_positions.append((i % width, i // width))
+            pair = (left[off + 3], right[off + 3])
+            alpha_pairs[pair] = alpha_pairs.get(pair, 0) + 1
         rgb += bool(has_rgb)
         alpha += has_alpha
         rgb_only += bool(has_rgb and not has_alpha)
@@ -56,12 +62,25 @@ def compare_rgba(left: bytes, right: bytes, width=64, height=64):
         x0, x1 = min(x for x, _ in positions), max(x for x, _ in positions)
         y0, y1 = min(y for _, y in positions), max(y for _, y in positions)
         bbox = [x0, y0, x1 - x0 + 1, y1 - y0 + 1]
+    alpha_bbox = None
+    if alpha_positions:
+        x0, x1 = min(x for x, _ in alpha_positions), max(x for x, _ in alpha_positions)
+        y0, y1 = min(y for _, y in alpha_positions), max(y for _, y in alpha_positions)
+        alpha_bbox = [x0, y0, x1 - x0 + 1, y1 - y0 + 1]
+    alpha_columns = {}
+    for x, _ in alpha_positions:
+        alpha_columns[str(x)] = alpha_columns.get(str(x), 0) + 1
     return {'canvas_pixels': width * height, 'different_rgba_pixels': changed,
             'different_rgb_pixels': rgb, 'different_alpha_pixels': alpha,
             'rgb_only_different_pixels': rgb_only, 'alpha_only_different_pixels': alpha_only,
             'max_abs_delta_rgba': max_delta,
             'mean_abs_delta_rgba': [round(v / (width * height), 6) for v in total_delta],
-            'difference_bounds_xywh': bbox, 'exact_rgba_equal': changed == 0}
+            'difference_bounds_xywh': bbox,
+            'alpha_difference_bounds_xywh': alpha_bbox,
+            'alpha_difference_columns': alpha_columns,
+            'alpha_value_pairs': [{'pygame_alpha': p, 'chromium_alpha': c, 'pixels': n}
+                                  for (p, c), n in sorted(alpha_pairs.items())],
+            'exact_rgba_equal': changed == 0}
 
 
 def verify_reports(pygame_report, browser_report):
