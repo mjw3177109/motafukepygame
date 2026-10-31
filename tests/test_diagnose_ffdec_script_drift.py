@@ -1,11 +1,15 @@
 import hashlib
+import json
+import sys
 import tempfile
 import unittest
+from contextlib import redirect_stderr
+from io import StringIO
 from pathlib import Path
 from unittest.mock import patch
 
 from tools.diagnose_ffdec_script_drift import (
-    byte_summary, classify, diagnose, first_difference, safe_renderer_path,
+    byte_summary, classify, diagnose, first_difference, main, safe_renderer_path,
 )
 
 
@@ -113,6 +117,62 @@ class FFDecDriftDiagnosticsTests(unittest.TestCase):
                     diagnose({'source': source}, {'original': {'sha256': source['swf_sha256']}},
                              swf, jar, root / 'export')
 
+
+    def test_cli_records_invalid_input_json_as_fail_closed_artifact(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            committed = root / 'committed.json'
+            manifest = root / 'manifest.json'
+            report = root / 'nested' / 'diagnostic.json'
+            committed.write_text('{invalid json', encoding='utf-8')
+            manifest.write_text('{}', encoding='utf-8')
+            argv = ['ffdec-drift', '--committed', str(committed),
+                    '--manifest', str(manifest), '--swf', str(root / 'game.swf'),
+                    '--ffdec', str(root / 'ffdec.jar'),
+                    '--export-root', str(root / 'export'), '--out', str(report)]
+            with patch.object(sys, 'argv', argv), redirect_stderr(StringIO()):
+                with self.assertRaises(SystemExit) as failure:
+                    main()
+            self.assertEqual(failure.exception.code, 2)
+            data = json.loads(report.read_text(encoding='utf-8'))
+            self.assertEqual(data['classification'], 'diagnostic_unavailable')
+            self.assertEqual(data['error_type'], 'JSONDecodeError')
+            self.assertFalse(data['provenance_verified'])
+            self.assertFalse(data['gameplay_parity_verified'])
+            self.assertFalse(data['kaggle_started'])
+
+    def test_cli_preserves_swf_mismatch_failure_without_retry(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            swf, jar = root / 'game.swf', root / 'ffdec.jar'
+            swf.write_bytes(b'changed SWF')
+            jar.write_bytes(b'FFDec fixture')
+            committed = root / 'committed.json'
+            manifest = root / 'manifest.json'
+            report = root / 'diagnostic.json'
+            expected_swf = digest(b'original SWF')
+            committed.write_text(json.dumps({'source': {
+                'swf_sha256': expected_swf,
+                'renderer_actionscript_path': 'export/scripts/frame_4346/DoAction_2.as',
+                'renderer_actionscript_sha256': digest(b'original script'),
+            }}), encoding='utf-8')
+            manifest.write_text(json.dumps({'original': {'sha256': expected_swf},
+                                            'files': []}), encoding='utf-8')
+            argv = ['ffdec-drift', '--committed', str(committed),
+                    '--manifest', str(manifest), '--swf', str(swf),
+                    '--ffdec', str(jar), '--export-root', str(root / 'export'),
+                    '--out', str(report)]
+            with patch.object(sys, 'argv', argv), patch(
+                    'subprocess.run', side_effect=AssertionError('no FFDec retry')
+            ), redirect_stderr(StringIO()):
+                with self.assertRaises(SystemExit) as failure:
+                    main()
+            self.assertEqual(failure.exception.code, 2)
+            data = json.loads(report.read_text(encoding='utf-8'))
+            self.assertEqual(data['classification'], 'diagnostic_unavailable')
+            self.assertIn('SWF provenance mismatch', data['error_message'])
+            self.assertFalse(data['provenance_verified'])
+            self.assertFalse(data['kaggle_started'])
 
 if __name__ == '__main__':
     unittest.main()
