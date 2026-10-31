@@ -17,6 +17,7 @@ from pathlib import Path
 
 from tools.audit_svg_sampling import audit as audit_svg_sources
 from tools.audit_dual_raster_pixels import compare_rgba, verify_reports
+from tools.audit_raster_edge_regions import summarize_difference_regions
 
 ALIASES = ('mt_00', 'mt_01')
 VARIANTS = ('original', 'auto', 'pixelated', 'crisp-edges')
@@ -52,6 +53,27 @@ def pixel_counts(left: bytes, right: bytes) -> dict:
     result = compare_rgba(left, right)
     return {k: result[k] for k in ('different_rgba_pixels', 'different_rgb_pixels',
                                    'different_alpha_pixels', 'difference_bounds_xywh')}
+
+
+
+REGISTRATION_METRIC_KEYS = (
+    'different_rgba_pixels', 'different_rgb_pixels',
+    'different_visible_rgb_pixels', 'different_invisible_rgb_pixels',
+    'different_composited_black_pixels', 'different_composited_white_pixels',
+    'different_alpha_pixels', 'difference_bounds_xywh',
+    'alpha_difference_bounds_xywh', 'alpha_difference_columns', 'alpha_value_pairs',
+)
+
+
+def registration_comparison(left: bytes, right: bytes) -> dict:
+    """Record RGB visibility and edge/interior effects, not just alpha counts."""
+    comparison = compare_rgba(left, right)
+    regions = summarize_difference_regions(left, right, 64, 64)
+    if (sum(regions['rgba'].values()) != comparison['different_rgba_pixels'] or
+            sum(regions['alpha'].values()) != comparison['different_alpha_pixels']):
+        raise ValueError('registration difference-region count mismatch')
+    return {**{key: comparison[key] for key in REGISTRATION_METRIC_KEYS},
+            'difference_regions': regions}
 
 
 def checked_baseline(path: Path, metadata: dict) -> bytes:
@@ -156,17 +178,10 @@ def run(manifest_path, registration_path, anchors_path, export_root,
                     chrome = render_chromium(page, original, ox, oy)
                     if mode == 'pinned' and chrome != original_b:
                         raise ValueError(f'pinned registration baseline drift: {alias}')
-                    comparison = compare_rgba(original_p, chrome)
                     registration_probe[mode] = {
                         'origin_xy': [ox, oy],
-                        'chromium_changed_from_pinned': pixel_counts(original_b, chrome),
-                        'pygame_vs_chromium': {
-                            'different_rgba_pixels': comparison['different_rgba_pixels'],
-                            'different_alpha_pixels': comparison['different_alpha_pixels'],
-                            'alpha_difference_bounds_xywh': comparison['alpha_difference_bounds_xywh'],
-                            'alpha_difference_columns': comparison['alpha_difference_columns'],
-                            'alpha_value_pairs': comparison['alpha_value_pairs'],
-                        },
+                        'chromium_changed_from_pinned': registration_comparison(original_b, chrome),
+                        'pygame_vs_chromium': registration_comparison(original_p, chrome),
                     }
                 output['sprites'][alias] = {'shape_id': shape,
                     'original_svg_sha256': source['svg_sha256'],
