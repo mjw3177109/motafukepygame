@@ -35,6 +35,37 @@ class FFDecDriftDiagnosticsTests(unittest.TestCase):
             self.assertEqual(result['classification'], 'first_export_matches_anchor')
             self.assertFalse(result['gameplay_parity_verified'])
 
+    def test_matching_export_with_stale_manifest_fails_without_ffdec_retry(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            swf, jar = root / 'game.swf', root / 'ffdec.jar'
+            swf.write_bytes(b'original swf')
+            jar.write_bytes(b'original ffdec')
+            script = root / 'export/scripts/frame_4346/DoAction_2.as'
+            script.parent.mkdir(parents=True)
+            script.write_bytes(b'correct original script')
+            source = {
+                'swf_sha256': digest(swf.read_bytes()),
+                'renderer_actionscript_path': 'export/scripts/frame_4346/DoAction_2.as',
+                'renderer_actionscript_sha256': digest(script.read_bytes()),
+            }
+            manifest = {
+                'original': {'sha256': source['swf_sha256']},
+                'files': [{'path': 'scripts/frame_4346/DoAction_2.as',
+                           'sha256': digest(b'stale manifest hash')}],
+            }
+            with patch('subprocess.run', side_effect=AssertionError('FFDec retry is not warranted')):
+                result = diagnose({'source': source}, manifest, swf, jar, root / 'export')
+            self.assertEqual(result['classification'],
+                             'manifest_hash_mismatch_first_export_matches_anchor')
+            self.assertEqual(result['first']['sha256'], source['renderer_actionscript_sha256'])
+            self.assertEqual(result['manifest_sha256'], digest(b'stale manifest hash'))
+            self.assertIsNone(result['repeat'])
+            self.assertIsNone(result['repeat_exit_code'])
+            self.assertFalse(result['provenance_verified'])
+            self.assertFalse(result['gameplay_parity_verified'])
+            self.assertFalse(result['kaggle_started'])
+
     def test_classifies_retry_evidence_without_claiming_success(self):
         anchor = digest(b'correct')
         self.assertEqual(classify(anchor, b'wrong', b'correct'),
