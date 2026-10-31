@@ -97,7 +97,12 @@ def diagnose(committed: dict, manifest: dict, swf: Path, ffdec: Path,
               'first_vs_repeat_first_difference': None,
               'classification': None, 'provenance_verified': False,
               'gameplay_parity_verified': False, 'kaggle_started': False}
-    if first is not None and sha256(first) == expected and found[0].get('sha256') == expected:
+    if first is not None and sha256(first) == expected:
+        if found[0].get('sha256') != expected:
+            # The exported bytes are correct, but the manifest is inconsistent.
+            # Retrying FFDec cannot repair this independent provenance failure.
+            result['classification'] = 'manifest_hash_mismatch_first_export_matches_anchor'
+            return result
         result['classification'] = 'first_export_matches_anchor'
         result['provenance_verified'] = True
         return result
