@@ -43,3 +43,28 @@ A black sprite edge can have different alpha yet look identical on black and
 different on white; this is regression-tested. These backdrop probes are
 diagnostic only. They neither establish the root cause of the 15.95px edge
 sampling nor substitute for original Flash screenshots or gameplay parity.
+
+
+## Edge versus interior attribution (2026-10-31)
+
+The dual-raster audit now records `difference_regions` for every verified PNG
+pair. It classifies mismatched RGBA and alpha pixels as `edge`, `interior`
+or `outside` using four-neighbour alpha visibility (>1), conservatively
+treating a pixel visible in only one renderer as edge. This is a **spatial
+diagnostic**, not a causal test or an original Flash reference.
+
+Reanalysis of the archived source-hashed PNG pairs from commit
+`4052ccf3bd8f68fc46848b037ded3a288b3edd01` produced:
+
+| Alias | RGBA edge | RGBA interior | RGBA outside | Alpha edge | Alpha interior |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| mt_00 | 120 | 779 | 0 | 32 | 0 |
+| mt_01 | 115 | 817 | 0 | 32 | 0 |
+
+The majority of RGBA differences are **inside** the visible sprite, although
+all alpha differences are on the edge. Therefore the left-edge 15.95px
+registration hypothesis cannot, on its own, explain the interior RGB
+differences. Next investigate the embedded SVG bitmap pattern's color
+sampling/interpolation separately from boundary alpha coverage. Do not
+normalize RGB or shift production assets based on this diagnostic alone.
+The new independent six-case synthetic test suite runs in normal Python CI.
