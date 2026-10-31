@@ -11,6 +11,7 @@ import base64
 import hashlib
 import io
 import json
+import math
 import re
 from pathlib import Path
 
@@ -19,6 +20,18 @@ from tools.audit_dual_raster_pixels import compare_rgba, verify_reports
 
 ALIASES = ('mt_00', 'mt_01')
 VARIANTS = ('original', 'auto', 'pixelated', 'crisp-edges')
+REGISTRATION_MODES = ('pinned', 'snap-x', 'snap-y', 'snap-xy')
+
+
+def registration_offsets(origin_x: float, origin_y: float) -> dict:
+    """Isolate fractional registration on each axis; never modify source SVG."""
+    for value in (origin_x, origin_y):
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+            raise ValueError('registration offsets must be finite numbers')
+    x, y = float(origin_x), float(origin_y)
+    sx, sy = float(round(x)), float(round(y))
+    return {'pinned': (x, y), 'snap-x': (sx, y),
+            'snap-y': (x, sy), 'snap-xy': (sx, sy)}
 
 
 def make_variant(svg: bytes, variant: str) -> bytes:
@@ -96,6 +109,7 @@ def run(manifest_path, registration_path, anchors_path, export_root,
     output = {'schema_version': 1, 'swf_sha256': swf,
               'experiment': 'isolated SVG image-rendering hints; no production changes',
               'flash_pixel_parity_verified': False, 'sampling_root_cause_verified': False,
+              'registration_root_cause_verified': False,
               'gymnasium_kaggle_started': False, 'sprites': {}}
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True, executable_path=chromium_path)
@@ -132,9 +146,32 @@ def run(manifest_path, registration_path, anchors_path, export_root,
                         'chromium_delta_from_original': pixel_counts(baseline_b, chrome),
                         'cairo_vs_chromium': pixel_counts(cairo, chrome),
                     }
+                # Orthogonal experiment: keep SVG bytes unchanged, vary only the
+                # Chromium Canvas draw offset by snapping X and/or Y independently.
+                # The pinned mode must reproduce the archived Chromium PNG.
+                offsets = registration_offsets(pin['origin_x'], pin['origin_y'])
+                registration_probe = {}
+                for mode in REGISTRATION_MODES:
+                    ox, oy = offsets[mode]
+                    chrome = render_chromium(page, original, ox, oy)
+                    if mode == 'pinned' and chrome != original_b:
+                        raise ValueError(f'pinned registration baseline drift: {alias}')
+                    comparison = compare_rgba(original_p, chrome)
+                    registration_probe[mode] = {
+                        'origin_xy': [ox, oy],
+                        'chromium_changed_from_pinned': pixel_counts(original_b, chrome),
+                        'pygame_vs_chromium': {
+                            'different_rgba_pixels': comparison['different_rgba_pixels'],
+                            'different_alpha_pixels': comparison['different_alpha_pixels'],
+                            'alpha_difference_bounds_xywh': comparison['alpha_difference_bounds_xywh'],
+                            'alpha_difference_columns': comparison['alpha_difference_columns'],
+                            'alpha_value_pairs': comparison['alpha_value_pairs'],
+                        },
+                    }
                 output['sprites'][alias] = {'shape_id': shape,
                     'original_svg_sha256': source['svg_sha256'],
-                    'archived_baselines_reproduced': True, 'variants': variants}
+                    'archived_baselines_reproduced': True, 'variants': variants,
+                    'registration_probe': registration_probe}
         finally:
             browser.close()
     target = Path(out_path)
@@ -143,7 +180,11 @@ def run(manifest_path, registration_path, anchors_path, export_root,
     for alias, item in output['sprites'].items():
         print(alias, {variant: data['cairo_vs_chromium']['different_rgba_pixels']
                       for variant, data in item['variants'].items()})
-    print('PASS: source-hashed controlled rasterizer experiment; Flash parity NOT VERIFIED')
+    for alias, item in output['sprites'].items():
+        print(alias, 'registration alpha differences', {
+            mode: data['pygame_vs_chromium']['different_alpha_pixels']
+            for mode, data in item['registration_probe'].items()})
+    print('PASS: source-hashed sampling/registration experiments; Flash parity NOT VERIFIED')
     return output
 
 
