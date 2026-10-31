@@ -9,11 +9,13 @@ on:
       - 'data/original_floors.json'
       - 'data/original_sprite_symbol_anchors.json'
       - 'data/original_sprite_frame_anchors.json'
+      - 'data/original_sprite_placement_anchors.json'
       - 'core/floor_tile_plan.py'
       - 'tools/**'
       - 'tests/test_swf_audit_triggers.py'
       - 'tests/test_trace_swf_symbols.py'
       - 'tests/test_audit_swf_sprite_frames.py'
+      - 'tests/test_audit_sprite_placements.py'
       - '.github/workflows/swf-audit.yml'
   pull_request:
     paths:
@@ -22,11 +24,13 @@ on:
       - 'data/original_floors.json'
       - 'data/original_sprite_symbol_anchors.json'
       - 'data/original_sprite_frame_anchors.json'
+      - 'data/original_sprite_placement_anchors.json'
       - 'core/floor_tile_plan.py'
       - 'tools/**'
       - 'tests/test_swf_audit_triggers.py'
       - 'tests/test_trace_swf_symbols.py'
       - 'tests/test_audit_swf_sprite_frames.py'
+      - 'tests/test_audit_sprite_placements.py'
       - '.github/workflows/swf-audit.yml'
 permissions:
   contents: read
@@ -59,6 +63,9 @@ jobs:
       - name: Verify original sprite declared frames against ShowFrame tags
         run: |
           python -m tools.audit_swf_sprite_frames --tags .swf_audit/ffdec_tags.log --trace .swf_audit/swf_symbol_trace.json --anchors data/original_sprite_frame_anchors.json --out .swf_audit/swf_sprite_frames.json
+      - name: Verify original mt_00-mt_03 per-frame PlaceObject2 transforms
+        run: |
+          python -m tools.audit_sprite_placements --tags .swf_audit/ffdec_tags.log --trace .swf_audit/swf_symbol_trace.json --frames .swf_audit/swf_sprite_frames.json --anchors data/original_sprite_placement_anchors.json --out .swf_audit/swf_sprite_placements.json
       - name: Preserve case-distinct FFDec exports and verify archive bytes
         run: |
           python tools/package_swf_audit.py --manifest .swf_audit/manifest.json --export-root .swf_audit/export --archive .swf_audit/ffdec_export.tar.gz --report .swf_audit/export_archive_report.json
@@ -74,6 +81,7 @@ jobs:
             .swf_audit/floor_asset_coverage.json
             .swf_audit/swf_symbol_trace.json
             .swf_audit/swf_sprite_frames.json
+            .swf_audit/swf_sprite_placements.json
             .swf_audit/export_archive_report.json
             .swf_audit/ffdec_*.log
             .swf_audit/ffdec_export.tar.gz
