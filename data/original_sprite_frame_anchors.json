@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "swf_sha256": "04b317b7fd9d32c5b083c993e99a3eea527f392e5fc938d23928e953bb638db9",
+  "anchors": {
+    "mt_00": {"character_id": 223, "frame_count": 1},
+    "mt_01": {"character_id": 220, "frame_count": 1},
+    "mt_02": {"character_id": 217, "frame_count": 10},
+    "mt_03": {"character_id": 213, "frame_count": 10},
+    "mt_99": {"character_id": 491, "frame_count": 74}
+  }
+}
