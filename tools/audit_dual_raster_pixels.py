@@ -11,6 +11,8 @@ import json
 import re
 from pathlib import Path
 
+from tools.audit_raster_edge_regions import summarize_difference_regions
+
 ALIASES = ('mt_00', 'mt_01')
 SIZE = (64, 64)
 
@@ -197,6 +199,7 @@ def run(pygame_dir, browser_dir, registration_path, anchors_path, out_path):
             'pygame_png_sha256': p['sprites'][alias]['png_sha256'],
             'browser_png_sha256': b['sprites'][alias]['png_sha256'],
             **compare_rgba(left, right, *SIZE),
+            'difference_regions': summarize_difference_regions(left, right, *SIZE),
         }
     output = {'schema_version': 1, 'swf_sha256': swf,
               'comparison': 'Pygame/CairoSVG versus Chromium/Canvas; not Flash',
