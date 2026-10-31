@@ -27,7 +27,7 @@ class FFDecDriftDiagnosticsTests(unittest.TestCase):
                       'renderer_actionscript_path': 'export/scripts/frame_4346/DoAction_2.as',
                       'renderer_actionscript_sha256': digest(script.read_bytes())}
             manifest = {'original': {'sha256': source['swf_sha256']},
-                        'files': [{'path': source['renderer_actionscript_path'],
+                        'files': [{'path': source['renderer_actionscript_path'].removeprefix('export/'),
                                    'sha256': source['renderer_actionscript_sha256']}]}
             with patch('subprocess.run', side_effect=AssertionError('must not rerun')):
                 result = diagnose({'source': source}, manifest, swf, jar, root / 'export')

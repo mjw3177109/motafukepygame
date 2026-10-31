@@ -84,7 +84,7 @@ def diagnose(committed: dict, manifest: dict, swf: Path, ffdec: Path,
     entries = manifest.get('files')
     if not isinstance(entries, list):
         raise ValueError('missing export manifest')
-    found = [e for e in entries if isinstance(e, dict) and e.get('path') == relative]
+    found = [e for e in entries if isinstance(e, dict) and e.get('path') == relative.removeprefix('export/')]
     if len(found) != 1:
         raise ValueError('renderer script missing or duplicated in manifest')
     first = _read_export(export_root, relative.removeprefix('export/'))
