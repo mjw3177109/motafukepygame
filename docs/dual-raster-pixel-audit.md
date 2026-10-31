@@ -26,3 +26,20 @@ The observed 243/255 coverage (~95.3%) is consistent with fractional SVG edge co
 ## Independent provenance binding (2026-10-31)
 
 The two renderer reports previously only checked that their claimed Shape IDs and SVG hashes agreed with each other. Two equally incorrect reports could pass that check. The audit now requires the separately FFDec-verified `shape_registration_report.json` and the committed SWF registration anchors; both renderer reports must match the pinned Shape ID, source SVG SHA256, SWF SHA256, and registration coordinates. Jointly forged IDs/hashes and drifted anchor/report data are regression-tested. This closes a source-evidence gate only; it does **not** prove the alpha-edge hypothesis, Flash pixel equivalence, gameplay parity, or completion.
+
+
+## Visibility-aware comparison (2026-10-31)
+
+The original RGBA mismatch count is a byte-level diagnostic, not a count of
+visually different pixels. RGB values can differ while both alpha channels are
+zero; those bytes are invisible after ordinary alpha compositing. The audit now
+separately reports visible-vs-fully-transparent RGB mismatches and 8-bit
+straight-alpha composited RGB mismatch counts over opaque black and white
+backgrounds. Each channel is rounded with
+`(rgb * alpha + background * (255 - alpha) + 127) // 255`.
+The existing raw RGBA counts are retained unchanged for regression continuity.
+
+A black sprite edge can have different alpha yet look identical on black and
+different on white; this is regression-tested. These backdrop probes are
+diagnostic only. They neither establish the root cause of the 15.95px edge
+sampling nor substitute for original Flash screenshots or gameplay parity.

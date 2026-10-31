@@ -34,6 +34,7 @@ def compare_rgba(left: bytes, right: bytes, width=64, height=64):
     if len(left) != width * height * 4 or len(right) != len(left):
         raise ValueError('raster sizes differ or are not RGBA')
     changed = rgb = alpha = rgb_only = alpha_only = 0
+    visible_rgb = invisible_rgb = composite_black = composite_white = 0
     max_delta = [0, 0, 0, 0]
     total_delta = [0, 0, 0, 0]
     positions = []
@@ -52,6 +53,26 @@ def compare_rgba(left: bytes, right: bytes, width=64, height=64):
             alpha_pairs[pair] = alpha_pairs.get(pair, 0) + 1
         rgb += bool(has_rgb)
         alpha += has_alpha
+        # RGB values beneath zero alpha are not visible on any opaque backdrop.
+        # Record both raw bytes and their composited appearance; neither is
+        # a comparison to the original Flash player.
+        if has_rgb:
+            if left[off + 3] == right[off + 3] == 0:
+                invisible_rgb += 1
+            else:
+                visible_rgb += 1
+        for background in (0, 255):
+            differs = any(
+                (left[off + c] * left[off + 3] +
+                 background * (255 - left[off + 3]) + 127) // 255 !=
+                (right[off + c] * right[off + 3] +
+                 background * (255 - right[off + 3]) + 127) // 255
+                for c in range(3)
+            )
+            if background == 0:
+                composite_black += differs
+            else:
+                composite_white += differs
         rgb_only += bool(has_rgb and not has_alpha)
         alpha_only += bool(has_alpha and not has_rgb)
         for c in range(4):
@@ -72,6 +93,10 @@ def compare_rgba(left: bytes, right: bytes, width=64, height=64):
         alpha_columns[str(x)] = alpha_columns.get(str(x), 0) + 1
     return {'canvas_pixels': width * height, 'different_rgba_pixels': changed,
             'different_rgb_pixels': rgb, 'different_alpha_pixels': alpha,
+            'different_visible_rgb_pixels': visible_rgb,
+            'different_invisible_rgb_pixels': invisible_rgb,
+            'different_composited_black_pixels': composite_black,
+            'different_composited_white_pixels': composite_white,
             'rgb_only_different_pixels': rgb_only, 'alpha_only_different_pixels': alpha_only,
             'max_abs_delta_rgba': max_delta,
             'mean_abs_delta_rgba': [round(v / (width * height), 6) for v in total_delta],

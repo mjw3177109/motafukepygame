@@ -48,6 +48,35 @@ class DualRasterAuditTests(unittest.TestCase):
         self.assertEqual(result['alpha_value_pairs'], [
             {'pygame_alpha': 255, 'chromium_alpha': 243, 'pixels': 32}])
 
+    def test_fully_transparent_rgb_does_not_count_as_visible(self):
+        left = bytes([255, 0, 0, 0])
+        right = bytes([0, 255, 0, 0])
+        result = compare_rgba(left, right, 1, 1)
+        self.assertEqual(result['different_rgba_pixels'], 1)
+        self.assertEqual(result['different_rgb_pixels'], 1)
+        self.assertEqual(result['different_visible_rgb_pixels'], 0)
+        self.assertEqual(result['different_invisible_rgb_pixels'], 1)
+        self.assertEqual(result['different_composited_black_pixels'], 0)
+        self.assertEqual(result['different_composited_white_pixels'], 0)
+
+    def test_alpha_difference_depends_on_backdrop(self):
+        left = bytes([0, 0, 0, 255])
+        right = bytes([0, 0, 0, 243])
+        result = compare_rgba(left, right, 1, 1)
+        self.assertEqual(result['different_alpha_pixels'], 1)
+        self.assertEqual(result['different_rgb_pixels'], 0)
+        self.assertEqual(result['different_composited_black_pixels'], 0)
+        self.assertEqual(result['different_composited_white_pixels'], 1)
+
+    def test_opaque_rgb_change_is_visible_on_both_backdrops(self):
+        left = bytes([1, 2, 3, 255])
+        right = bytes([2, 2, 3, 255])
+        result = compare_rgba(left, right, 1, 1)
+        self.assertEqual(result['different_visible_rgb_pixels'], 1)
+        self.assertEqual(result['different_invisible_rgb_pixels'], 0)
+        self.assertEqual(result['different_composited_black_pixels'], 1)
+        self.assertEqual(result['different_composited_white_pixels'], 1)
+
     def test_rejects_different_or_invalid_dimensions(self):
         with self.assertRaises(ValueError):
             compare_rgba(b'\x00' * 16, b'\x00' * 12, 2, 2)
