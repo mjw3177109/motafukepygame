@@ -132,7 +132,7 @@ def run(manifest_path, report_path, anchors_path, pygame_path, export_root, out_
                                       'png': filename, 'png_sha256': hashlib.sha256(png).hexdigest(),
                                       'bounds_delta_from_pygame_xywh': delta}
                 final = {'schema_version': 1, 'swf_sha256': swf,
-                         'renderer': f'Chromium {browser.version} Canvas/createImageBitmap',
+                         'renderer': f'Chromium {browser.version} Canvas (ImageBitmap or Image.decode fallback)',
                          'original_html5_svg_raster_smoke': 'passed',
                          'pygame_html5_alpha_bounds_within_2px': True,
                          'flash_pixel_parity_verified': False, 'gameplay_parity_verified': False,
