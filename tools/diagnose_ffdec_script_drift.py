@@ -142,6 +142,23 @@ def main() -> None:
                           json.loads(args.manifest.read_text(encoding='utf-8')),
                           args.swf, args.ffdec, args.export_root)
     except (ValueError, OSError, json.JSONDecodeError) as exc:
+        # A failed provenance check must still leave an inspectable CI artifact.
+        # This is diagnostic evidence, never a successful provenance verdict.
+        unavailable = {
+            'schema_version': 1,
+            'classification': 'diagnostic_unavailable',
+            'error_type': type(exc).__name__,
+            'error_message': str(exc)[:500],
+            'provenance_verified': False,
+            'gameplay_parity_verified': False,
+            'kaggle_started': False,
+        }
+        try:
+            args.out.parent.mkdir(parents=True, exist_ok=True)
+            args.out.write_text(json.dumps(unavailable, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+        except OSError:
+            # Never convert a report-write failure into a pass.
+            pass
         parser.exit(2, f'FAIL: FFDec script drift diagnosis unavailable: {exc}\n')
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(result, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
