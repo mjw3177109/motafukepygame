@@ -84,6 +84,9 @@ jobs:
         with:
           python-version: '3.11'
       - run: python tools/extract_swf.py --swf game.swf --ffdec FFDec/ffdec.jar --out .swf_audit
+      - name: Verify renderer ActionScript anchor and diagnose FFDec drift (fail closed)
+        run: |
+          python -m tools.diagnose_ffdec_script_drift --committed data/original_floors.json --manifest .swf_audit/manifest.json --swf game.swf --ffdec FFDec/ffdec.jar --export-root .swf_audit/export --out .swf_audit/ffdec_script_drift_diagnostic.json
       - name: Extract original map and monster tables
         run: |
           SWF_SHA=$(python -c 'import json; print(json.load(open(".swf_audit/manifest.json"))["original"]["sha256"])')
@@ -133,6 +136,7 @@ jobs:
           # Never upload raw export/: upload-artifact treats case-only filenames as duplicates.
           path: |
             .swf_audit/swf_header.json
+            .swf_audit/ffdec_script_drift_diagnostic.json
             .swf_audit/manifest.json
             .swf_audit/original_tables.json
             .swf_audit/floor_asset_coverage.json
