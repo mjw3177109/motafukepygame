@@ -7,3 +7,7 @@ The new fail-closed diagnostic runs after the first FFDec export and before floo
 Classifications: first_export_matches_anchor; repeat_matches_anchor_first_does_not; repeatable_mismatch_against_anchor; two_distinct_mismatches_against_anchor; mismatch_repeat_unavailable. Only the first classification passes.
 
 The diagnostic JSON is retained as a GitHub Actions artifact even on failure. No Flash visual/gameplay parity or Gymnasium/Kaggle readiness is inferred.
+
+## Manifest-only drift guard (2026-10-31)
+
+A correct first export can coexist with an incorrect manifest SHA256. Previously, that case retried FFDec and could label the result `first_export_matches_anchor` while `provenance_verified` was false. The diagnostic now returns `manifest_hash_mismatch_first_export_matches_anchor` without retrying FFDec, preserving both the correct file-byte evidence and the manifest inconsistency. The CLI still exits nonzero, so neither a successful retry nor correct bytes alone unlock source provenance or game parity. A regression test asserts the classification, no subprocess retry, and closed gameplay/Kaggle gates.
