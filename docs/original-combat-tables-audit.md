@@ -15,14 +15,14 @@ formula, event effect, or complete playable result has been inferred.**
 
 The CI verification requires all three independent inputs: committed raw
 values, freshly extracted FFDec original_tables.json, and the existing
-data/original_floors.json source SHA anchors. It also re-hashes the exported
-ActionScript bytes. Any value/name/stat/ID, source, field-order, or safety-gate
+data/original_floors.json source SHA anchors. It also re-hashes the original `game.swf` bytes (rather than trusting only
+three matching JSON SHA fields) and the exported ActionScript bytes. Any value/name/stat/ID, source, field-order, or safety-gate
 drift fails the audit; success writes original_combat_tables_audit.json and
 keeps combat/gameplay, Gymnasium, and Kaggle gates false.
 
 Run after FFDec extraction:
 
-    python -m tools.verify_original_combat_tables --committed data/original_combat_tables.json --extracted .swf_audit/original_tables.json --floor-anchors data/original_floors.json --export-root .swf_audit --out .swf_audit/original_combat_tables_audit.json
+    python -m tools.verify_original_combat_tables --committed data/original_combat_tables.json --extracted .swf_audit/original_tables.json --floor-anchors data/original_floors.json --export-root .swf_audit --swf game.swf --out .swf_audit/original_combat_tables_audit.json
 
 Next: derive combat field semantics and formulas independently from original
 ActionScript control flow, then compare Flash traces to Pygame and HTML5.

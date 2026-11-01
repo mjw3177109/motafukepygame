@@ -36,7 +36,7 @@ def _check_tables(tables: object, label: str) -> None:
 
 
 def verify_original_combat_tables(committed: dict, extracted: dict,
-                                  floor_anchors: dict, export_root: Path) -> dict:
+                                  floor_anchors: dict, export_root: Path, swf_path: Path) -> dict:
     """Compare each raw value to independent pinned source and exported bytes."""
     if not all(isinstance(x, dict) for x in (committed, extracted, floor_anchors)):
         raise ValueError('expected three JSON objects')
@@ -55,6 +55,10 @@ def verify_original_combat_tables(committed: dict, extracted: dict,
             raise ValueError(f'original {key} anchor mismatch')
     if any(x.get('actionscript_path') != SOURCE_PATH for x in (source, actual, pinned)):
         raise ValueError('original ActionScript path mismatch')
+    if not swf_path.is_file():
+        raise ValueError('missing original SWF')
+    if hashlib.sha256(swf_path.read_bytes()).hexdigest() != source['swf_sha256']:
+        raise ValueError('original SWF bytes hash mismatch')
     script_path = Path(export_root).resolve() / SOURCE_PATH
     if not script_path.is_file() or not script_path.resolve().is_relative_to(Path(export_root).resolve()):
         raise ValueError('missing or unsafe original ActionScript export')
@@ -82,14 +86,14 @@ def verify_original_combat_tables(committed: dict, extracted: dict,
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    for arg in ('committed', 'extracted', 'floor-anchors', 'export-root', 'out'):
+    for arg in ('committed', 'extracted', 'floor-anchors', 'export-root', 'swf', 'out'):
         parser.add_argument('--' + arg, required=True, type=Path)
     args = parser.parse_args()
     try:
         result = verify_original_combat_tables(
             json.loads(args.committed.read_text(encoding='utf-8')),
             json.loads(args.extracted.read_text(encoding='utf-8')),
-            json.loads(args.floor_anchors.read_text(encoding='utf-8')), args.export_root)
+            json.loads(args.floor_anchors.read_text(encoding='utf-8')), args.export_root, args.swf)
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
     except (OSError, ValueError) as error:

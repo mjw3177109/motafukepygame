@@ -103,7 +103,7 @@ jobs:
           python tools/extract_original_tables.py --script .swf_audit/export/scripts/frame_4346/DoAction.as --swf-sha256 "$SWF_SHA" --out .swf_audit/original_tables.json
       - name: Verify original raw monster arrays and base stats against FFDec (not combat parity)
         run: |
-          python -m tools.verify_original_combat_tables --committed data/original_combat_tables.json --extracted .swf_audit/original_tables.json --floor-anchors data/original_floors.json --export-root .swf_audit --out .swf_audit/original_combat_tables_audit.json
+          python -m tools.verify_original_combat_tables --committed data/original_combat_tables.json --extracted .swf_audit/original_tables.json --floor-anchors data/original_floors.json --export-root .swf_audit --swf game.swf --out .swf_audit/original_combat_tables_audit.json
       - name: Verify all 3267 committed floor cells against hashed original ActionScript
         run: |
           python tools/verify_original_floors.py --committed data/original_floors.json --extracted .swf_audit/original_tables.json --export-root .swf_audit

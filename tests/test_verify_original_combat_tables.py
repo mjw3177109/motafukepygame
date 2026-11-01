@@ -17,7 +17,9 @@ class RawCombatTablesTest(unittest.TestCase):
         script.parent.mkdir(parents=True)
         script.write_bytes(b'synthetic test ActionScript')
         digest = hashlib.sha256(script.read_bytes()).hexdigest()
-        source = {'swf_sha256': 'a' * 64, 'actionscript_sha256': digest,
+        swf = self.root / 'game.swf'
+        swf.write_bytes(b'synthetic test SWF')
+        source = {'swf_sha256': hashlib.sha256(swf.read_bytes()).hexdigest(), 'actionscript_sha256': digest,
                   'actionscript_path': SOURCE_PATH}
         self.extracted = {'schema_version': 1, 'source': copy.deepcopy(source),
                           'monster_field_order': 'raw ActionScript array order; meanings require independent verification',
@@ -28,7 +30,7 @@ class RawCombatTablesTest(unittest.TestCase):
         self.floors = {'schema_version': 1, 'source': copy.deepcopy(source)}
 
     def verify(self):
-        return verify_original_combat_tables(self.committed, self.extracted, self.floors, self.root)
+        return verify_original_combat_tables(self.committed, self.extracted, self.floors, self.root, self.root / 'game.swf')
 
     def test_valid_raw_arrays_do_not_claim_formula_or_gameplay(self):
         result = self.verify()
@@ -66,6 +68,16 @@ class RawCombatTablesTest(unittest.TestCase):
             self.verify()
         self.extracted['base_stats']['mp'] = True
         with self.assertRaisesRegex(ValueError, 'noninteger base stat'):
+            self.verify()
+
+    def test_rejects_swapped_original_swf_bytes(self):
+        (self.root / 'game.swf').write_bytes(b'changed SWF')
+        with self.assertRaisesRegex(ValueError, 'SWF bytes hash mismatch'):
+            self.verify()
+
+    def test_rejects_missing_original_swf(self):
+        (self.root / 'game.swf').unlink()
+        with self.assertRaisesRegex(ValueError, 'missing original SWF'):
             self.verify()
 
     def test_rejects_script_hash_and_independent_anchor_drift(self):
