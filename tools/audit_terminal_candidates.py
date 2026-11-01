@@ -17,6 +17,15 @@ PATTERNS = {
         r"(?:\b(?:Now_hp|right_hp)\b\s*(?:<=|>=|==|!=|<|>)"
         r"|(?:<=|>=|==|!=|<|>)\s*\b(?:Now_hp|right_hp)\b)"
     ),
+    # Textual assignment candidates only; no claim about executed branches.
+    # Include indexed array writes and whole-array resets, but exclude == / ===.
+    "terminal_state_write": re.compile(
+        r"(?<![\w$])(?P<target>(?:_root\.)?"
+        r"(?:Display_text|mt_LastGame_ID"
+        r"|Display_say(?:[ \t]*\[[^\]\r\n]+\])?"
+        r"|mt_line_26(?:[ \t]*\[[^\]\r\n]+\](?:[ \t]*\[[^\]\r\n]+\])?)?))"
+        r"[ \t]*(?P<operator>\+\+|--|\+=|-=|\*=|/=|%=|=(?!=))"
+    ),
 }
 
 
@@ -77,19 +86,27 @@ def audit_candidates(manifest: dict, export_root: Path, swf_bytes: bytes) -> dic
                 if key in seen:
                     continue
                 seen.add(key)
-                hits.append({
+                hit = {
                     "kind": kind, "path": path, "line": line,
                     "source_sha256": sha256(raw),
                     "snippet": lines[line - 1].strip()[:240],
                     "source_context": source_window(lines, line),
-                })
+                }
+                if kind == "terminal_state_write":
+                    hit["target"] = match.group("target")
+                    hit["operator"] = match.group("operator")
+                hits.append(hit)
     hits.sort(key=lambda h: (h["kind"], h["path"], h["line"]))
-    counts = {name: sum(h["kind"] == name for h in hits) for name in PATTERNS}
+    counts = {name: sum(h["kind"] == name for h in hits)
+              for name in PATTERNS if name != "terminal_state_write"}
+    write_count = sum(h["kind"] == "terminal_state_write" for h in hits)
     return {
-        "schema_version": 1, "swf_sha256": SWF_SHA256,
+        "schema_version": 2, "swf_sha256": SWF_SHA256,
         "script_files_checked": len(entries), "source_manifest_verified": True,
-        "candidate_counts": counts, "candidates": hits,
+        "candidate_counts": counts, "state_write_candidate_count": write_count,
+        "candidates": hits,
         "candidates_are_text_matches_not_control_flow_proof": True,
+        "state_writes_are_text_candidates_not_proven_assignments": True,
         "source_context_is_decompiled_text_not_control_flow_proof": True,
         "game_over_may_be_a_frame_label_not_a_script_mention": True,
         "flash_runtime_verified": False, "death_behavior_verified": False,
@@ -115,7 +132,8 @@ def main() -> None:
     except (OSError, ValueError, UnicodeDecodeError, KeyError) as exc:
         parser.exit(2, f"FAIL: original terminal candidate inventory: {exc}\n")
     print(f"PASS: {report['script_files_checked']} manifest-hashed ActionScript files; "
-          f"candidates={report['candidate_counts']}; death/ending NOT VERIFIED")
+          f"candidates={report['candidate_counts']}; "
+          f"state_writes={report['state_write_candidate_count']}; death/ending NOT VERIFIED")
     for hit in report["candidates"][:24]:
         print(f"CANDIDATE {hit['kind']} {hit['path']}:{hit['line']} {hit['snippet']}")
         if hit["kind"] == "game_over_mention":

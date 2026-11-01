@@ -25,3 +25,8 @@ python -m tools.audit_terminal_candidates --manifest .swf_audit/manifest.json --
 - 本次两处源码窗口**均未显示直接的玩家 HP 死亡条件**。这是局部文本证据，不排除更早的状态变更或其他脚本跳转；不能据此把 `game_over` 判定为死亡界面，也不能证明实际结局路径。
 
 下一步：从原始 ActionScript 追溯 `Display_text`、`mt_line_26[3][5]`、`Display_say[8]`、`mt_LastGame_ID` 的赋值点和触发事件，并通过 Flash 实机轨迹确认两个分支的实际意义。不得在此之前更改双端死亡/结局机制或开放 RL 门禁。
+
+
+## 2026-11-01 增量：结局相关状态写入候选索引
+
+同一条已校验 SWF SHA256 + FFDec 完整脚本清单的 CI 链，现在还索引 \`Display_text\`、\`mt_LastGame_ID\`、\`Display_say\`（含下标）和 \`mt_line_26\`（含下标）的文本赋值、复合赋值及后置自增/自减。结果在 \`.swf_audit/original_terminal_candidates.json\` 的 \`terminal_state_write\` 候选中保留文件、行号、完整脚本 SHA256、目标、运算符和相邻源码；\`state_write_candidate_count\` 单独计数，不改变旧候选计数字段。此索引用于定位潜在状态来源，不是 ActionScript 解析器，可能包含注释或无法执行的分支，亦可能漏掉间接赋值。只有源码控制流与 Flash 实机回放确认后，才能将候选写入转成双端游戏规则。新增 4 项测试覆盖写入、比较误判、动态下标和哈希篡改拒绝。
