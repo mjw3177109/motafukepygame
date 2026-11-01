@@ -107,6 +107,9 @@ jobs:
       - name: Audit original monster field roles and encounter formula (not full battle)
         run: |
           python -m tools.audit_combat_field_semantics --script .swf_audit/export/scripts/frame_4346/DoAction_2.as --swf game.swf --floors data/original_floors.json --combat data/original_combat_tables.json --out .swf_audit/original_combat_semantics_audit.json
+      - name: Verify original frame-24 critical and alternating-turn source (not battle parity)
+        run: |
+          python -m tools.audit_original_battle_frame24 --script .swf_audit/export/scripts/DefineSprite_453_mt_other_04/frame_24/DoAction.as --swf game.swf --out .swf_audit/original_battle_frame24_audit.json
       - name: Verify all 3267 committed floor cells against hashed original ActionScript
         run: |
           python tools/verify_original_floors.py --committed data/original_floors.json --extracted .swf_audit/original_tables.json --export-root .swf_audit
@@ -172,6 +175,7 @@ jobs:
             .swf_audit/original_tables.json
             .swf_audit/original_combat_tables_audit.json
             .swf_audit/original_combat_semantics_audit.json
+            .swf_audit/original_battle_frame24_audit.json
             .swf_audit/floor_asset_coverage.json
             .swf_audit/swf_symbol_trace.json
             .swf_audit/swf_sprite_frames.json
