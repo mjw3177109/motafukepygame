@@ -120,6 +120,9 @@ jobs:
       - name: Audit original battle completion and reward source (not death parity)
         run: |
           python -m tools.audit_original_battle_completion --export-root .swf_audit/export --swf game.swf --out .swf_audit/original_battle_completion_audit.json
+      - name: Index source-hashed game-over and HP-condition candidates (not death parity)
+        run: |
+          python -m tools.audit_terminal_candidates --manifest .swf_audit/manifest.json --export-root .swf_audit/export --swf game.swf --out .swf_audit/original_terminal_candidates.json
       - name: Verify all 3267 committed floor cells against hashed original ActionScript
         run: |
           python tools/verify_original_floors.py --committed data/original_floors.json --extracted .swf_audit/original_tables.json --export-root .swf_audit
@@ -188,6 +191,7 @@ jobs:
             .swf_audit/original_battle_frame24_audit.json
             .swf_audit/original_battle_transitions_audit.json
             .swf_audit/original_battle_completion_audit.json
+            .swf_audit/original_terminal_candidates.json
             .swf_audit/floor_asset_coverage.json
             .swf_audit/swf_symbol_trace.json
             .swf_audit/swf_sprite_frames.json
