@@ -13,7 +13,8 @@ def tag(offset, indent, index, label, tag_id, raw=b''):
 def fixture():
     rows = []
     for i, (alias, cid, shape) in enumerate([('mt_00', 223, 222), ('mt_01', 220, 219),
-                                             ('mt_02', 217, 215), ('mt_03', 213, 211)]):
+                                             ('mt_02', 217, 215), ('mt_03', 213, 211),
+                                             ('mt_06', 198, 197)]):
         base = 0x100 + i * 0x100
         rows.append(tag(base, 4, i, f'DefineSprite ({cid})', 39,
                         cid.to_bytes(2, 'little') + b'\x01\x00\x00'))
@@ -24,7 +25,7 @@ def fixture():
     trace = {'schema_version': 1, 'swf_sha256': 'a'*64,
              'ffdec_tag_dump_sha256': hashlib.sha256(source.encode()).hexdigest(),
              'symbols': {alias: {'character_id': cid, 'define_offset': f'{0x100+i*0x100:08x}'}
-                         for i, (alias, cid) in enumerate([('mt_00',223),('mt_01',220),('mt_02',217),('mt_03',213)])}}
+                         for i, (alias, cid) in enumerate([('mt_00',223),('mt_01',220),('mt_02',217),('mt_03',213),('mt_06',198)])}}
     frames = {'schema_version': 1, 'swf_sha256': 'a'*64,
               'ffdec_tag_dump_sha256': trace['ffdec_tag_dump_sha256'],
               'sprites': {alias: {'character_id': v['character_id'], 'define_offset': v['define_offset'],
@@ -48,6 +49,24 @@ class PlacementAuditTests(unittest.TestCase):
         self.assertEqual(item['matrix']['tx_twips'], 0)
         self.assertEqual(item['matrix']['a_fixed16'], 65536)
 
+    def test_real_original_mt06_source_timeline(self):
+        # Exact FFDec tag payloads/offsets from game.swf SHA256
+        # 04b317b7fd9d32c5b083c993e99a3eea527f392e5fc938d23928e953bb638db9.
+        source = '\n'.join([
+            tag(0x1b0ea, 4, 263, 'DefineSprite (198)', 39,
+                bytes.fromhex('c6 00 01 00 44 0b 0a 00 00 00 86 06 06 01 00 c5 00 00 40 00 00 00')),
+            tag(0x1b0f4, 6, 0, 'SoundStreamHead2', 45, bytes.fromhex('0a 00 00 00')),
+            tag(0x1b0fa, 6, 1, 'PlaceObject2 (197) Depth: 1', 26,
+                bytes.fromhex('06 01 00 c5 00 00')),
+            tag(0x1b102, 6, 2, 'ShowFrame', 1),
+        ])
+        result = snapshots(source, 198, '0001b0ea', 1)
+        self.assertEqual(result['timeline_sha256'],
+                         '98ebcafab193157724e5b6d358fcc8859e62b6e2cb7f4e2350aa6e18e684e2dc')
+        self.assertEqual(result['frames'][0]['placements'][0]['character_id'], 197)
+        self.assertEqual(result['frames'][0]['placements'][0]['matrix']['tx_twips'], 0)
+        self.assertEqual(result['uninterpreted_action_count'], 0)
+
     def test_real_original_moving_and_clip_placements(self):
         depth, item = placement(bytes.fromhex('46 01 00 c7 00 00 04 00'), None)
         self.assertEqual(item['clip_depth'], 4)
@@ -58,10 +77,10 @@ class PlacementAuditTests(unittest.TestCase):
         self.assertEqual(moving['character_id'], 215)
         self.assertEqual(moving['matrix']['tx_twips'], 196)
 
-    def test_complete_four_sprite_fixture(self):
+    def test_complete_five_sprite_fixture(self):
         source, trace, frames = fixture()
         report = audit(source, trace, frames)
-        self.assertEqual(report['verified_aliases'], ['mt_00', 'mt_01', 'mt_02', 'mt_03'])
+        self.assertEqual(report['verified_aliases'], ['mt_00', 'mt_01', 'mt_02', 'mt_03', 'mt_06'])
         self.assertEqual(report['sprites']['mt_00']['frames'][0]['placements'][0]['character_id'], 222)
         self.assertFalse(report['visual_parity_verified'])
 

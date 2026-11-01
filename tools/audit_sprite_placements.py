@@ -14,7 +14,7 @@ TAG = re.compile(r'^([0-9a-fA-F]{8}):(\s+)(\d+)\.\s+(.*?)\s+tagId=\s*(\d+)\s+len
 CHAR = re.compile(r'\((\d+)\)')
 DEPTH = re.compile(r'Depth:\s*(\d+)')
 HEX = re.compile(r'[0-9a-fA-F]{2}\Z')
-SELECTED = ('mt_00', 'mt_01', 'mt_02', 'mt_03')
+SELECTED = ('mt_00', 'mt_01', 'mt_02', 'mt_03', 'mt_06')
 
 
 class Bits:

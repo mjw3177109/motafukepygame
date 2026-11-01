@@ -102,7 +102,7 @@ jobs:
       - name: Verify original sprite declared frames against ShowFrame tags
         run: |
           python -m tools.audit_swf_sprite_frames --tags .swf_audit/ffdec_tags.log --trace .swf_audit/swf_symbol_trace.json --anchors data/original_sprite_frame_anchors.json --out .swf_audit/swf_sprite_frames.json
-      - name: Verify original mt_00-mt_03 per-frame PlaceObject2 transforms
+      - name: Verify original mt_00-mt_03 and mt_06 per-frame PlaceObject2 transforms
         run: |
           python -m tools.audit_sprite_placements --tags .swf_audit/ffdec_tags.log --trace .swf_audit/swf_symbol_trace.json --frames .swf_audit/swf_sprite_frames.json --anchors data/original_sprite_placement_anchors.json --out .swf_audit/swf_sprite_placements.json
       - name: Build source-linked floor asset review queue (no visual approval)
