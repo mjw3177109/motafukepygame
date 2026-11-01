@@ -137,6 +137,9 @@ jobs:
       - name: Verify saved mt_06 PNG evidence against source pins and reported pixels
         run: |
           python -m tools.verify_mt06_artifacts --report .swf_audit/mt06_candidate/report.json --png-dir .swf_audit/mt06_candidate --anchors data/original_shape_registration_anchors.json --out .swf_audit/mt06_candidate/artifact_verification.json
+      - name: Build mt_06 source-checked two-renderer visual review sheet (not Flash parity)
+        run: |
+          python -m tools.build_mt06_visual_review --report .swf_audit/mt06_candidate/report.json --png-dir .swf_audit/mt06_candidate --anchors data/original_shape_registration_anchors.json --out-dir .swf_audit/mt06_candidate
       - name: Preserve case-distinct FFDec exports and verify archive bytes
         run: |
           python tools/package_swf_audit.py --manifest .swf_audit/manifest.json --export-root .swf_audit/export --archive .swf_audit/ffdec_export.tar.gz --report .swf_audit/export_archive_report.json
@@ -167,6 +170,7 @@ jobs:
             .swf_audit/mt06_candidate/*.png
             .swf_audit/mt06_candidate/report.json
             .swf_audit/mt06_candidate/artifact_verification.json
+            .swf_audit/mt06_candidate/visual_review.json
             .swf_audit/ffdec_*.log
             .swf_audit/ffdec_export.tar.gz
           retention-days: 14
