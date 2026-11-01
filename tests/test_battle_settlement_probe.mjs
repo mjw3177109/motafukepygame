@@ -24,3 +24,18 @@ test('frame54 requires monster death', () => {
   const c = cases[0];
   assert.throws(() => frame54Handoff(c.world,{left_hp:1,right_hp:5}), /completed monster/);
 });
+
+
+test('zero/negative HP reward path is source-scoped, not a Flash death verdict', () => {
+  const c = cases[0];
+  for (const hp of [0,-15]) {
+    const world=structuredClone(c.world);
+    const handoff=frame54Handoff(world,{...c.battle,right_hp:hp});
+    const reward=consumeBattleCompletion(handoff.state,c.monster);
+    assert.equal(reward.state.hp,hp);
+    assert.equal(reward.state.money,world.money+c.monster[3]);
+    assert.equal(reward.state.mp,world.mp+c.monster[4]);
+    assert.equal(reward.state.grid[5][5],0);
+    assert.deepEqual(world,c.world);
+  }
+});

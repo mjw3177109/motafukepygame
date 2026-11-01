@@ -36,5 +36,21 @@ class SettlementTests(unittest.TestCase):
             frame54_handoff(case['world'], {'left_hp':1,'right_hp':5})
 
 
+
+    def test_zero_or_negative_hp_source_scoped_reward_chain(self):
+        """Synthetic frame54 -> sprite855 -> Move_arrow(100), not Flash death parity."""
+        case = CASES[0]
+        for hp in (0, -15):
+            with self.subTest(hp=hp):
+                world = deepcopy(case['world'])
+                battle = {**case['battle'], 'right_hp': hp}
+                handoff = frame54_handoff(world, battle)
+                reward = consume_battle_completion(handoff['state'], case['monster'])
+                self.assertEqual(reward['state']['hp'], hp)
+                self.assertEqual(reward['state']['money'], world['money'] + case['monster'][3])
+                self.assertEqual(reward['state']['mp'], world['mp'] + case['monster'][4])
+                self.assertEqual(reward['state']['grid'][5][5], 0)
+                self.assertEqual(world, case['world'])
+
 if __name__ == '__main__':
     unittest.main()
