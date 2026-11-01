@@ -28,7 +28,11 @@ def _read_image(path: Path, expected_sha: str):
         img.load()
         if img.mode not in ('RGB', 'RGBA'):
             raise ValueError(f'Flash capture must be RGB/RGBA: {path.name}')
-        return img.copy().convert('RGB')
+        # Preserve the raw mode and alpha for an exact stage/crop provenance check.
+        # Transparent captures cannot be compared to opaque renderer composites.
+        if img.mode == 'RGBA' and img.getchannel('A').getextrema() != (255, 255):
+            raise ValueError(f'Flash capture must be fully opaque: {path.name}')
+        return img.copy()
 
 
 def _utc_timestamp(value: object) -> bool:
@@ -103,7 +107,7 @@ def audit(report: dict, anchors: dict, png_dir: Path, baseline_dir: Path | None)
     x, y, w, h = rect
     if x + w > stage.width or y + h > stage.height or crop.size != SIZE:
         raise ValueError('Flash capture crop outside original stage or wrong size')
-    if stage.crop((x, y, x + w, y + h)).tobytes() != crop.tobytes():
+    if stage.mode != crop.mode or stage.crop((x, y, x + w, y + h)).tobytes() != crop.tobytes():
         raise ValueError('Flash reference crop is not an exact raw-stage crop')
 
     def composite_renderer(name: str):
@@ -122,8 +126,8 @@ def audit(report: dict, anchors: dict, png_dir: Path, baseline_dir: Path | None)
         'frame_index': frame,
         'original_stage_sha256': metadata['original_stage_sha256'],
         'reference_crop_sha256': metadata['reference_crop_sha256'],
-        'pygame_vs_flash_rgb_different_pixels': _rgb_differences(composite_renderer('pygame'), crop),
-        'chromium_vs_flash_rgb_different_pixels': _rgb_differences(composite_renderer('chromium'), crop),
+        'pygame_vs_flash_rgb_different_pixels': _rgb_differences(composite_renderer('pygame'), crop.convert('RGB')),
+        'chromium_vs_flash_rgb_different_pixels': _rgb_differences(composite_renderer('chromium'), crop.convert('RGB')),
         'comparison_limit': 'raw stage crop vs solid-background composite; player authenticity and human alignment not approved',
     })
     return output

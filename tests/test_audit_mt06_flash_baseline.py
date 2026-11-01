@@ -107,6 +107,50 @@ class FlashBaselineTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'capture.json'):
             self.run_audit()
 
+    def test_accepts_fully_opaque_rgba_stage_and_crop(self):
+        with Image.open(self.baseline / 'original_stage.png') as image:
+            stage = image.convert('RGBA')
+        stage.save(self.baseline / 'original_stage.png')
+        stage.crop((5, 6, 69, 70)).save(self.baseline / 'reference_crop.png')
+        self.meta['original_stage_sha256'] = self.sha('original_stage.png')
+        self.meta['reference_crop_sha256'] = self.sha('reference_crop.png')
+        self.write_meta()
+        output = self.run_audit()
+        self.assertEqual(output['flash_capture_status'], 'captured_unreviewed')
+        self.assertEqual(output['pygame_vs_flash_rgb_different_pixels'], 0)
+        self.assertFalse(output['flash_visual_parity_verified'])
+
+    def test_rejects_transparent_stage_even_when_both_hashes_match(self):
+        with Image.open(self.baseline / 'original_stage.png') as image:
+            stage = image.convert('RGBA')
+        stage.putpixel((5, 6), (100, 90, 80, 0))
+        stage.save(self.baseline / 'original_stage.png')
+        stage.crop((5, 6, 69, 70)).save(self.baseline / 'reference_crop.png')
+        self.meta['original_stage_sha256'] = self.sha('original_stage.png')
+        self.meta['reference_crop_sha256'] = self.sha('reference_crop.png')
+        self.write_meta()
+        with self.assertRaisesRegex(ValueError, 'fully opaque'):
+            self.run_audit()
+
+    def test_rejects_transparent_crop_with_updated_hash(self):
+        with Image.open(self.baseline / 'reference_crop.png') as image:
+            crop = image.convert('RGBA')
+        crop.putpixel((0, 0), (100, 90, 80, 0))
+        crop.save(self.baseline / 'reference_crop.png')
+        self.meta['reference_crop_sha256'] = self.sha('reference_crop.png')
+        self.write_meta()
+        with self.assertRaisesRegex(ValueError, 'fully opaque'):
+            self.run_audit()
+
+    def test_rejects_mode_changed_crop_even_when_rgb_pixels_match(self):
+        with Image.open(self.baseline / 'original_stage.png') as image:
+            stage = image.convert('RGBA')
+        stage.save(self.baseline / 'original_stage.png')
+        self.meta['original_stage_sha256'] = self.sha('original_stage.png')
+        self.write_meta()
+        with self.assertRaisesRegex(ValueError, 'not an exact raw-stage crop'):
+            self.run_audit()
+
 
 if __name__ == '__main__':
     unittest.main()
