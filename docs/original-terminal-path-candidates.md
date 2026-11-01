@@ -15,3 +15,13 @@ python -m tools.audit_terminal_candidates --manifest .swf_audit/manifest.json --
 ## 新增：两处 game_over 的可复核源码上下文
 
 索引现在对每个命中保留前 24 行、后 8 行的原始 FFDec 反编译文本窗口，记录行号、400 字符截断标记，并保留完整 ActionScript 文件 SHA256。CI 日志额外输出两处 `game_over` 的窗口，审计 JSON 保存所有候选窗口，便于核对 Sprite 855 第 9 行与第 206 行的相邻条件及分支。此处只提供可审阅的邻近源码，**不自动推断所在 if 分支、死亡语义、结局语义或 Flash 实机执行路径**。文本窗口跨越代码块时也不代表执行关系，后续必须结合 ActionScript 控制流和实机轨迹验证。
+
+## 2026-11-01 源码窗口实测（不是运行时结论）
+
+在 [SWF 审计 PR run 41355793449](https://github.com/mjw3177109/motafukepygame/actions/runs/41355793449) 的 FFDec 164 个脚本来源哈希校验通过后，`scripts/DefineSprite_855/frame_1/DoAction.as` 的相邻源码显示：
+
+- 第 9 行 `gotoAndPlay("game_over")` 位于 `Display_text == 2` 条件内，并嵌套 `Number(mt_line_26[3][5]) == 0`；在跳转前调用 `DelBaseDisplay()` 和 `DelLineDisplay()`。
+- 第 206 行同名跳转位于 `Display_say[8] == 9` 条件内，并嵌套 `mt_LastGame_ID == 0`；前面将 `Display_say[8]` 改为 10、`Now_key_flag` 改为 1，跳转前同样清理显示。紧接着的 `mt_LastGame_ID == 1` 分支还修改第 21 层地图并复制/删除剪辑。
+- 本次两处源码窗口**均未显示直接的玩家 HP 死亡条件**。这是局部文本证据，不排除更早的状态变更或其他脚本跳转；不能据此把 `game_over` 判定为死亡界面，也不能证明实际结局路径。
+
+下一步：从原始 ActionScript 追溯 `Display_text`、`mt_line_26[3][5]`、`Display_say[8]`、`mt_LastGame_ID` 的赋值点和触发事件，并通过 Flash 实机轨迹确认两个分支的实际意义。不得在此之前更改双端死亡/结局机制或开放 RL 门禁。
