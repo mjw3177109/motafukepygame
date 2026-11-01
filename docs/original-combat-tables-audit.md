@@ -26,3 +26,14 @@ Run after FFDec extraction:
 
 Next: derive combat field semantics and formulas independently from original
 ActionScript control flow, then compare Flash traces to Pygame and HTML5.
+
+## 2026-11-01: independent raw-source reparse gate
+
+The audit now reparses the **actual hashed FFDec ActionScript bytes** using the
+same strict monster/base declaration grammar as the original extractor. It
+compares all 33 six-field arrays and nine starting stats against that source,
+not merely two JSON copies that can be edited together. Duplicate or missing
+source declarations fail closed. Three synthetic regression cases cover
+colluding JSON edits to a monster, colluding edits to HP, and a valid-hash
+script with incomplete declarations. This verifies provenance only: monster
+field meanings, damage formulas, gameplay and Flash parity remain unapproved.

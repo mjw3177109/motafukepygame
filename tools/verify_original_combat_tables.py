@@ -10,6 +10,8 @@ import json
 import re
 from pathlib import Path
 
+from tools.extract_original_tables import BASE, MONSTER
+
 SOURCE_PATH = 'export/scripts/frame_4346/DoAction.as'
 SHA256 = re.compile(r'[0-9a-f]{64}\Z')
 MONSTER_IDS = {str(i) for i in range(33)}
@@ -33,6 +35,27 @@ def _check_tables(tables: object, label: str) -> None:
             raise ValueError(f'{label}: invalid raw monster array at {monster_id}')
     if any(type(v) is not int for v in stats.values()):
         raise ValueError(f'{label}: noninteger base stat')
+
+
+def _parse_raw_combat_source(script_bytes: bytes) -> tuple[dict, dict]:
+    """Re-read original ActionScript, never trust a matching pair of JSON files."""
+    source = script_bytes.decode('utf-8-sig')
+    monsters = {}
+    for fields in MONSTER.findall(source):
+        monster_id = str(int(fields[0]))
+        if monster_id in monsters:
+            raise ValueError(f'duplicate original ActionScript monster {monster_id}')
+        monsters[monster_id] = [int(v) for v in fields[1:6]] + [fields[6]]
+    if set(monsters) != MONSTER_IDS:
+        raise ValueError('original ActionScript monster declarations incomplete')
+    stats = {}
+    for name, raw in BASE.findall(source):
+        if name in stats:
+            raise ValueError(f'duplicate original ActionScript base stat {name}')
+        stats[name] = int(raw)
+    if set(stats) != BASE_NAMES:
+        raise ValueError('original ActionScript base stats incomplete')
+    return monsters, stats
 
 
 def verify_original_combat_tables(committed: dict, extracted: dict,
@@ -78,6 +101,15 @@ def verify_original_combat_tables(committed: dict, extracted: dict,
     for key in sorted(BASE_NAMES):
         if committed['base_stats'][key] != extracted['base_stats'][key]:
             raise ValueError(f'original base stat drift at {key}: committed={committed["base_stats"][key]}, FFDec={extracted["base_stats"][key]}')
+    # Both JSON copies can agree while diverging from the unchanged original script.
+    source_monsters, source_stats = _parse_raw_combat_source(script_path.read_bytes())
+    for monster_id in sorted(MONSTER_IDS, key=int):
+        for field_index, (value, raw_value) in enumerate(zip(extracted['monsters'][monster_id], source_monsters[monster_id])):
+            if value != raw_value:
+                raise ValueError(f'ActionScript monster drift at {monster_id}[{field_index}]')
+    for key in sorted(BASE_NAMES):
+        if extracted['base_stats'][key] != source_stats[key]:
+            raise ValueError(f'ActionScript base stat drift at {key}')
     return {'schema_version': 1, 'swf_sha256': source['swf_sha256'],
             'monster_count': 33, 'raw_fields_per_monster': 6, 'base_stat_count': 9,
             'raw_source_verified': True, 'combat_formula_verified': False,

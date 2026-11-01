@@ -25,6 +25,15 @@ class RawCombatTablesTest(unittest.TestCase):
                           'monster_field_order': 'raw ActionScript array order; meanings require independent verification',
                           'monsters': {str(i): [i, 20, 3, 4, 5, f'fixture-{i}'] for i in range(33)},
                           'base_stats': {k: i for i, k in enumerate(('life', 'hp', 'gong', 'fang', 'money', 'yellow', 'blue', 'red', 'mp'))}}
+        # Synthetic declarations with the same grammar as FFDec, not original game data.
+        raw_lines = [
+            f'boss_man[{idx}] = new Array({",".join(str(v) for v in row[:5])},"{row[5]}");'
+            for idx, row in self.extracted['monsters'].items()
+        ]
+        raw_lines.extend(f'Base_{key} = {value};' for key, value in self.extracted['base_stats'].items())
+        script.write_text('\n'.join(raw_lines) + '\n', encoding='utf-8')
+        source['actionscript_sha256'] = hashlib.sha256(script.read_bytes()).hexdigest()
+        self.extracted['source']['actionscript_sha256'] = source['actionscript_sha256']
         self.committed = copy.deepcopy(self.extracted)
         self.committed.update({k: False for k in ('combat_formula_verified', 'gameplay_parity_verified', 'gymnasium_ready', 'kaggle_started')})
         self.floors = {'schema_version': 1, 'source': copy.deepcopy(source)}
@@ -78,6 +87,27 @@ class RawCombatTablesTest(unittest.TestCase):
     def test_rejects_missing_original_swf(self):
         (self.root / 'game.swf').unlink()
         with self.assertRaisesRegex(ValueError, 'missing original SWF'):
+            self.verify()
+
+    def test_rejects_colluding_monster_json_edits_against_unchanged_script(self):
+        self.committed['monsters']['12'][2] = 99
+        self.extracted['monsters']['12'][2] = 99
+        with self.assertRaisesRegex(ValueError, r'ActionScript monster drift at 12\[2\]'):
+            self.verify()
+
+    def test_rejects_colluding_base_stat_json_edits_against_unchanged_script(self):
+        self.committed['base_stats']['hp'] = 999
+        self.extracted['base_stats']['hp'] = 999
+        with self.assertRaisesRegex(ValueError, 'ActionScript base stat drift at hp'):
+            self.verify()
+
+    def test_rejects_missing_original_script_declarations_with_matching_hash(self):
+        script = self.root / SOURCE_PATH
+        script.write_text('Base_hp = 1000;\n', encoding='utf-8')
+        digest = hashlib.sha256(script.read_bytes()).hexdigest()
+        for item in (self.committed, self.extracted, self.floors):
+            item['source']['actionscript_sha256'] = digest
+        with self.assertRaisesRegex(ValueError, 'ActionScript monster declarations incomplete'):
             self.verify()
 
     def test_rejects_script_hash_and_independent_anchor_drift(self):
