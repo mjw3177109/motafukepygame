@@ -10,7 +10,7 @@
 
 示例 JSON（**占位值不是 Flash 取证**）：
 
-\`\`\`json
+```json
 {
   "schema_version": 1,
   "alias": "mt_06",
@@ -27,7 +27,7 @@
   "original_stage_sha256": "ACTUAL_SHA256",
   "reference_crop_sha256": "ACTUAL_SHA256"
 }
-\`\`\`
+```
 
 真实捕获必须保证 mt_06 与两端候选的场景、帧、像素比例、背景和坐标一致。工具先运行既有 verify_mt06_artifacts 来源审计，再检查截图哈希与原始舞台精确裁剪关系；然后将 Pygame/Chromium PNG 分别合成到记录的背景色，与 Flash 裁剪图进行 RGB 像素差异统计。
 
