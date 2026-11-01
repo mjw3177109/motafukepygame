@@ -70,9 +70,9 @@ class ShapeRegistrationTests(unittest.TestCase):
         real = ('0001b0bd:  262. DefineShape (197) tagId=  2 len=      39  '
                 'c5 00 55 80 a0 58 0a 00 01 40 c4 00 d9 55 55 45 55 55 '
                 '0a aa ea b0 00 10 15 56 05 81 e4 50 1c aa 03 92 c0 72 d8 00 00')
-        synthetic = '\\n'.join(shape_tag(cid, -320, 320, -320, 320)
+        synthetic = '\n'.join(shape_tag(cid, -320, 320, -320, 320)
                               for cid in SHAPES if cid != 197)
-        parsed = parse_shape_rects(real + '\\n' + synthetic)
+        parsed = parse_shape_rects(real + '\n' + synthetic)
         self.assertEqual(parsed[197]['rect_twips'], [-320, 320, -320, 320])
         self.assertEqual(parsed[197]['define_offset'], '0001b0bd')
         import json
