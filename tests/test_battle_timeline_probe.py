@@ -64,5 +64,35 @@ class BattleTimelineTests(unittest.TestCase):
         self.assertEqual(world, before)
 
 
+
+    def test_zero_and_negative_hero_hp_preserved_through_frame54(self):
+        """Static frame24/34/54 branch probe, NOT Flash death or reward parity."""
+        monster = [25, 20, 1, 1, 1, "绿头怪"]
+        for hp, expected_hp in ((20, 0), (5, -15)):
+            with self.subTest(initial_hp=hp):
+                battle = begin_battle(monster, {"hp": hp, "attack": 11, "defense": 10}, 0)
+                original_battle = deepcopy(battle)
+                replay = replay_to_victory(battle, [199, 199, 199])
+                self.assertEqual(replay["battle"]["right_hp"], expected_hp)
+                self.assertEqual(replay["battle"]["left_hp"], 0)
+                self.assertEqual(replay["next_frame"], 35)
+                self.assertEqual(len(replay["steps"]), 5)
+                self.assertEqual(
+                    [s["right_hp"] for s in replay["steps"] if s["event"] == "monster_counterattack"],
+                    [hp - 10, hp - 20],
+                )
+                self.assertEqual(
+                    [s["transition"] for s in replay["steps"]],
+                    ["frame34_to_24"] * 4 + ["frame34_to_35"],
+                )
+                world = {"display_kill": 1, "hp": hp}
+                handoff = frame54_handoff(world, replay["battle"])
+                self.assertEqual(
+                    handoff,
+                    {"state": {"display_kill": 2, "hp": expected_hp}, "event": "frame54_handoff"},
+                )
+                self.assertEqual(world, {"display_kill": 1, "hp": hp})
+                self.assertEqual(battle, original_battle)
+
 if __name__ == "__main__":
     unittest.main()

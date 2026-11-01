@@ -44,3 +44,23 @@ test('encounter -> frame34 victory -> frame54 -> reward without phantom retaliat
   assert.equal(reward.state.display_kill,0);
   assert.deepEqual(world,before);
 });
+
+test('zero and negative hero HP survive frame54 (static branch probe; no death verdict)',()=>{
+  const monster=[25,20,1,1,1,'绿头怪'];
+  for (const [hp,expectedHp] of [[20,0],[5,-15]]) {
+    const battle=beginBattle(monster,{hp,attack:11,defense:10},0);
+    const original=structuredClone(battle);
+    const replay=replayToVictory(battle,[199,199,199]);
+    assert.equal(replay.battle.right_hp,expectedHp);
+    assert.equal(replay.battle.left_hp,0);
+    assert.equal(replay.next_frame,35);
+    assert.equal(replay.steps.length,5);
+    assert.deepEqual(replay.steps.filter(s=>s.event==='monster_counterattack').map(s=>s.right_hp),[hp-10,hp-20]);
+    assert.deepEqual(replay.steps.map(s=>s.transition),[...Array(4).fill('frame34_to_24'),'frame34_to_35']);
+    const world={display_kill:1,hp};
+    const handoff=frame54Handoff(world,replay.battle);
+    assert.deepEqual(handoff,{state:{display_kill:2,hp:expectedHp},event:'frame54_handoff'});
+    assert.deepEqual(world,{display_kill:1,hp});
+    assert.deepEqual(battle,original);
+  }
+});
