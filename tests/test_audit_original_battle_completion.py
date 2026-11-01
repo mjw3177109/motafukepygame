@@ -27,6 +27,10 @@ class CompletionAuditTests(unittest.TestCase):
         self.patch = patch.object(audit, 'SOURCES', self.anchors)
         self.patch.start()
         self.addCleanup(self.patch.stop)
+        block = audit._block(COMPLETION.decode(), r'_root\.Display_kill\s*==\s*2')
+        self.block_patch = patch.object(audit, 'COMPLETION_BLOCK_SHA256', hashlib.sha256(block.encode()).hexdigest())
+        self.block_patch.start()
+        self.addCleanup(self.block_patch.stop)
 
     def test_source_scoped_chain_is_explicitly_not_flash_parity(self):
         report = audit.audit_completion(self.scripts, audit.SWF_SHA256)
@@ -46,7 +50,7 @@ class CompletionAuditTests(unittest.TestCase):
     def test_rejects_missing_completion_dispatch(self):
         changed = COMPLETION.replace(b'_root.Move_arrow(100);', b'')
         with patch.dict(audit.SOURCES, {'completion': (self.anchors['completion'][0], hashlib.sha256(changed).hexdigest())}):
-            with self.assertRaisesRegex(ValueError, 'completion clause'):
+            with self.assertRaisesRegex(ValueError, 'completion source block SHA256'):
                 audit.audit_completion({**self.scripts, 'completion': changed}, audit.SWF_SHA256)
 
     def test_rejects_new_hp_guard(self):

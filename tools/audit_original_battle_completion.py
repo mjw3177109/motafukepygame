@@ -11,6 +11,7 @@ import re
 from pathlib import Path
 
 SWF_SHA256 = '04b317b7fd9d32c5b083c993e99a3eea527f392e5fc938d23928e953bb638db9'
+COMPLETION_BLOCK_SHA256 = '8d799e14285dbb9b9205afe4c670ce7e08d1fb63d4a831d73de47547f2a99c05'
 SOURCES = {
     'completion': ('scripts/DefineSprite_855/frame_1/DoAction.as',
                    'fdc32d3bc0ab4e511aade04b38a8b336030c33096c7ce3f4d14b58f5f9b1f0a6'),
@@ -49,12 +50,16 @@ def audit_completion(scripts: dict[str, bytes], swf_sha256: str) -> dict:
     decoded = {}
     for name, (path, expected_sha) in SOURCES.items():
         raw = scripts[name]
-        if not isinstance(raw, bytes) or _hash(raw) != expected_sha:
+        if not isinstance(raw, bytes) or (name == 'reward' and _hash(raw) != expected_sha):
             raise ValueError(f'{name} ActionScript byte SHA256 mismatch')
         decoded[name] = raw.decode('utf-8-sig')
-        sources.append({'name': name, 'path': path, 'sha256': expected_sha,
+        sources.append({'name': name, 'path': path, 'sha256': _hash(raw),
+                        'full_byte_hash_pinned': name == 'reward',
                         'size_bytes': len(raw), 'source_verified': True})
     completion = _block(decoded['completion'], r'_root\.Display_kill\s*==\s*2')
+    scoped_hash = _hash(completion.replace('\r\n', '\n').encode('utf-8'))
+    if scoped_hash != COMPLETION_BLOCK_SHA256:
+        raise ValueError('completion source block SHA256 mismatch')
     required = [r'_root\.DelMovie\("mt_kills"\)\s*;',
                 r'_root\.DelMovie\("mt_kills_left"\)\s*;',
                 r'_root\.DelMovie\("mt_kills_right"\)\s*;',
@@ -83,6 +88,8 @@ def audit_completion(scripts: dict[str, bytes], swf_sha256: str) -> dict:
         'source_chain': ['frame54: Display_kill=2, Now_hp=right_hp',
                          'sprite855 frame1: Display_kill==2 -> Move_arrow(100)',
                          'Move_arrow(100): clear monster, add money and MP'],
+        'completion_scoped_sha256': scoped_hash,
+        'completion_full_hash_may_drift_in_unrelated_ffdec_output': True,
         'no_hp_guard_in_these_two_blocks': True,
         'static_source_verified': True, 'flash_playback_verified': False,
         'global_death_handling_verified': False, 'negative_hp_runtime_verified': False,
