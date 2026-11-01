@@ -38,6 +38,38 @@ class TerminalCandidatesTests(unittest.TestCase):
         self.assertFalse(result["ending_verified"])
         self.assertFalse(result["gymnasium_ready"])
 
+    def test_source_context_is_bounded_and_source_hashed(self):
+        lines = ["trace('padding');"] * 45
+        lines[29] = '_root.gotoAndPlay("game_over");'
+        lines[41] = '_root.gotoAndPlay("game_over");'
+        data = ("\\n".join(lines) + "\\n").encode("utf-8")
+        self.file.write_bytes(data)
+        self.manifest["files"][0].update(
+            sha256=hashlib.sha256(data).hexdigest(), size=len(data)
+        )
+        result = audit.audit_candidates(self.manifest, self.root, self.swf)
+        self.assertEqual(result["candidate_counts"]["game_over_mention"], 2)
+        hits = [h for h in result["candidates"] if h["kind"] == "game_over_mention"]
+        self.assertEqual([h["line"] for h in hits], [30, 42])
+        self.assertEqual([row["line"] for row in hits[0]["source_context"]], list(range(6, 39)))
+        self.assertEqual([row["line"] for row in hits[1]["source_context"]], list(range(18, 46)))
+        self.assertEqual(hits[0]["source_context"][24]["text"], lines[29])
+        self.assertEqual(hits[1]["source_sha256"], hashlib.sha256(data).hexdigest())
+        self.assertFalse(result["death_behavior_verified"])
+        self.assertFalse(result["ending_verified"])
+
+    def test_context_marks_long_lines_as_truncated(self):
+        data = ("game_over " + "x" * 500 + "\\n").encode("utf-8")
+        self.file.write_bytes(data)
+        self.manifest["files"][0].update(
+            sha256=hashlib.sha256(data).hexdigest(), size=len(data)
+        )
+        result = audit.audit_candidates(self.manifest, self.root, self.swf)
+        row = result["candidates"][0]["source_context"][0]
+        self.assertEqual(len(row["text"]), 400)
+        self.assertTrue(row["truncated"])
+        self.assertEqual(row["line"], 1)
+
     def test_rejects_wrong_swf_bytes(self):
         with self.assertRaisesRegex(ValueError, "game.swf"):
             audit.audit_candidates(self.manifest, self.root, b"changed")

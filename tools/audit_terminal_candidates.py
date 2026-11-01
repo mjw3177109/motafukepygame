@@ -24,6 +24,17 @@ def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def source_window(lines: list[str], line: int, before: int = 24, after: int = 8) -> list[dict]:
+    """Show decompiled neighboring lines, without inferring a branch or runtime behavior."""
+    first = max(1, line - before)
+    last = min(len(lines), line + after)
+    return [
+        {"line": n, "text": lines[n - 1][:400],
+         "truncated": len(lines[n - 1]) > 400}
+        for n in range(first, last + 1)
+    ]
+
+
 def audit_candidates(manifest: dict, export_root: Path, swf_bytes: bytes) -> dict:
     if sha256(swf_bytes) != SWF_SHA256:
         raise ValueError("original game.swf SHA256 mismatch")
@@ -70,6 +81,7 @@ def audit_candidates(manifest: dict, export_root: Path, swf_bytes: bytes) -> dic
                     "kind": kind, "path": path, "line": line,
                     "source_sha256": sha256(raw),
                     "snippet": lines[line - 1].strip()[:240],
+                    "source_context": source_window(lines, line),
                 })
     hits.sort(key=lambda h: (h["kind"], h["path"], h["line"]))
     counts = {name: sum(h["kind"] == name for h in hits) for name in PATTERNS}
@@ -78,6 +90,7 @@ def audit_candidates(manifest: dict, export_root: Path, swf_bytes: bytes) -> dic
         "script_files_checked": len(entries), "source_manifest_verified": True,
         "candidate_counts": counts, "candidates": hits,
         "candidates_are_text_matches_not_control_flow_proof": True,
+        "source_context_is_decompiled_text_not_control_flow_proof": True,
         "game_over_may_be_a_frame_label_not_a_script_mention": True,
         "flash_runtime_verified": False, "death_behavior_verified": False,
         "ending_verified": False, "dual_client_parity_verified": False,
@@ -105,6 +118,10 @@ def main() -> None:
           f"candidates={report['candidate_counts']}; death/ending NOT VERIFIED")
     for hit in report["candidates"][:24]:
         print(f"CANDIDATE {hit['kind']} {hit['path']}:{hit['line']} {hit['snippet']}")
+        if hit["kind"] == "game_over_mention":
+            for row in hit["source_context"]:
+                suffix = " [truncated]" if row["truncated"] else ""
+                print(f"CONTEXT {hit['path']}:{row['line']} {row['text']}{suffix}")
 
 
 if __name__ == "__main__":
