@@ -73,3 +73,33 @@ test('all 33 original monsters: one-hit and two-hit full pipeline (66 synthetic 
     }
   }
 });
+
+test('all 33 monsters: Flash random(200) critical boundary at life=0',()=>{
+  assert.equal(fullRoster.gameplay_parity_verified,false);
+  assert.equal(fullRoster.gymnasium_ready,false);
+  for(let enemyId=0;enemyId<33;enemyId++) {
+    const monster=fullRoster.monsters[String(enemyId)];
+    const halfHit=Math.ceil(monster[0]/2);
+    for(const roll of [0,1]) {
+      const grid=Array.from({length:11},()=>Array(11).fill(0));
+      grid[0][0]=17;
+      grid[5][6]=enemyId<31?enemyId+40:enemyId===31?188:198;
+      const world={grid,row:5,col:5,hp:1000000,
+        attack:monster[2]+halfHit,defense:monster[1]-7,
+        life:0,line:1,display_kill:0,key_flag:1,money:11,mp:13};
+      const before=structuredClone(world);
+      const result=resolveEncounter(world,2,{[String(enemyId)]:monster},roll===0?[roll]:[roll,roll]);
+      const heroSteps=result.steps.filter(s=>s.event==='hero_attack');
+      assert.deepEqual(heroSteps.map(s=>s.critical),roll===0?[true]:[false,false]);
+      assert.equal(heroSteps[0].damage,halfHit*(roll===0?2:1));
+      assert.equal(result.steps.length,roll===0?1:3);
+      const special=enemyId===20?100:enemyId===12?300:enemyId===10?250000:enemyId===17?333333:0;
+      assert.equal(result.state.hp,1000000-special-(roll===0?0:7));
+      assert.equal(result.state.money,11+monster[3]);
+      assert.equal(result.state.mp,13+monster[4]);
+      assert.equal(result.battle.left_hp,0);
+      assert.equal(result.state.grid[5][6],0);
+      assert.deepEqual(world,before);
+    }
+  }
+});

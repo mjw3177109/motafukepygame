@@ -72,5 +72,31 @@ class OriginalMonsterFullPipelineMatrixTests(unittest.TestCase):
                     self.assertEqual(result["state"].get("boss_kills"), 1 if enemy_id == 19 else None)
 
 
+    def test_all_33_monsters_critical_zero_vs_noncritical_one(self):
+        """Flash random(200) roll 0 crits at life=0; roll 1 does not."""
+        for enemy_id in range(33):
+            monster = ROSTER["monsters"][str(enemy_id)]
+            half_hit = (monster[0] + 1) // 2
+            for roll in (0, 1):
+                with self.subTest(monster=enemy_id, roll=roll):
+                    world = make_world(enemy_id, monster, False)
+                    world["attack"] = monster[2] + half_hit
+                    world["defense"] = monster[1] - 7
+                    before = deepcopy(world)
+                    result = resolve_encounter(world, 2, {str(enemy_id): monster},
+                                               [roll] if roll == 0 else [roll, roll])
+                    hero_steps = [s for s in result["steps"] if s["event"] == "hero_attack"]
+                    self.assertEqual([s["critical"] for s in hero_steps],
+                                     [True] if roll == 0 else [False, False])
+                    self.assertEqual(hero_steps[0]["damage"], half_hit * (2 if roll == 0 else 1))
+                    self.assertEqual(len(result["steps"]), 1 if roll == 0 else 3)
+                    self.assertEqual(result["state"]["hp"],
+                                     1000000 - SPECIAL.get(enemy_id, 0) - (0 if roll == 0 else 7))
+                    self.assertEqual(result["state"]["money"], 11 + monster[3])
+                    self.assertEqual(result["state"]["mp"], 13 + monster[4])
+                    self.assertEqual(result["battle"]["left_hp"], 0)
+                    self.assertEqual(result["state"]["grid"][5][6], 0)
+                    self.assertEqual(world, before)
+
 if __name__ == "__main__":
     unittest.main()
