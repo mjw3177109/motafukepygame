@@ -7,6 +7,7 @@ on:
       - 'game.swf'
       - 'FFDec/**'
       - 'data/original_floors.json'
+      - 'data/original_combat_tables.json'
       - 'data/original_sprite_symbol_anchors.json'
       - 'data/original_sprite_frame_anchors.json'
       - 'data/original_sprite_placement_anchors.json'
@@ -31,6 +32,7 @@ on:
       - 'tests/test_audit_shape_registration.py'
       - 'tests/test_smoke_mt06_candidate.py'
       - 'tests/test_audit_mt06_flash_baseline.py'
+      - 'tests/test_verify_original_combat_tables.py'
       - 'data/flash_baselines/**'
       - 'tests/test_smoke_original_static_render.py'
       - 'tests/test_smoke_original_browser_static.py'
@@ -43,6 +45,7 @@ on:
       - 'game.swf'
       - 'FFDec/**'
       - 'data/original_floors.json'
+      - 'data/original_combat_tables.json'
       - 'data/original_sprite_symbol_anchors.json'
       - 'data/original_sprite_frame_anchors.json'
       - 'data/original_sprite_placement_anchors.json'
@@ -67,6 +70,7 @@ on:
       - 'tests/test_audit_shape_registration.py'
       - 'tests/test_smoke_mt06_candidate.py'
       - 'tests/test_audit_mt06_flash_baseline.py'
+      - 'tests/test_verify_original_combat_tables.py'
       - 'data/flash_baselines/**'
       - 'tests/test_smoke_original_static_render.py'
       - 'tests/test_smoke_original_browser_static.py'
@@ -97,6 +101,9 @@ jobs:
         run: |
           SWF_SHA=$(python -c 'import json; print(json.load(open(".swf_audit/manifest.json"))["original"]["sha256"])')
           python tools/extract_original_tables.py --script .swf_audit/export/scripts/frame_4346/DoAction.as --swf-sha256 "$SWF_SHA" --out .swf_audit/original_tables.json
+      - name: Verify original raw monster arrays and base stats against FFDec (not combat parity)
+        run: |
+          python -m tools.verify_original_combat_tables --committed data/original_combat_tables.json --extracted .swf_audit/original_tables.json --floor-anchors data/original_floors.json --export-root .swf_audit --out .swf_audit/original_combat_tables_audit.json
       - name: Verify all 3267 committed floor cells against hashed original ActionScript
         run: |
           python tools/verify_original_floors.py --committed data/original_floors.json --extracted .swf_audit/original_tables.json --export-root .swf_audit
@@ -160,6 +167,7 @@ jobs:
             .swf_audit/ffdec_script_drift_diagnostic.json
             .swf_audit/manifest.json
             .swf_audit/original_tables.json
+            .swf_audit/original_combat_tables_audit.json
             .swf_audit/floor_asset_coverage.json
             .swf_audit/swf_symbol_trace.json
             .swf_audit/swf_sprite_frames.json
