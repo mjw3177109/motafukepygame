@@ -174,5 +174,48 @@ class FFDecDriftDiagnosticsTests(unittest.TestCase):
             self.assertFalse(data['provenance_verified'])
             self.assertFalse(data['kaggle_started'])
 
+    def test_cli_malformed_json_container_keeps_fail_closed_report(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            swf, jar = root / 'game.swf', root / 'ffdec.jar'
+            swf.write_bytes(b'original SWF')
+            jar.write_bytes(b'FFDec fixture')
+            source = {
+                'swf_sha256': digest(swf.read_bytes()),
+                'renderer_actionscript_path': 'export/scripts/frame_4346/DoAction_2.as',
+                'renderer_actionscript_sha256': digest(b'original script'),
+            }
+            cases = (
+                ('committed_array', [], {'original': {'sha256': source['swf_sha256']}, 'files': []}),
+                ('manifest_array', {'source': source}, []),
+                ('original_array', {'source': source}, {'original': [], 'files': []}),
+            )
+            for label, committed_data, manifest_data in cases:
+                with self.subTest(label=label):
+                    committed = root / 'committed.json'
+                    manifest = root / 'manifest.json'
+                    report = root / 'diagnostic.json'
+                    report.unlink(missing_ok=True)
+                    committed.write_text(json.dumps(committed_data), encoding='utf-8')
+                    manifest.write_text(json.dumps(manifest_data), encoding='utf-8')
+                    argv = [
+                        'ffdec-drift', '--committed', str(committed),
+                        '--manifest', str(manifest), '--swf', str(swf),
+                        '--ffdec', str(jar), '--export-root', str(root / 'export'),
+                        '--out', str(report),
+                    ]
+                    with patch.object(sys, 'argv', argv), patch(
+                        'subprocess.run', side_effect=AssertionError('must not retry FFDec')
+                    ), redirect_stderr(StringIO()):
+                        with self.assertRaises(SystemExit) as failure:
+                            main()
+                    self.assertEqual(failure.exception.code, 2)
+                    data = json.loads(report.read_text(encoding='utf-8'))
+                    self.assertEqual(data['classification'], 'diagnostic_unavailable')
+                    self.assertEqual(data['error_type'], 'ValueError')
+                    self.assertFalse(data['provenance_verified'])
+                    self.assertFalse(data['gameplay_parity_verified'])
+                    self.assertFalse(data['kaggle_started'])
+
 if __name__ == '__main__':
     unittest.main()

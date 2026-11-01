@@ -67,6 +67,8 @@ def _read_export(root: Path, relative: str) -> bytes | None:
 
 def diagnose(committed: dict, manifest: dict, swf: Path, ffdec: Path,
              export_root: Path, timeout: int = 180) -> dict:
+    if not isinstance(committed, dict) or not isinstance(manifest, dict):
+        raise ValueError('committed source and FFDec manifest must be JSON objects')
     source = committed.get('source')
     if not isinstance(source, dict):
         raise ValueError('missing committed original source anchors')
@@ -79,7 +81,10 @@ def diagnose(committed: dict, manifest: dict, swf: Path, ffdec: Path,
     if not swf.is_file() or not ffdec.is_file():
         raise ValueError('original SWF or FFDec jar missing')
     swf_actual = sha256(swf.read_bytes())
-    if swf_actual != swf_expected or manifest.get('original', {}).get('sha256') != swf_expected:
+    original = manifest.get('original')
+    if not isinstance(original, dict):
+        raise ValueError('FFDec manifest original metadata must be an object')
+    if swf_actual != swf_expected or original.get('sha256') != swf_expected:
         raise ValueError('SWF provenance mismatch; diagnostic retry forbidden')
     entries = manifest.get('files')
     if not isinstance(entries, list):

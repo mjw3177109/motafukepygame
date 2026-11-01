@@ -15,3 +15,7 @@ A correct first export can coexist with an incorrect manifest SHA256. Previously
 ## Fail-closed artifact on early validation errors (2026-10-31)
 
 If committed JSON is malformed, the original SWF hash differs, or the anchored script path is invalid, the CLI now attempts to write `ffdec_script_drift_diagnostic.json` before exiting with status 2. This diagnostic-only object records `classification=diagnostic_unavailable`, a bounded error message, and explicit false values for provenance, gameplay parity and Kaggle. It does not retry FFDec on an invalid SWF. If the report destination itself cannot be written, the command still exits nonzero; the Actions log is then the fallback evidence. Two CLI regression tests cover malformed JSON and a changed SWF.
+
+## Malformed JSON container fail-closed regression (2026-10-31)
+
+A syntactically valid JSON array at the committed-source or FFDec-manifest root, or an array in `manifest.original`, previously raised an uncaught `AttributeError` during `.get()` access. The CLI could exit without writing the diagnostic artifact. Validate these container types before accessing metadata, raise a bounded `ValueError`, and preserve `classification=diagnostic_unavailable` with all provenance/gameplay/Kaggle gates false. The regression test exercises all three cases through the CLI and prohibits an FFDec retry. This changes error reporting only; it does not prove Flash gameplay parity or resolve intermittent export drift.
