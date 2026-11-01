@@ -42,7 +42,7 @@ class TerminalCandidatesTests(unittest.TestCase):
         lines = ["trace('padding');"] * 45
         lines[29] = '_root.gotoAndPlay("game_over");'
         lines[41] = '_root.gotoAndPlay("game_over");'
-        data = ("\\n".join(lines) + "\\n").encode("utf-8")
+        data = ("\n".join(lines) + "\n").encode("utf-8")
         self.file.write_bytes(data)
         self.manifest["files"][0].update(
             sha256=hashlib.sha256(data).hexdigest(), size=len(data)
@@ -59,7 +59,7 @@ class TerminalCandidatesTests(unittest.TestCase):
         self.assertFalse(result["ending_verified"])
 
     def test_context_marks_long_lines_as_truncated(self):
-        data = ("game_over " + "x" * 500 + "\\n").encode("utf-8")
+        data = ("game_over " + "x" * 500 + "\n").encode("utf-8")
         self.file.write_bytes(data)
         self.manifest["files"][0].update(
             sha256=hashlib.sha256(data).hexdigest(), size=len(data)
