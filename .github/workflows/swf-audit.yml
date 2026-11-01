@@ -33,6 +33,8 @@ on:
       - 'tests/test_smoke_mt06_candidate.py'
       - 'tests/test_audit_mt06_flash_baseline.py'
       - 'tests/test_verify_original_combat_tables.py'
+      - 'tests/test_audit_original_battle_transitions.py'
+      - 'tests/fixtures/original_mt_other_04_frame*.as'
       - 'data/flash_baselines/**'
       - 'tests/test_smoke_original_static_render.py'
       - 'tests/test_smoke_original_browser_static.py'
@@ -71,6 +73,8 @@ on:
       - 'tests/test_smoke_mt06_candidate.py'
       - 'tests/test_audit_mt06_flash_baseline.py'
       - 'tests/test_verify_original_combat_tables.py'
+      - 'tests/test_audit_original_battle_transitions.py'
+      - 'tests/fixtures/original_mt_other_04_frame*.as'
       - 'data/flash_baselines/**'
       - 'tests/test_smoke_original_static_render.py'
       - 'tests/test_smoke_original_browser_static.py'
@@ -110,6 +114,9 @@ jobs:
       - name: Verify original frame-24 critical and alternating-turn source (not battle parity)
         run: |
           python -m tools.audit_original_battle_frame24 --script .swf_audit/export/scripts/DefineSprite_453_mt_other_04/frame_24/DoAction.as --swf game.swf --out .swf_audit/original_battle_frame24_audit.json
+      - name: Verify original frame-34/35/54 battle transition source (not Flash parity)
+        run: |
+          python -m tools.audit_original_battle_transitions --export-root .swf_audit/export --swf game.swf --out .swf_audit/original_battle_transitions_audit.json
       - name: Verify all 3267 committed floor cells against hashed original ActionScript
         run: |
           python tools/verify_original_floors.py --committed data/original_floors.json --extracted .swf_audit/original_tables.json --export-root .swf_audit
@@ -176,6 +183,7 @@ jobs:
             .swf_audit/original_combat_tables_audit.json
             .swf_audit/original_combat_semantics_audit.json
             .swf_audit/original_battle_frame24_audit.json
+            .swf_audit/original_battle_transitions_audit.json
             .swf_audit/floor_asset_coverage.json
             .swf_audit/swf_symbol_trace.json
             .swf_audit/swf_sprite_frames.json
