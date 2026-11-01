@@ -1,4 +1,4 @@
-"""Source-verified SWF Shape bounds and mt_00/mt_01 SVG registration offsets.
+"""Source-verified SWF Shape bounds, static registrations, and mt_06 candidate.
 
 No browser/Pygame rasterization, animation or pixel parity is claimed.
 """
@@ -14,8 +14,9 @@ from pathlib import Path
 
 TAG = re.compile(r'^([0-9a-fA-F]{8}):(\s+)\d+\.\s+(DefineShape\d*) \((\d+)\)\s+tagId=\s*(\d+)\s+len=\s*(\d+)\s*(.*)$')
 HEX = re.compile(r'[0-9a-fA-F]{2}\Z')
-SHAPES = (199, 211, 212, 215, 216, 219, 222)
+SHAPES = (197, 199, 211, 212, 215, 216, 219, 222)
 STATIC = {'mt_00': 222, 'mt_01': 219}
+CANDIDATES = {'mt_06': 197}  # source registration only; not a runtime binding
 IDENTITY = {'a_fixed16': 65536, 'b_fixed16': 0, 'c_fixed16': 0,
             'd_fixed16': 65536, 'tx_twips': 0, 'ty_twips': 0}
 
@@ -93,7 +94,8 @@ def audit(tags, manifest, trace, placements, export_root, anchors):
         trace.get('ffdec_tag_dump_sha256') != digest or
         placements.get('ffdec_tag_dump_sha256') != digest or
         anchors.get('schema_version') != 1 or anchors.get('swf_sha256') != swf or
-        set(anchors.get('aliases', {})) != set(STATIC)):
+        set(anchors.get('aliases', {})) != set(STATIC) or
+        set(anchors.get('candidate_aliases', {})) != set(CANDIDATES)):
         raise ValueError('source or registration anchor provenance mismatch')
     inventory = {}
     for entry in manifest.get('files', []):
@@ -120,8 +122,8 @@ def audit(tags, manifest, trace, placements, export_root, anchors):
             raise ValueError(f'SVG bounds differ from original RECT: {relative}')
         shapes[str(cid)] = {'path': relative, 'sha256': expected, **original,
                             'width_px': width, 'height_px': height}
-    aliases = {}
-    for alias, cid in STATIC.items():
+    aliases, candidates = {}, {}
+    for alias, cid in {**STATIC, **CANDIDATES}.items():
         sprite = placements.get('sprites', {}).get(alias, {})
         frames = sprite.get('frames', [])
         symbol = trace.get('symbols', {}).get(alias, {})
@@ -138,12 +140,22 @@ def audit(tags, manifest, trace, placements, export_root, anchors):
             raise ValueError(f'unverified identity placement: {alias}')
         xmin, _, ymin, _ = shapes[str(cid)]['rect_twips']
         origin = {'shape_id': cid, 'origin_x': -xmin / 20, 'origin_y': -ymin / 20}
-        if anchors['aliases'][alias] != origin:
-            raise ValueError(f'registration anchor drift: {alias}')
-        aliases[alias] = {'source': shapes[str(cid)]['path'], 'sha256': shapes[str(cid)]['sha256'],
-                          **origin}
+        if alias in STATIC:
+            if anchors['aliases'][alias] != origin:
+                raise ValueError(f'registration anchor drift: {alias}')
+            aliases[alias] = {'source': shapes[str(cid)]['path'], 'sha256': shapes[str(cid)]['sha256'],
+                              **origin}
+        else:
+            expected = {**origin, 'source_sha256': shapes[str(cid)]['sha256']}
+            if anchors['candidate_aliases'][alias] != expected:
+                raise ValueError(f'candidate registration anchor drift: {alias}')
+            candidates[alias] = {'source': shapes[str(cid)]['path'],
+                                 'sha256': shapes[str(cid)]['sha256'], **origin,
+                                 'ready_for_dual_renderer_smoke': True,
+                                 'flash_visual_parity_verified': False}
     return {'schema_version': 1, 'swf_sha256': swf, 'ffdec_tag_dump_sha256': digest,
             'shapes': shapes, 'verified_static_aliases': aliases,
+            'static_registration_candidates': candidates,
             'registration_verified_for_static_aliases': True,
             'rasterization_verified': False, 'visual_parity_verified': False,
             'animated_registration_verified': False}
@@ -162,7 +174,8 @@ def main():
         parser.exit(2, f'Shape registration audit FAILED: {exc}\n')
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(result, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
-    print('PASS: 7 source Shape RECT/SVG pairs; 2 identity static sprite registrations; '
+    print('PASS: 8 source Shape RECT/SVG pairs; 2 existing static registrations; '
+          '1 mt_06 source registration candidate; '
           'rasterization and pixel parity NOT VERIFIED')
 
 

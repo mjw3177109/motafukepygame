@@ -12,5 +12,13 @@
       "origin_x": 15.95,
       "origin_y": 15.95
     }
+  },
+  "candidate_aliases": {
+    "mt_06": {
+      "shape_id": 197,
+      "origin_x": 16,
+      "origin_y": 16,
+      "source_sha256": "15e5960bf4064c15af2b7086b91e437c55ccbead25425ae40149fbda20a93a70"
+    }
   }
 }
