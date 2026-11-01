@@ -105,6 +105,9 @@ jobs:
       - name: Verify original mt_00-mt_03 per-frame PlaceObject2 transforms
         run: |
           python -m tools.audit_sprite_placements --tags .swf_audit/ffdec_tags.log --trace .swf_audit/swf_symbol_trace.json --frames .swf_audit/swf_sprite_frames.json --anchors data/original_sprite_placement_anchors.json --out .swf_audit/swf_sprite_placements.json
+      - name: Build source-linked floor asset review queue (no visual approval)
+        run: |
+          python -m tools.build_asset_review_queue --coverage .swf_audit/floor_asset_coverage.json --trace .swf_audit/swf_symbol_trace.json --frames .swf_audit/swf_sprite_frames.json --placements .swf_audit/swf_sprite_placements.json --out .swf_audit/asset_review_queue.json
       - name: Verify original Shape RECT and static sprite registration offsets
         run: |
           python -m tools.audit_shape_registration --tags .swf_audit/ffdec_tags.log --manifest .swf_audit/manifest.json --trace .swf_audit/swf_symbol_trace.json --placements .swf_audit/swf_sprite_placements.json --export-root .swf_audit/export --anchors data/original_shape_registration_anchors.json --out .swf_audit/shape_registration_report.json
@@ -143,6 +146,7 @@ jobs:
             .swf_audit/swf_symbol_trace.json
             .swf_audit/swf_sprite_frames.json
             .swf_audit/swf_sprite_placements.json
+            .swf_audit/asset_review_queue.json
             .swf_audit/shape_registration_report.json
             .swf_audit/svg_sampling_report.json
             .swf_audit/svg_image_rendering_experiment.json
