@@ -38,3 +38,10 @@ CI 在验证原版楼层表后运行新审计，并归档 original_terminal_tile
 复核原版 FFDec 导出的 `Move_arrow` 源码发现：第三条独立 `if` 内还有一层 `mt_GetMoney[0] == 1` 的 `if/else`。持有该状态时进入 `say_four`，否则进入 `say_two`；**两个分支均写入** `mt_line_20[7][5] = 13`。此前审计只要求在外层块内找到一次地图写入，可能漏掉另一分支的错误。
 
 本轮在 `tools/audit_tile24_branch_order.py` 中分别校验两条子分支的对话标签及地图写入，并新增四项失败关闭回归。证据归档新增 `love_dialogue_both_arms_verified`（仅表示静态源码结构）。原版 Flash 运行轨迹、实际道具状态、双端执行结果与结局仍未验收；Gymnasium/Kaggle 门禁继续关闭。
+
+
+## 地图格 24：第 22 层三项道具条件与双对话分支（本轮）
+
+从 2026-11-02 的 GitHub Actions 原版 FFDec 归档（SWF SHA256 `04b317b7fd9d32c5b083c993e99a3eea527f392e5fc938d23928e953bb638db9`，`scripts/frame_4346/DoAction_2.as` SHA256 `0de19a0338cd966446acb4fd2acb82f82cf77992c8839356e17afc8f3085d034`）核对 `Move_arrow` 第 762–775 行。地图格 24 的第四条独立守卫为 `Now_line == 22`。进入后先清除 `Now_key_flag`、设置 `Display_say[0] = 1` 并创建 `mt_say_01` 剪辑，再根据 `Number(mt_GetMoney[0]) == 1 && Number(mt_GetMoney[1]) == 1 && Number(mt_GetMoney[2]) == 1` 选择 `say_six`；其余情况进入 `say_five`。
+
+新增静态失败关闭审计要求三个道具下标和 AND 条件精确匹配、前置对话设置在分支选择之前、`if/else` 两臂分别包含正确对话标签；新增 6 项回归测试。输出 `floor22_three_item_both_arms_verified` 只代表原版静态源码审计，不代表游戏事件可达、真实执行顺序、双端复刻或结局通过。下一步应建立原版 Flash 操作轨迹并与 Pygame/HTML5 两端对照；Gymnasium/Kaggle 门禁保持关闭。

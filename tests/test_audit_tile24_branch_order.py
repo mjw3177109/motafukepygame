@@ -32,7 +32,10 @@ SOURCE = '''function Move_arrow(arrow_id)
    }
    if(Number(eval(temp_lines)[temp_x][temp_y]) == 24 && _root.Now_line == 22)
    {
-      if(_root.flag)
+      _root.Now_key_flag = 0;
+      _root.Display_say[0] = 1;
+      _root.CopyMovie("mt_say_01","mtsay_001",1350,380,207);
+      if(Number(_root.mt_GetMoney[0]) == 1 && Number(_root.mt_GetMoney[1]) == 1 && Number(_root.mt_GetMoney[2]) == 1)
       {
          _root.mtsay_001.gotoAndPlay("say_six");
       }
@@ -52,6 +55,7 @@ class Tile24BranchOrderTests(unittest.TestCase):
                          ['initial_dialogue', 'ending_state_change', 'love_dialogue', 'floor22_dialogue'])
         self.assertTrue(report['independent_if_statements_verified'])
         self.assertTrue(report['love_dialogue_both_arms_verified'])
+        self.assertTrue(report['floor22_three_item_both_arms_verified'])
         self.assertFalse(report['runtime_combined_branch_execution_verified'])
         self.assertFalse(report['flash_parity_verified'])
 
@@ -116,6 +120,41 @@ class Tile24BranchOrderTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'love_dialogue missing else arm'):
             verify_tile24_branch_order(changed)
 
+
+
+    def test_floor22_missing_item_two_guard_fails(self):
+        changed = SOURCE.replace(' && Number(_root.mt_GetMoney[2]) == 1', '')
+        with self.assertRaisesRegex(ValueError, 'floor22_dialogue missing exact three-item AND guard'):
+            verify_tile24_branch_order(changed)
+
+    def test_floor22_wrong_item_index_fails(self):
+        changed = SOURCE.replace('Number(_root.mt_GetMoney[1]) == 1', 'Number(_root.mt_GetMoney[3]) == 1')
+        with self.assertRaisesRegex(ValueError, 'floor22_dialogue missing exact three-item AND guard'):
+            verify_tile24_branch_order(changed)
+
+    def test_floor22_else_dialogue_wrong_fails(self):
+        changed = SOURCE.replace('gotoAndPlay("say_five")', 'gotoAndPlay("say_six")')
+        with self.assertRaisesRegex(ValueError, 'floor22_dialogue else arm'):
+            verify_tile24_branch_order(changed)
+
+    def test_floor22_if_dialogue_wrong_fails(self):
+        changed = SOURCE.replace('gotoAndPlay("say_six")', 'gotoAndPlay("say_five")')
+        with self.assertRaisesRegex(ValueError, 'floor22_dialogue if arm'):
+            verify_tile24_branch_order(changed)
+
+    def test_floor22_else_must_remain_else(self):
+        changed = SOURCE.replace(
+            '      else\n      {\n         _root.mtsay_001.gotoAndPlay("say_five");',
+            '      if(true)\n      {\n         _root.mtsay_001.gotoAndPlay("say_five");')
+        with self.assertRaisesRegex(ValueError, 'floor22_dialogue missing else arm'):
+            verify_tile24_branch_order(changed)
+
+    def test_floor22_setup_must_precede_item_choice(self):
+        changed = SOURCE.replace(
+            '      _root.Now_key_flag = 0;\n      _root.Display_say[0] = 1;\n      _root.CopyMovie("mt_say_01","mtsay_001",1350,380,207);\n      if(Number(_root.mt_GetMoney[0])',
+            '      _root.Now_key_flag = 0;\n      _root.CopyMovie("mt_say_01","mtsay_001",1350,380,207);\n      if(Number(_root.mt_GetMoney[0])')
+        with self.assertRaisesRegex(ValueError, 'floor22_dialogue missing pre-choice setup'):
+            verify_tile24_branch_order(changed)
 
 if __name__ == '__main__':
     unittest.main()
