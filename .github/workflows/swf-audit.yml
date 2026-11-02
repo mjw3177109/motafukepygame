@@ -34,6 +34,7 @@ on:
       - 'tests/test_audit_mt06_flash_baseline.py'
       - 'tests/test_verify_original_combat_tables.py'
       - 'tests/test_audit_original_battle_transitions.py'
+      - 'tests/test_audit_say08_handoff.py'
       - 'tests/fixtures/original_mt_other_04_frame*.as'
       - 'data/flash_baselines/**'
       - 'tests/test_smoke_original_static_render.py'
@@ -74,6 +75,7 @@ on:
       - 'tests/test_audit_mt06_flash_baseline.py'
       - 'tests/test_verify_original_combat_tables.py'
       - 'tests/test_audit_original_battle_transitions.py'
+      - 'tests/test_audit_say08_handoff.py'
       - 'tests/fixtures/original_mt_other_04_frame*.as'
       - 'data/flash_baselines/**'
       - 'tests/test_smoke_original_static_render.py'
@@ -123,6 +125,9 @@ jobs:
       - name: Index source-hashed game-over and HP-condition candidates (not death parity)
         run: |
           python -m tools.audit_terminal_candidates --manifest .swf_audit/manifest.json --export-root .swf_audit/export --swf game.swf --out .swf_audit/original_terminal_candidates.json
+      - name: Verify say-08 frame writes and Sprite 855 consumer source (not runtime)
+        run: |
+          python -m tools.audit_say08_handoff --manifest .swf_audit/manifest.json --export-root .swf_audit/export --swf game.swf --out .swf_audit/original_say08_handoff.json
       - name: Verify all 3267 committed floor cells against hashed original ActionScript
         run: |
           python tools/verify_original_floors.py --committed data/original_floors.json --extracted .swf_audit/original_tables.json --export-root .swf_audit
@@ -192,6 +197,7 @@ jobs:
             .swf_audit/original_battle_transitions_audit.json
             .swf_audit/original_battle_completion_audit.json
             .swf_audit/original_terminal_candidates.json
+            .swf_audit/original_say08_handoff.json
             .swf_audit/floor_asset_coverage.json
             .swf_audit/swf_symbol_trace.json
             .swf_audit/swf_sprite_frames.json
