@@ -18,6 +18,7 @@ class Tile24SharedCasesTests(unittest.TestCase):
                 self.assertEqual(original, case['input'])
                 self.assertEqual([x['branch'] for x in result['trace']], case['branches'])
                 self.assertEqual([x['dialogue_command'] for x in result['trace'] if 'dialogue_command' in x], case['dialogues'])
+                self.assertEqual([{'branch': x['branch'], 'clip_command': x['clip_command']} for x in result['trace'] if 'clip_command' in x], case['clip_commands'])
                 self.assertEqual(result['state'], {**case['input'], **case['changed']})
                 self.assertTrue(result['source_branch_order_verified'])
                 self.assertFalse(result['flash_runtime_verified'])

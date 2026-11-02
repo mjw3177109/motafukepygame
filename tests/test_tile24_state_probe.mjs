@@ -11,6 +11,7 @@ for (const c of cases) {
     assert.deepEqual(c.input, original, 'input mutated');
     assert.deepEqual(result.trace.map(x => x.branch), c.branches);
     assert.deepEqual(result.trace.filter(x => x.dialogue_command).map(x => x.dialogue_command), c.dialogues);
+    assert.deepEqual(result.trace.filter(x => x.clip_command).map(x => ({branch: x.branch, clip_command: x.clip_command})), c.clip_commands, 'clip command branch/order mismatch');
     assert.deepEqual(result.state, {...c.input, ...c.changed});
     assert.equal(result.flash_runtime_verified, false);
     assert.equal(result.dual_client_parity_verified, false);
