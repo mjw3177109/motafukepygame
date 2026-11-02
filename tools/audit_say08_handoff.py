@@ -22,8 +22,21 @@ def _require_once(source: str, pattern: str, description: str) -> re.Match:
     return hits[0]
 
 
+def _terminal_guard_writes(provenance: dict) -> list[dict]:
+    """Preserve hashed text candidates for the ending guard; never infer execution."""
+    fields = ("path", "line", "column", "target", "operator",
+              "source_sha256", "snippet", "source_context")
+    return [
+        {field: hit[field] for field in fields}
+        for hit in provenance["candidates"]
+        if hit["kind"] == "terminal_state_write"
+        and hit["target"].removeprefix("_root.") == "mt_LastGame_ID"
+    ]
+
+
 def audit_handoff(manifest: dict, export_root: Path, swf_bytes: bytes) -> dict:
     provenance = audit_candidates(manifest, export_root, swf_bytes)
+    guard_writes = _terminal_guard_writes(provenance)
     entries = {item["path"]: item for item in manifest["files"]}
 
     def load(path: str) -> tuple[str, str]:
@@ -74,7 +87,14 @@ def audit_handoff(manifest: dict, export_root: Path, swf_bytes: bytes) -> dict:
         "say-08 terminal conditional text",
     )
     return {
-        "schema_version": 1,
+        "schema_version": 2,
+        "terminal_guard": {
+            "variable": "mt_LastGame_ID",
+            "write_candidate_count": len(guard_writes),
+            "write_candidates": guard_writes,
+            "source_writes_are_text_candidates_only": True,
+            "runtime_value_proven": False,
+        },
         "swf_sha256": provenance["swf_sha256"],
         "source_manifest_verified": provenance["source_manifest_verified"],
         "script_files_checked": provenance["script_files_checked"],
@@ -108,7 +128,8 @@ def main() -> None:
     except (OSError, ValueError, UnicodeDecodeError, KeyError) as exc:
         parser.exit(2, f"FAIL: original say-08 source handoff: {exc}\n")
     print("PASS: original say-08 frames 6/9/12 and Sprite 855 consumer source "
-          "anchors; execution, ending and Flash parity NOT VERIFIED")
+          f"anchors; mt_LastGame_ID write candidates={report['terminal_guard']['write_candidate_count']}; "
+          "execution, ending and Flash parity NOT VERIFIED")
 
 
 if __name__ == "__main__":
