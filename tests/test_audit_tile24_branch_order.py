@@ -153,7 +153,7 @@ class Tile24BranchOrderTests(unittest.TestCase):
         changed = SOURCE.replace(
             '      _root.Now_key_flag = 0;\n      _root.Display_say[0] = 1;\n      _root.CopyMovie("mt_say_01","mtsay_001",1350,380,207);\n      if(Number(_root.mt_GetMoney[0])',
             '      _root.Now_key_flag = 0;\n      _root.CopyMovie("mt_say_01","mtsay_001",1350,380,207);\n      if(Number(_root.mt_GetMoney[0])')
-        with self.assertRaisesRegex(ValueError, 'floor22_dialogue missing pre-choice setup'):
+        with self.assertRaisesRegex(ValueError, 'floor22_dialogue missing or duplicated pre-choice setup'):
             verify_tile24_branch_order(changed)
 
     def test_floor22_setup_order_must_match_original(self):
