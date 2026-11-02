@@ -45,3 +45,10 @@ CI 在验证原版楼层表后运行新审计，并归档 original_terminal_tile
 从 2026-11-02 的 GitHub Actions 原版 FFDec 归档（SWF SHA256 `04b317b7fd9d32c5b083c993e99a3eea527f392e5fc938d23928e953bb638db9`，`scripts/frame_4346/DoAction_2.as` SHA256 `0de19a0338cd966446acb4fd2acb82f82cf77992c8839356e17afc8f3085d034`）核对 `Move_arrow` 第 762–775 行。地图格 24 的第四条独立守卫为 `Now_line == 22`。进入后先清除 `Now_key_flag`、设置 `Display_say[0] = 1` 并创建 `mt_say_01` 剪辑，再根据 `Number(mt_GetMoney[0]) == 1 && Number(mt_GetMoney[1]) == 1 && Number(mt_GetMoney[2]) == 1` 选择 `say_six`；其余情况进入 `say_five`。
 
 新增静态失败关闭审计要求三个道具下标和 AND 条件精确匹配、前置对话设置在分支选择之前、`if/else` 两臂分别包含正确对话标签；新增 6 项回归测试。输出 `floor22_three_item_both_arms_verified` 只代表原版静态源码审计，不代表游戏事件可达、真实执行顺序、双端复刻或结局通过。下一步应建立原版 Flash 操作轨迹并与 Pygame/HTML5 两端对照；Gymnasium/Kaggle 门禁保持关闭。
+
+
+## 第 22 层对话前置状态顺序：审计误通过修复（2026-11-02）
+
+先前 `_verify_floor22_dialogue_arms` 只检查 `Now_key_flag = 0`、`Display_say[0] = 1`、`CopyMovie(...)` 在三道具判断之前出现，**没有验证这三条语句的相对顺序和唯一性**。因此，交换状态初始化与清除按键标志，或重复写入对话状态，仍可能得到静态审计通过的假阳性。
+
+现在要求三条前置语句各恰好出现一次，且严格保持原版的 `Now_key_flag → Display_say[0] → CopyMovie` 源码顺序；新增两项合成源码回归用例，分别拒绝重排和重复写入。该检查仍是 FFDec 导出源码结构审计，不能证明 Flash 实机执行、双端剧情一致性或结局验收。下一步仍需采集原版运行轨迹并与 Pygame/HTML5 对照；Gymnasium/Kaggle 门禁保持关闭。
