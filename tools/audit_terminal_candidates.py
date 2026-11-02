@@ -82,7 +82,10 @@ def audit_candidates(manifest: dict, export_root: Path, swf_bytes: bytes) -> dic
         for kind, pattern in PATTERNS.items():
             for match in pattern.finditer(source):
                 line = source.count("\n", 0, match.start()) + 1
-                key = (kind, line)
+                # Multiple state assignments can share one ActionScript line.
+                # Keep each write's source offset; preserve legacy line-level
+                # de-duplication for game_over and HP textual mentions.
+                key = (kind, line, match.start() if kind == "terminal_state_write" else None)
                 if key in seen:
                     continue
                 seen.add(key)
@@ -95,6 +98,7 @@ def audit_candidates(manifest: dict, export_root: Path, swf_bytes: bytes) -> dic
                 if kind == "terminal_state_write":
                     hit["target"] = match.group("target")
                     hit["operator"] = match.group("operator")
+                    hit["column"] = match.start() - source.rfind("\n", 0, match.start())
                 hits.append(hit)
     hits.sort(key=lambda h: (h["kind"], h["path"], h["line"]))
     counts = {name: sum(h["kind"] == name for h in hits)
