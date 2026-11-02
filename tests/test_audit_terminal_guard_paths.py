@@ -113,8 +113,8 @@ class TerminalGuardPathsTests(unittest.TestCase):
 
     def test_say08_start_assignment_outside_guard_fails_closed(self):
         self.sources[audit.CONTROL] = CONTROL.replace(
-            '   _root.Display_say[8] = 1;\\n   _root.CopyMovie("mt_say_08"',
-            '}\\n_root.Display_say[8] = 1;\\n   _root.CopyMovie("mt_say_08"')
+            '   _root.Display_say[8] = 1;\n   _root.CopyMovie("mt_say_08"',
+            '}\n_root.Display_say[8] = 1;\n   _root.CopyMovie("mt_say_08"')
         with self.assertRaisesRegex(ValueError, "tile-129 say-08 start"):
             self.run_audit()
 
