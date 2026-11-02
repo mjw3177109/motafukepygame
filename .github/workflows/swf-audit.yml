@@ -136,6 +136,9 @@ jobs:
       - name: Verify all 3267 committed floor cells against hashed original ActionScript
         run: |
           python tools/verify_original_floors.py --committed data/original_floors.json --extracted .swf_audit/original_tables.json --export-root .swf_audit
+      - name: Locate source-verified ending/dialogue tiles in original initial maps (not runtime)
+        run: |
+          python -m tools.audit_terminal_tile_locations --committed data/original_floors.json --extracted .swf_audit/original_tables.json --manifest .swf_audit/manifest.json --export-root .swf_audit/export --swf game.swf --out .swf_audit/original_terminal_tile_locations.json
       - name: Audit original floor sprite alias coverage (no false parity)
         run: python tools/audit_floor_assets.py --floors data/original_floors.json --manifest .swf_audit/manifest.json --out .swf_audit/floor_asset_coverage.json
       - name: Trace original ExportAssets sprites to hashed shape exports
@@ -204,6 +207,7 @@ jobs:
             .swf_audit/original_terminal_candidates.json
             .swf_audit/original_say08_handoff.json
             .swf_audit/original_terminal_guard_paths.json
+            .swf_audit/original_terminal_tile_locations.json
             .swf_audit/floor_asset_coverage.json
             .swf_audit/swf_symbol_trace.json
             .swf_audit/swf_sprite_frames.json
