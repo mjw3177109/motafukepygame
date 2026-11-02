@@ -9,7 +9,13 @@ from tools import audit_terminal_guard_paths as audit
 from tools import audit_terminal_candidates as base
 
 INIT = "mt_LastGame_ID = 0;\n"
-CONTROL = '''if(Number(eval(temp_lines)[temp_x][temp_y]) == 24 && _root.mt_changes == 1 && _root.my_love == 0)
+CONTROL = '''if(Number(eval(temp_lines)[temp_x][temp_y]) == 129 && _root.Display_say[8] == 0)
+{
+   _root.Now_key_flag = 0;
+   _root.Display_say[8] = 1;
+   _root.CopyMovie("mt_say_08","mtsay_008",1350,380,207);
+}
+if(Number(eval(temp_lines)[temp_x][temp_y]) == 24 && _root.mt_changes == 1 && _root.my_love == 0)
 {
    _root.Now_key_flag = 0;
    _root.Display_say[0] = 1;
@@ -70,6 +76,11 @@ class TerminalGuardPathsTests(unittest.TestCase):
 
     def test_static_guard_and_save_load_sources_verified_without_runtime_claims(self):
         result = self.run_audit()
+        self.assertEqual(result["say08_start_event"]["tile_id"], 129)
+        self.assertEqual(result["say08_start_event"]["required_Display_say_8"], 0)
+        self.assertEqual(result["say08_start_event"]["assigned_Display_say_8"], 1)
+        self.assertEqual(result["say08_start_event"]["created_clip"], "mtsay_008")
+        self.assertTrue(result["say08_start_event"]["same_guarded_block_verified"])
         self.assertEqual(result["tile_event"]["assigned_mt_LastGame_ID"], 1)
         self.assertTrue(result["tile_event"]["same_guarded_block_verified"])
         self.assertEqual(result["initial"]["value"], 0)
@@ -82,6 +93,30 @@ class TerminalGuardPathsTests(unittest.TestCase):
     def test_crlf_source_is_accepted(self):
         self.sources = {k: v.replace("\n", "\r\n") for k, v in self.sources.items()}
         self.assertTrue(self.run_audit()["source_anchors_verified"])
+
+    def test_say08_start_wrong_tile_fails_closed(self):
+        self.sources[audit.CONTROL] = CONTROL.replace("== 129 &&", "== 128 &&")
+        with self.assertRaisesRegex(ValueError, "tile-129 say-08 start"):
+            self.run_audit()
+
+    def test_say08_start_wrong_initial_state_fails_closed(self):
+        self.sources[audit.CONTROL] = CONTROL.replace(
+            "_root.Display_say[8] == 0", "_root.Display_say[8] == 1")
+        with self.assertRaisesRegex(ValueError, "tile-129 say-08 start"):
+            self.run_audit()
+
+    def test_say08_start_wrong_clip_fails_closed(self):
+        self.sources[audit.CONTROL] = CONTROL.replace(
+            '"mt_say_08","mtsay_008"', '"mt_say_07","mtsay_008"')
+        with self.assertRaisesRegex(ValueError, "tile-129 say-08 start"):
+            self.run_audit()
+
+    def test_say08_start_assignment_outside_guard_fails_closed(self):
+        self.sources[audit.CONTROL] = CONTROL.replace(
+            '   _root.Display_say[8] = 1;\\n   _root.CopyMovie("mt_say_08"',
+            '}\\n_root.Display_say[8] = 1;\\n   _root.CopyMovie("mt_say_08"')
+        with self.assertRaisesRegex(ValueError, "tile-129 say-08 start"):
+            self.run_audit()
 
     def test_wrong_event_guard_fails_closed(self):
         self.sources[audit.CONTROL] = CONTROL.replace("_root.my_love == 0", "_root.my_love == 1")

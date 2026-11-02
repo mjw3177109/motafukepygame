@@ -16,6 +16,15 @@ from tools.audit_terminal_candidates import audit_candidates, sha256
 INIT = "scripts/frame_4346/DoAction.as"
 CONTROL = "scripts/frame_4346/DoAction_2.as"
 
+SAY08_START = (
+    r'if\\s*\\(\\s*Number\\(eval\\(temp_lines\\)\\[temp_x\\]\\[temp_y\\]\\)\\s*==\\s*129'
+    r'\\s*&&\\s*_root\\.Display_say\\[8\\]\\s*==\\s*0\\s*\\)\\s*\\{'
+    r'\\s*_root\\.Now_key_flag\\s*=\\s*0\\s*;'
+    r'\\s*_root\\.Display_say\\[8\\]\\s*=\\s*1\\s*;'
+    r'\\s*_root\\.CopyMovie\\(\\s*"mt_say_08"\\s*,\\s*"mtsay_008"\\s*,\\s*1350\\s*,\\s*380\\s*,\\s*207\\s*\\)\\s*;'
+    r'\\s*\\}'
+)
+
 EVENT = (
     r'if\s*\(\s*Number\(eval\(temp_lines\)\[temp_x\]\[temp_y\]\)\s*==\s*24'
     r'\s*&&\s*_root\.mt_changes\s*==\s*1\s*&&\s*_root\.my_love\s*==\s*0\s*\)\s*\{'
@@ -56,6 +65,7 @@ def audit_paths_from_verified_sources(load: Callable[[str], tuple[str, str]]) ->
     control, control_sha = load(CONTROL)
     init = _one(initial, r"^[ \t]*mt_LastGame_ID[ \t]*=[ \t]*0[ \t]*;[ \t\r]*$",
                 "initial mt_LastGame_ID=0")
+    say08_start = _one(control, SAY08_START, "tile-129 say-08 start")
     event = _one(control, EVENT, "tile-24 guarded mt_LastGame_ID=1")
     save_body, save_offset = _function(control, "SaveData")
     load_body, load_offset = _function(control, "LoadData")
@@ -80,6 +90,12 @@ def audit_paths_from_verified_sources(load: Callable[[str], tuple[str, str]]) ->
         "schema_version": 1,
         "sources": {INIT: initial_sha, CONTROL: control_sha},
         "initial": {"path": INIT, "line": initial.count("\n", 0, init.start()) + 1, "value": 0},
+        "say08_start_event": {"path": CONTROL,
+                              "line": control.count("\\n", 0, say08_start.start()) + 1,
+                              "tile_id": 129, "required_Display_say_8": 0,
+                              "assigned_Display_say_8": 1,
+                              "created_clip": "mtsay_008",
+                              "same_guarded_block_verified": True},
         "tile_event": {"path": CONTROL, "line": control.count("\n", 0, event.start()) + 1,
                        "tile_id": 24, "mt_changes": 1, "my_love": 0,
                        "assigned_mt_LastGame_ID": 1,
@@ -134,7 +150,8 @@ def main() -> None:
         args.out.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     except (OSError, ValueError, UnicodeDecodeError, KeyError) as exc:
         parser.exit(2, f"FAIL: original terminal guard paths: {exc}\n")
-    print("PASS: source-hashed initial, tile-24 guard, SaveData/LoadData textual anchors; "
+    print("PASS: source-hashed tile-129 say-08 entry, tile-24 ending guard, "
+          "initial state and SaveData/LoadData textual anchors; "
           "runtime, ending, dual-client parity and RL NOT VERIFIED")
 
 
