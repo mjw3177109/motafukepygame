@@ -156,5 +156,20 @@ class Tile24BranchOrderTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'floor22_dialogue missing pre-choice setup'):
             verify_tile24_branch_order(changed)
 
+    def test_floor22_setup_order_must_match_original(self):
+        changed = SOURCE.replace(
+            '      _root.Now_key_flag = 0;\n      _root.Display_say[0] = 1;\n      _root.CopyMovie',
+            '      _root.Display_say[0] = 1;\n      _root.Now_key_flag = 0;\n      _root.CopyMovie')
+        with self.assertRaisesRegex(ValueError, 'pre-choice setup order'):
+            verify_tile24_branch_order(changed)
+
+    def test_floor22_duplicate_setup_write_fails_closed(self):
+        changed = SOURCE.replace(
+            '      _root.Now_key_flag = 0;\n      _root.Display_say[0] = 1;\n      _root.CopyMovie',
+            '      _root.Now_key_flag = 0;\n      _root.Display_say[0] = 1;\n      _root.Display_say[0] = 1;\n      _root.CopyMovie')
+        with self.assertRaisesRegex(ValueError, 'missing or duplicated pre-choice setup'):
+            verify_tile24_branch_order(changed)
+
+
 if __name__ == '__main__':
     unittest.main()
