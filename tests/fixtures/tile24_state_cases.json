@@ -1,0 +1,256 @@
+[
+  {
+    "name": "non_event_tile",
+    "input": {
+      "tile_id": 129,
+      "display_say0": 0,
+      "mt_changes": 1,
+      "my_love": 0,
+      "now_line": 22,
+      "get_money": [
+        0,
+        0,
+        0
+      ],
+      "now_key_flag": 1,
+      "last_game_id": 0,
+      "floor20_7_5": 24
+    },
+    "branches": [],
+    "dialogues": [],
+    "changed": {}
+  },
+  {
+    "name": "initial_only",
+    "input": {
+      "tile_id": 24,
+      "display_say0": 0,
+      "mt_changes": 0,
+      "my_love": 0,
+      "now_line": 0,
+      "get_money": [
+        0,
+        0,
+        0
+      ],
+      "now_key_flag": 1,
+      "last_game_id": 0,
+      "floor20_7_5": 24
+    },
+    "branches": [
+      "initial_dialogue"
+    ],
+    "dialogues": [],
+    "changed": {
+      "display_say0": 1
+    }
+  },
+  {
+    "name": "ending_after_initial",
+    "input": {
+      "tile_id": 24,
+      "display_say0": 0,
+      "mt_changes": 1,
+      "my_love": 0,
+      "now_line": 0,
+      "get_money": [
+        0,
+        0,
+        0
+      ],
+      "now_key_flag": 1,
+      "last_game_id": 0,
+      "floor20_7_5": 24
+    },
+    "branches": [
+      "initial_dialogue",
+      "ending_state_change"
+    ],
+    "dialogues": [
+      "say_three"
+    ],
+    "changed": {
+      "display_say0": 1,
+      "mt_changes": 0,
+      "last_game_id": 1
+    }
+  },
+  {
+    "name": "love_with_item",
+    "input": {
+      "tile_id": 24,
+      "display_say0": 1,
+      "mt_changes": 0,
+      "my_love": 1,
+      "now_line": 0,
+      "get_money": [
+        1,
+        0,
+        0
+      ],
+      "now_key_flag": 1,
+      "last_game_id": 0,
+      "floor20_7_5": 24
+    },
+    "branches": [
+      "love_dialogue"
+    ],
+    "dialogues": [
+      "say_four"
+    ],
+    "changed": {
+      "my_love": 0,
+      "floor20_7_5": 13
+    }
+  },
+  {
+    "name": "love_without_item",
+    "input": {
+      "tile_id": 24,
+      "display_say0": 1,
+      "mt_changes": 1,
+      "my_love": 1,
+      "now_line": 0,
+      "get_money": [
+        0,
+        0,
+        0
+      ],
+      "now_key_flag": 1,
+      "last_game_id": 0,
+      "floor20_7_5": 24
+    },
+    "branches": [
+      "love_dialogue"
+    ],
+    "dialogues": [
+      "say_two"
+    ],
+    "changed": {
+      "my_love": 0,
+      "mt_changes": 0,
+      "floor20_7_5": 13
+    }
+  },
+  {
+    "name": "floor22_all_items",
+    "input": {
+      "tile_id": 24,
+      "display_say0": 1,
+      "mt_changes": 0,
+      "my_love": 0,
+      "now_line": 22,
+      "get_money": [
+        1,
+        1,
+        1
+      ],
+      "now_key_flag": 1,
+      "last_game_id": 0,
+      "floor20_7_5": 24
+    },
+    "branches": [
+      "floor22_dialogue"
+    ],
+    "dialogues": [
+      "say_six"
+    ],
+    "changed": {
+      "now_key_flag": 0
+    }
+  },
+  {
+    "name": "floor22_missing_item",
+    "input": {
+      "tile_id": 24,
+      "display_say0": 1,
+      "mt_changes": 0,
+      "my_love": 0,
+      "now_line": 22,
+      "get_money": [
+        1,
+        1,
+        0
+      ],
+      "now_key_flag": 1,
+      "last_game_id": 0,
+      "floor20_7_5": 24
+    },
+    "branches": [
+      "floor22_dialogue"
+    ],
+    "dialogues": [
+      "say_five"
+    ],
+    "changed": {
+      "now_key_flag": 0
+    }
+  },
+  {
+    "name": "three_independent_guards",
+    "input": {
+      "tile_id": 24,
+      "display_say0": 0,
+      "mt_changes": 1,
+      "my_love": 0,
+      "now_line": 22,
+      "get_money": [
+        1,
+        1,
+        1
+      ],
+      "now_key_flag": 1,
+      "last_game_id": 0,
+      "floor20_7_5": 24
+    },
+    "branches": [
+      "initial_dialogue",
+      "ending_state_change",
+      "floor22_dialogue"
+    ],
+    "dialogues": [
+      "say_three",
+      "say_six"
+    ],
+    "changed": {
+      "display_say0": 1,
+      "mt_changes": 0,
+      "last_game_id": 1,
+      "now_key_flag": 0
+    }
+  },
+  {
+    "name": "love_then_floor22",
+    "input": {
+      "tile_id": 24,
+      "display_say0": 0,
+      "mt_changes": 1,
+      "my_love": 1,
+      "now_line": 22,
+      "get_money": [
+        1,
+        0,
+        0
+      ],
+      "now_key_flag": 1,
+      "last_game_id": 0,
+      "floor20_7_5": 24
+    },
+    "branches": [
+      "initial_dialogue",
+      "love_dialogue",
+      "floor22_dialogue"
+    ],
+    "dialogues": [
+      "say_four",
+      "say_five"
+    ],
+    "changed": {
+      "display_say0": 1,
+      "mt_changes": 0,
+      "my_love": 0,
+      "floor20_7_5": 13,
+      "now_key_flag": 0
+    }
+  }
+]
