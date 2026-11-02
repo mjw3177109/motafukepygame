@@ -76,6 +76,12 @@ if(_root.Display_say[8] == 9)
         self.assertFalse(report["ending_verified"])
         self.assertFalse(report["gymnasium_ready"])
 
+    def test_crlf_ffdec_frame_write_is_accepted(self):
+        for path in list(self.sources):
+            self.sources[path] = self.sources[path].replace("\n", "\r\n")
+        report = handoff.audit_handoff(self.manifest(), self.root, self.swf)
+        self.assertEqual([x["value"] for x in report["writers"]], [2, 5, 9])
+
     def test_missing_frame_write_fails_closed(self):
         path = "scripts/DefineSprite_795_mt_say_08/frame_12/DoAction.as"
         self.sources[path] = "_root.Display_say[8] = 8;\n"

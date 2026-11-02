@@ -40,7 +40,7 @@ def audit_handoff(manifest: dict, export_root: Path, swf_bytes: bytes) -> dict:
         source, digest = load(path)
         match = _require_once(
             source,
-            rf"^[ \t]*_root\.Display_say\[8\][ \t]*=[ \t]*{value}[ \t]*;[ \t]*$",
+            rf"^[ \t]*_root\.Display_say\[8\][ \t]*=[ \t]*{value}[ \t]*;[ \t\r]*$",
             f"say-08 frame {frame} write",
         )
         writers.append({"frame": frame, "value": value, "path": path,
