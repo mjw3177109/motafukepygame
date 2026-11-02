@@ -19,6 +19,23 @@ for (const c of cases) {
     assert.equal(result.source_branch_order_verified, false);
   });
 }
+test('safe integer boundary matches Python review contract', () => {
+  const max = Number.MAX_SAFE_INTEGER;
+  assert.equal(traceTile24State({...cases[1].input, tile_id:max}).state.tile_id, max);
+  assert.equal(traceTile24State({...cases[1].input, floor20_7_5:-max}).state.floor20_7_5, -max);
+});
+test('reject unsafe integers without input mutation', () => {
+  const unsafe = Number.MAX_SAFE_INTEGER + 1;
+  for (const changed of [
+    {...cases[1].input, tile_id:unsafe},
+    {...cases[1].input, floor20_7_5:unsafe},
+    {...cases[1].input, floor20_7_5:-unsafe},
+  ]) {
+    const before = structuredClone(changed);
+    assert.throws(() => traceTile24State(changed));
+    assert.deepEqual(changed, before);
+  }
+});
 test('reject malformed and coerced state without mutation', () => {
   const input = cases[1].input;
   for (const bad of [null, [], {...input, my_love:true}, {...input, get_money:[1,1]},

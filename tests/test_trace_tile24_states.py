@@ -71,6 +71,24 @@ class Tile24StateTraceTests(unittest.TestCase):
             with self.subTest(changed=changed), self.assertRaises(ValueError):
                 trace_tile24_states(changed, SOURCE)
 
+    def test_safe_integer_boundary_matches_javascript(self):
+        maximum = (1 << 53) - 1
+        for original in (state(tile_id=maximum), state(floor20_7_5=-maximum)):
+            with self.subTest(original=original):
+                result = trace_tile24_states(original, SOURCE)
+                self.assertEqual(result["state"]["tile_id"], original["tile_id"])
+                self.assertEqual(result["state"]["floor20_7_5"], original["floor20_7_5"])
+
+    def test_unsafe_cross_language_integer_rejected_without_mutation(self):
+        unsafe = 1 << 53
+        for original in (state(tile_id=unsafe), state(floor20_7_5=unsafe),
+                         state(floor20_7_5=-unsafe)):
+            with self.subTest(original=original):
+                before = {**original, "get_money": list(original["get_money"])}
+                with self.assertRaises(ValueError):
+                    trace_tile24_states(original, SOURCE)
+                self.assertEqual(original, before)
+
     def test_result_cannot_claim_runtime_parity(self):
         result = trace_tile24_states(state(), SOURCE)
         self.assertTrue(result["branch_local_hypothesis_only"])

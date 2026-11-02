@@ -16,6 +16,9 @@ BRANCHES = (
     "initial_dialogue", "ending_state_change", "love_dialogue", "floor22_dialogue",
 )
 
+# Match the JSON/JavaScript probe integer domain; never silently round state IDs.
+MAX_SAFE_INTEGER = (1 << 53) - 1
+
 
 def trace_tile24_states(state: dict, actionscript: str) -> dict:
     """Hypothetical branch-local trace; NOT Flash runtime or dual-client parity."""
@@ -32,9 +35,10 @@ def trace_tile24_states(state: dict, actionscript: str) -> dict:
     flags = ("display_say0", "mt_changes", "my_love", "now_key_flag", "last_game_id")
     if any(type(state[k]) is not int or state[k] not in (0, 1) for k in flags):
         raise ValueError("binary state flags required")
-    if (type(state["tile_id"]) is not int or state["tile_id"] < 0
+    if (type(state["tile_id"]) is not int or not 0 <= state["tile_id"] <= MAX_SAFE_INTEGER
             or type(state["now_line"]) is not int or not 0 <= state["now_line"] <= 26
-            or type(state["floor20_7_5"]) is not int):
+            or type(state["floor20_7_5"]) is not int
+            or abs(state["floor20_7_5"]) > MAX_SAFE_INTEGER):
         raise ValueError("invalid tile, floor or map cell")
     items = state["get_money"]
     if (type(items) is not list or len(items) != 3

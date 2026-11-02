@@ -15,3 +15,7 @@ This is **cross-language probe regression**, not real Pygame/HTML5 game executio
 ## Shared fixture clip-command guard (2026-11-02)
 
 Previous shared tests checked branch names, dialogue commands, and final state, but **did not assert `CopyMovie` commands or which branch emitted them**. A regression that dropped or moved a clip command could pass both language suites. The nine synthetic fixtures now specify `clip_commands` as ordered `{branch, clip_command}` records; Python and JavaScript both compare them exactly, including empty cases and two-command combinations. This is a regression guard for *review-only command logging*, not Flash movie execution or actual client parity. No gameplay behavior, SWF resources, or RL readiness flags changed.
+
+## Cross-language integer precision guard (2026-11-02)
+
+The Python tile-24 tracer previously accepted arbitrarily large `tile_id` and `floor20_7_5` integers while the JavaScript probe correctly rejected values outside `Number.isSafeInteger`. Passing these values through JSON/JavaScript could silently change the event tile or map-cell state. Python now enforces the same inclusive ±(2^53−1) safe-integer domain as JavaScript (with `tile_id` still nonnegative); both suites test the accepted boundary and reject ±2^53 without mutating inputs. This fixes **synthetic probe input parity only**, not original Flash numeric semantics, Pygame/HTML5 gameplay, or runtime parity. Flash baselines and Gymnasium/Kaggle gates remain unverified/closed.
