@@ -83,6 +83,31 @@ class MovementProbeTests(unittest.TestCase):
                     step_move_arrow(state, 2)
                 self.assertEqual(state, before)
 
+
+    def test_reject_malformed_key_inventory_without_mutation(self):
+        invalid = [
+            None, [], {"yellow": 0, "blue": 0},
+            {"yellow": True, "blue": 0, "red": 0},
+            {"yellow": "1", "blue": 0, "red": 0},
+            {"yellow": 2**53, "blue": 0, "red": 0},
+        ]
+        for keys in invalid:
+            with self.subTest(keys=repr(keys)):
+                state = make_state(CASES[5])
+                state["keys"] = keys
+                before = deepcopy(state)
+                with self.assertRaisesRegex(ValueError, "key inventory"):
+                    step_move_arrow(state, 2)
+                self.assertEqual(state, before)
+
+    def test_key_pickup_safe_integer_overflow_fails_closed(self):
+        state = make_state(CASES[5])
+        state["keys"]["yellow"] = (1 << 53) - 1
+        before = deepcopy(state)
+        with self.assertRaisesRegex(ValueError, "key inventory overflow"):
+            step_move_arrow(state, 2)
+        self.assertEqual(state, before)
+
     def test_reject_bad_direction(self):
         with self.assertRaisesRegex(ValueError,'arrow_id'):
             step_move_arrow(make_state(CASES[0]),5)

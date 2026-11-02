@@ -36,6 +36,13 @@ def step_move_arrow(snapshot: dict, arrow_id: int) -> dict:
                 type(value) is not int or abs(value) > MAX_SAFE_INTEGER
                 for value in line) for line in grid)):
         raise ValueError("expected 11x11 original floor")
+    # Reject malformed JSON inventory before pickup/door arithmetic. Negative
+    # counts remain legal inputs here: the original locked-door fixture uses -1.
+    keys = state.get("keys")
+    if type(keys) is not dict or any(
+            type(keys.get(color)) is not int or abs(keys[color]) > MAX_SAFE_INTEGER
+            for color in ("yellow", "blue", "red")):
+        raise ValueError("expected safe-integer key inventory")
     row, col = state["row"], state["col"]
     if not (type(row) is int and type(col) is int and 0 <= row < 11 and 0 <= col < 11):
         raise ValueError("invalid original row/column")
@@ -56,6 +63,8 @@ def step_move_arrow(snapshot: dict, arrow_id: int) -> dict:
         return {"state": state, "event": "wall"}
     if tile in KEY_PICKUPS:
         key = KEY_PICKUPS[tile]
+        if state["keys"][key] == MAX_SAFE_INTEGER:
+            raise ValueError("key inventory overflow")
         state["keys"][key] += 1
         grid[nr][nc] = 0
         return {"state": state, "event": "pickup_" + key + "_key"}

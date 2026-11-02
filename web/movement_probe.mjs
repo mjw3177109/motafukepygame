@@ -20,6 +20,13 @@ export function stepMoveArrow(snapshot, arrowId) {
   if (!Number.isInteger(arrowId) || !Object.hasOwn(DELTAS, arrowId)) {
     throw new Error('arrow_id must be one of Flash 1,2,3,4');
   }
+  // Reject inherited/missing/coerced inventory before cloning or arithmetic.
+  const keys = snapshot?.keys;
+  if (!keys || typeof keys !== 'object' || Array.isArray(keys) ||
+      ['yellow','blue','red'].some(color =>
+        !Object.hasOwn(keys,color) || !Number.isSafeInteger(keys[color]))) {
+    throw new Error('expected safe-integer key inventory');
+  }
   const state = structuredClone(snapshot);
   const grid = state.grid;
   if (!isDenseOriginalGrid(grid)) {
@@ -43,6 +50,7 @@ export function stepMoveArrow(snapshot, arrowId) {
   if (tile === 1) return {state,event:'wall'};
   if (Object.hasOwn(keyPickups,tile)) {
     const key=keyPickups[tile];
+    if (state.keys[key] === Number.MAX_SAFE_INTEGER) throw new Error('key inventory overflow');
     state.keys[key]++; grid[nr][nc]=0;
     return {state,event:'pickup_'+key+'_key'};
   }

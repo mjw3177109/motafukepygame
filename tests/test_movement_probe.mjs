@@ -59,3 +59,29 @@ test('reject sparse, inherited and unsafe grid slots before movement',()=>{
       assert.equal(Object.hasOwn(state.grid[2],4),false);
   }
 });
+
+test('reject malformed inventory before key pickup without mutation',()=>{
+  const invalid=[
+    null, [], {yellow:0,blue:0},
+    {yellow:true,blue:0,red:0},
+    {yellow:'1',blue:0,red:0},
+    {yellow:Number.MAX_SAFE_INTEGER+1,blue:0,red:0},
+  ];
+  for (const keys of invalid) {
+    const state=makeState(cases[5]);state.keys=keys;
+    const before=structuredClone(state);
+    assert.throws(()=>stepMoveArrow(state,2),/key inventory/);
+    assert.deepEqual(state,before);
+  }
+  const inherited=Object.create({yellow:0});
+  Object.assign(inherited,{blue:0,red:0});
+  const state=makeState(cases[5]);state.keys=inherited;
+  assert.throws(()=>stepMoveArrow(state,2),/key inventory/);
+  assert.equal(Object.hasOwn(state.keys,'yellow'),false);
+});
+test('key pickup cannot overflow JavaScript safe integer',()=>{
+  const state=makeState(cases[5]);state.keys.yellow=Number.MAX_SAFE_INTEGER;
+  const before=structuredClone(state);
+  assert.throws(()=>stepMoveArrow(state,2),/key inventory overflow/);
+  assert.deepEqual(state,before);
+});
