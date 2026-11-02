@@ -79,3 +79,22 @@ test('arrow-turn JS safe-integer and idle flag preflight matches Python',()=>{
   const world=worldFor(cases[0]);world.display_kill=false;
   assert.throws(()=>stepArrowTurn(world,2,monsters),/idle/);
 });
+
+
+test('arrow-turn rejects inherited keyboard gate flags and array worlds',()=>{
+  const baseline=worldFor(cases[0]);
+  for (const field of ['key_flag','display_list','display_jump','display_text','display_buy']) {
+    const world={...baseline},value=world[field];
+    delete world[field];
+    const proto={};
+    Object.defineProperty(proto,field,{value,enumerable:true});
+    Object.setPrototypeOf(world,proto);
+    assert.throws(()=>classifyArrowInput(world,2),/flags/);
+    assert.throws(()=>stepArrowTurn(world,2,monsters),/flags/);
+    assert.equal(Object.hasOwn(world,field),false,'input must remain unchanged');
+  }
+  const arrayWorld=[];
+  Object.assign(arrayWorld,baseline);
+  assert.throws(()=>classifyArrowInput(arrayWorld,2),/flags/);
+  assert.throws(()=>stepArrowTurn(arrayWorld,2,monsters),/flags/);
+});

@@ -6,7 +6,8 @@ export function classifyArrowInput(world, arrowId) {
   if (!Number.isSafeInteger(arrowId) || !Object.hasOwn(DELTAS, arrowId))
     throw new Error('arrow_id must be one of Flash 1,2,3,4');
   const flags=['key_flag','display_list','display_jump','display_text','display_buy'];
-  if (!world || flags.some(f=>!Number.isSafeInteger(world[f])))
+  if (!world || typeof world !== 'object' || Array.isArray(world) ||
+      flags.some(f=>!Object.hasOwn(world,f) || !Number.isSafeInteger(world[f])))
     throw new Error('original keyboard gate flags required');
   if (world.key_flag===1 && world.display_list===0 && world.display_jump===0 && world.display_text===0)
     return 'move_arrow';
