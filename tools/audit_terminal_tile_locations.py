@@ -8,7 +8,9 @@ import argparse
 import json
 from pathlib import Path
 
-from tools.audit_terminal_guard_paths import audit_paths
+from tools.audit_terminal_candidates import sha256
+from tools.audit_terminal_guard_paths import CONTROL, audit_paths
+from tools.audit_move_arrow_binding import verify_move_arrow_binding
 from tools.verify_original_floors import verify_original_floors
 
 # Locked against the original Flash 1.12 initial 27 x 11 x 11 maps.
@@ -87,6 +89,13 @@ def audit_locations(committed: dict, extracted: dict, manifest: dict,
     report["actionscript_sha256"] = extracted["source"]["actionscript_sha256"]
     report["verified_static_cells"] = floor_proof["cell_count"]
     report["guard_source_paths"] = guard["sources"]
+    control_path = export_root / CONTROL
+    if control_path.is_symlink() or not control_path.resolve().is_relative_to(export_root.resolve()):
+        raise ValueError("unsafe Move_arrow source path")
+    control_bytes = control_path.read_bytes()
+    if sha256(control_bytes) != guard["sources"][CONTROL]:
+        raise ValueError("Move_arrow source changed after provenance check")
+    report["move_arrow_lookup"] = verify_move_arrow_binding(control_bytes.decode("utf-8-sig"))
     return report
 
 

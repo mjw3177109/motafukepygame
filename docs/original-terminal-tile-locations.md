@@ -10,3 +10,12 @@
 上述位置是初始静态数组的 [outer_index][inner_index]，不是已确认的屏幕 (x,y) 坐标；不能推断玩家一定能到达、进入事件判断，或剧情修改后仍保留该格。temp_lines 的运行时选择、动态地图变化、事件顺序、存档恢复、Flash 实机结局和 Pygame/HTML5 双端回放均未验证。
 
 CI 在验证原版楼层表后运行新审计，并归档 original_terminal_tile_locations.json。校验楼层形状、事件格位置/数量、原版事件条件及来源哈希；出现变化即失败关闭。下一步核对 temp_lines 的来源与动态事件写入，再采集原版 Flash 操作轨迹。Gymnasium/Kaggle 门禁继续关闭。
+
+
+## Move_arrow 楼层选择与地图坐标的源码绑定（新增）
+
+本轮从已归档且通过来源哈希校验的 `scripts/frame_4346/DoAction_2.as` 中，核对 `Move_arrow(arrow_id)` 函数。原版在 `Now_line < 10` 时使用 `"_root.mt_line_0" add Now_line`，否则使用 `"_root.mt_line_" add Now_line`。移动前以 `Now_xid`、`Now_yid` 初始化 `temp_x`、`temp_y`，事件查询为 `eval(temp_lines)[temp_x][temp_y]`。角色显示坐标的原始赋值为 `_x = 207 + temp_y * 32`、`_y = 47 + temp_x * 32`。这说明数组外层对应显示纵向、内层对应显示横向；仍不代表已经验证 Flash 运行时渲染或点击位置。
+
+同一 `Move_arrow` 函数内，编号 129 的事件条件出现 1 处，编号 24 的事件条件出现 4 处（含不同剧情条件）；不能把编号 24 的所有触发都解释为结局状态写入。新增 `tools/audit_move_arrow_binding.py` 和 8 项失败关闭测试，检查楼层补零、索引初始化、屏幕坐标映射、事件查询所在函数及条件出现次数。审计重读源文件并复核 SHA256，结果写入原有 `original_terminal_tile_locations.json` 的 `move_arrow_lookup` 字段。
+
+**验收边界：** 本轮只确认静态源码关系，不证明实际楼层切换、动态地图修改、事件可达性、存档往返、原版结局或 Pygame/HTML5 行为一致。下一步按真实 Flash 轨迹验证 `Move_arrow` 的事件状态转换，Gymnasium/Kaggle 门禁保持关闭。
