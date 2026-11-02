@@ -106,5 +106,36 @@ if(_root.Display_say[8] == 9)
             handoff.audit_handoff(self.manifest(), self.root, b"wrong")
 
 
+    def test_indexes_original_guard_write_candidates_with_hash_and_context(self):
+        path = "scripts/frame_4346/DoAction_2.as"
+        self.sources[path] = (
+            "mt_LastGame_ID = 0;\n"
+            "_root.mt_LastGame_ID += 1;\n"
+            "if(mt_LastGame_ID == 0) {}\n"
+            "Display_say[8] = 9;\n"
+        )
+        report = handoff.audit_handoff(self.manifest(), self.root, self.swf)
+        guard = report["terminal_guard"]
+        self.assertEqual(report["schema_version"], 2)
+        self.assertEqual(guard["variable"], "mt_LastGame_ID")
+        self.assertEqual(guard["write_candidate_count"], 2)
+        self.assertEqual([hit["line"] for hit in guard["write_candidates"]], [1, 2])
+        self.assertEqual([hit["operator"] for hit in guard["write_candidates"]], ["=", "+="])
+        self.assertEqual([hit["target"] for hit in guard["write_candidates"]],
+                         ["mt_LastGame_ID", "_root.mt_LastGame_ID"])
+        self.assertTrue(all(hit["path"] == path for hit in guard["write_candidates"]))
+        self.assertTrue(all(len(hit["source_sha256"]) == 64 for hit in guard["write_candidates"]))
+        self.assertTrue(all(hit["source_context"] for hit in guard["write_candidates"]))
+        self.assertTrue(guard["source_writes_are_text_candidates_only"])
+        self.assertFalse(guard["runtime_value_proven"])
+        self.assertFalse(report["ending_verified"])
+
+    def test_no_guard_write_candidate_does_not_infer_runtime_default(self):
+        report = handoff.audit_handoff(self.manifest(), self.root, self.swf)
+        self.assertEqual(report["terminal_guard"]["write_candidate_count"], 0)
+        self.assertEqual(report["terminal_guard"]["write_candidates"], [])
+        self.assertFalse(report["terminal_guard"]["runtime_value_proven"])
+
+
 if __name__ == "__main__":
     unittest.main()
