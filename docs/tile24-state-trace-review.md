@@ -1,0 +1,7 @@
+# Tile 24 — source-gated branch-local trace (NOT Flash parity)
+
+This increment adds `tools/trace_tile24_states.py` and `tests/test_trace_tile24_states.py` to convert four previously audited `Move_arrow` tile-24 source blocks into **review-only, deterministic input/output examples**. The tool calls `verify_tile24_branch_order()` on supplied ActionScript before tracing, rejects malformed inputs, preserves the input, and records only effects represented in the audited branch-local model. `CopyMovie` and `gotoAndPlay` are **logged as commands, not executed**.
+
+The model follows the audited independent source order: initial dialogue → ending-state change → `my_love` dialogue → floor-22 three-item dialogue. For tile 24 with `Display_say[0]=0`, `mt_changes=1`, `my_love=0`, and floor 22, the *branch-local hypothetical* trace includes initial dialogue, `say_three`, and floor-22 `say_five`/`say_six` selection. It does **not** establish that a real Flash run reaches or executes these branches together. Other `Move_arrow` statements, movie timing, external map mutation, save/load, UI, and actual Pygame/HTML5 runtime are out of scope.
+
+Focused regression: `python -m unittest discover -s tests -p 'test_trace_tile24_states.py' -v`. Existing CI Python discovery includes these tests. Next: capture original Flash input/state traces and compare actual Pygame and HTML5 replays, including cases where multiple guards might be true. Neither source audit nor synthetic replay authorizes 1:1 or Gymnasium/Kaggle claims.
