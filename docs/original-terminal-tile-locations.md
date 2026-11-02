@@ -31,3 +31,10 @@ CI 在验证原版楼层表后运行新审计，并归档 original_terminal_tile
 4. 第 762 行：Now_line == 22，根据三项 mt_GetMoney 状态选择 say_six 或 say_five。
 
 新增 tools/audit_tile24_branch_order.py 和 8 项回归测试，核对四个守卫的存在、数量、顺序及关键写入是否仍处于对应的花括号作用域。结果作为 original_terminal_tile_locations.json 的 tile24_branch_order 字段归档，保留运行时验证为 false。尤其注意：多个独立 if 可能在一次调用中依次满足；目前未证明实际是否会连续执行，也不能把上述静态分支视为剧情或结局已通过验收。下一步应在原版 Flash 中采集 tile-24 触发前后状态轨迹，并在 Pygame/HTML5 双端重放。强化学习门禁不变。
+
+
+## 地图格 24：`my_love == 1` 的双分支防漏审计
+
+复核原版 FFDec 导出的 `Move_arrow` 源码发现：第三条独立 `if` 内还有一层 `mt_GetMoney[0] == 1` 的 `if/else`。持有该状态时进入 `say_four`，否则进入 `say_two`；**两个分支均写入** `mt_line_20[7][5] = 13`。此前审计只要求在外层块内找到一次地图写入，可能漏掉另一分支的错误。
+
+本轮在 `tools/audit_tile24_branch_order.py` 中分别校验两条子分支的对话标签及地图写入，并新增四项失败关闭回归。证据归档新增 `love_dialogue_both_arms_verified`（仅表示静态源码结构）。原版 Flash 运行轨迹、实际道具状态、双端执行结果与结局仍未验收；Gymnasium/Kaggle 门禁继续关闭。

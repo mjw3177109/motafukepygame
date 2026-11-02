@@ -17,8 +17,14 @@ SOURCE = '''function Move_arrow(arrow_id)
    }
    if(Number(eval(temp_lines)[temp_x][temp_y]) == 24 && _root.my_love == 1)
    {
-      if(_root.flag)
+      if(Number(_root.mt_GetMoney[0]) == 1)
       {
+         _root.mtsay_001.gotoAndPlay("say_four");
+         _root.mt_line_20[7][5] = 13;
+      }
+      else
+      {
+         _root.mtsay_001.gotoAndPlay("say_two");
          _root.mt_line_20[7][5] = 13;
       }
       _root.my_love = 0;
@@ -45,6 +51,7 @@ class Tile24BranchOrderTests(unittest.TestCase):
         self.assertEqual([item['branch'] for item in report['source_order']],
                          ['initial_dialogue', 'ending_state_change', 'love_dialogue', 'floor22_dialogue'])
         self.assertTrue(report['independent_if_statements_verified'])
+        self.assertTrue(report['love_dialogue_both_arms_verified'])
         self.assertFalse(report['runtime_combined_branch_execution_verified'])
         self.assertFalse(report['flash_parity_verified'])
 
@@ -83,6 +90,31 @@ class Tile24BranchOrderTests(unittest.TestCase):
             verify_tile24_branch_order(SOURCE.replace(
                 '   if(Number(eval(temp_lines)[temp_x][temp_y]) == 24 && _root.my_love == 1)',
                 '   if(Number(eval(temp_lines)[temp_x][temp_y]) == 24 && _root.my_love == 1)\n   {}\n   if(Number(eval(temp_lines)[temp_x][temp_y]) == 24 && _root.my_love == 1)'))
+
+
+    def test_love_else_dialogue_cannot_be_replaced_by_first_arm(self):
+        changed = SOURCE.replace('gotoAndPlay("say_two")', 'gotoAndPlay("say_four")')
+        with self.assertRaisesRegex(ValueError, 'love_dialogue else arm'):
+            verify_tile24_branch_order(changed)
+
+    def test_love_else_map_write_cannot_be_lost(self):
+        changed = SOURCE.replace(
+            'gotoAndPlay("say_two");\n         _root.mt_line_20[7][5] = 13;',
+            'gotoAndPlay("say_two");\n         _root.mt_line_20[7][5] = 12;')
+        with self.assertRaisesRegex(ValueError, 'love_dialogue else arm'):
+            verify_tile24_branch_order(changed)
+
+    def test_love_if_arm_dialogue_cannot_be_replaced(self):
+        changed = SOURCE.replace('gotoAndPlay("say_four")', 'gotoAndPlay("say_two")')
+        with self.assertRaisesRegex(ValueError, 'love_dialogue if arm'):
+            verify_tile24_branch_order(changed)
+
+    def test_love_else_must_remain_else(self):
+        changed = SOURCE.replace(
+            '      else\n      {\n         _root.mtsay_001.gotoAndPlay("say_two");',
+            '      if(true)\n      {\n         _root.mtsay_001.gotoAndPlay("say_two");')
+        with self.assertRaisesRegex(ValueError, 'love_dialogue missing else arm'):
+            verify_tile24_branch_order(changed)
 
 
 if __name__ == '__main__':

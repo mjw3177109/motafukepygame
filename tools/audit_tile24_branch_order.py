@@ -29,6 +29,30 @@ def _braced_body(source: str, brace_index: int) -> str:
     raise ValueError('unterminated tile-24 branch')
 
 
+def _verify_love_dialogue_arms(branch_body: str) -> None:
+    """Require both original item-dependent arms; a shared write alone is insufficient."""
+    start = re.search(
+        r'(?m)^[ \t]*if\s*\(\s*Number\(_root\.mt_GetMoney\[0\]\)\s*==\s*1\s*\)\s*\{',
+        branch_body,
+    )
+    if start is None:
+        raise ValueError('tile-24 love_dialogue missing item-dependent if arm')
+    yes_body = _braced_body(branch_body, start.end() - 1)
+    closing_brace = start.end() - 1 + len(yes_body) + 1
+    else_match = re.match(r'\s*else\s*\{', branch_body[closing_brace + 1:])
+    if else_match is None:
+        raise ValueError('tile-24 love_dialogue missing else arm')
+    else_brace = closing_brace + 1 + else_match.end() - 1
+    no_body = _braced_body(branch_body, else_brace)
+    for label, body, expected in (
+        ('if', yes_body, '_root.mtsay_001.gotoAndPlay("say_four");'),
+        ('else', no_body, '_root.mtsay_001.gotoAndPlay("say_two");'),
+    ):
+        for statement in (expected, '_root.mt_line_20[7][5] = 13;'):
+            if not re.search(r'(?m)^[ \t]*' + re.escape(statement) + r'[ \t\r]*$', body):
+                raise ValueError(f'tile-24 love_dialogue {label} arm missing statement: {statement}')
+
+
 def verify_tile24_branch_order(source: str) -> dict:
     declarations = list(re.finditer(r'(?m)^function[ \t]+Move_arrow\(arrow_id\)[ \t]*\r?\n\{', source))
     if len(declarations) != 1:
@@ -56,12 +80,15 @@ def verify_tile24_branch_order(source: str) -> dict:
         for statement in statements:
             if not re.search(r'(?m)^[ \t]*' + re.escape(statement) + r'[ \t\r]*$', branch_body):
                 raise ValueError(f'tile-24 {label} missing branch statement: {statement}')
+        if label == 'love_dialogue':
+            _verify_love_dialogue_arms(branch_body)
         output.append({'branch': label, 'guard': condition,
                        'line': source.count('\n', 0, declarations[0].end())
                        + body.count('\n', 0, match.start()) + 1})
     if positions != sorted(positions) or positions != [m.start() for m in tile_guards]:
         raise ValueError('tile-24 independent guard order differs from original')
     return {'source_order': output, 'independent_if_statements_verified': True,
+            'love_dialogue_both_arms_verified': True,
             'runtime_combined_branch_execution_verified': False,
             'runtime_event_reachability_verified': False,
             'flash_parity_verified': False}
