@@ -1,0 +1,67 @@
+"""Static source audit for independent tile-24 branches in original Move_arrow.
+
+The report describes textual ordering, NOT Flash runtime reachability or parity.
+"""
+import re
+
+GUARDS = (
+    ("initial_dialogue", "_root.Display_say[0] == 0", (
+        '_root.Display_say[0] = 1;', '_root.CopyMovie("mt_say_01","mtsay_001",1350,380,207);')),
+    ("ending_state_change", "_root.mt_changes == 1 && _root.my_love == 0", (
+        '_root.mtsay_001.gotoAndPlay("say_three");', '_root.mt_changes = 0;', '_root.mt_LastGame_ID = 1;')),
+    ("love_dialogue", "_root.my_love == 1", (
+        '_root.mt_line_20[7][5] = 13;', '_root.my_love = 0;', '_root.mt_changes = 0;')),
+    ("floor22_dialogue", "_root.Now_line == 22", (
+        '_root.mtsay_001.gotoAndPlay("say_six");', '_root.mtsay_001.gotoAndPlay("say_five");')),
+)
+
+
+def _braced_body(source: str, brace_index: int) -> str:
+    """Return a brace-delimited block, accounting for nested if/else blocks."""
+    depth = 0
+    for i in range(brace_index, len(source)):
+        if source[i] == '{':
+            depth += 1
+        elif source[i] == '}':
+            depth -= 1
+            if depth == 0:
+                return source[brace_index + 1:i]
+    raise ValueError('unterminated tile-24 branch')
+
+
+def verify_tile24_branch_order(source: str) -> dict:
+    declarations = list(re.finditer(r'(?m)^function[ \t]+Move_arrow\(arrow_id\)[ \t]*\r?\n\{', source))
+    if len(declarations) != 1:
+        raise ValueError('expected exactly one Move_arrow declaration')
+    tail = source[declarations[0].end():]
+    end = re.search(r'(?m)^}[ \t\r]*$', tail)
+    if end is None:
+        raise ValueError('missing Move_arrow closing brace')
+    body = tail[:end.start()]
+    prefix = r'(?m)^[ \t]+if\s*\(\s*Number\(eval\(temp_lines\)\[temp_x\]\[temp_y\]\)\s*==\s*24\s*&&\s*'
+    tile_guards = list(re.finditer(prefix, body))
+    if len(tile_guards) != 4:
+        raise ValueError(f'expected four independent tile-24 guards, found {len(tile_guards)}')
+    positions = []
+    output = []
+    for label, condition, statements in GUARDS:
+        cond_regex = re.escape(condition).replace(r'\ ', r'\s*')
+        pattern = prefix + cond_regex + r'\s*\)\s*\{'
+        matches = list(re.finditer(pattern, body))
+        if len(matches) != 1:
+            raise ValueError(f'tile-24 {label} guard missing or duplicated')
+        match = matches[0]
+        positions.append(match.start())
+        branch_body = _braced_body(body, match.end() - 1)
+        for statement in statements:
+            if not re.search(r'(?m)^[ \t]*' + re.escape(statement) + r'[ \t\r]*$', branch_body):
+                raise ValueError(f'tile-24 {label} missing branch statement: {statement}')
+        output.append({'branch': label, 'guard': condition,
+                       'line': source.count('\n', 0, declarations[0].end())
+                       + body.count('\n', 0, match.start()) + 1})
+    if positions != sorted(positions) or positions != [m.start() for m in tile_guards]:
+        raise ValueError('tile-24 independent guard order differs from original')
+    return {'source_order': output, 'independent_if_statements_verified': True,
+            'runtime_combined_branch_execution_verified': False,
+            'runtime_event_reachability_verified': False,
+            'flash_parity_verified': False}

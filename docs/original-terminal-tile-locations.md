@@ -19,3 +19,15 @@ CI 在验证原版楼层表后运行新审计，并归档 original_terminal_tile
 同一 `Move_arrow` 函数内，编号 129 的事件条件出现 1 处，编号 24 的事件条件出现 4 处（含不同剧情条件）；不能把编号 24 的所有触发都解释为结局状态写入。新增 `tools/audit_move_arrow_binding.py` 和 8 项失败关闭测试，检查楼层补零、索引初始化、屏幕坐标映射、事件查询所在函数及条件出现次数。审计重读源文件并复核 SHA256，结果写入原有 `original_terminal_tile_locations.json` 的 `move_arrow_lookup` 字段。
 
 **验收边界：** 本轮只确认静态源码关系，不证明实际楼层切换、动态地图修改、事件可达性、存档往返、原版结局或 Pygame/HTML5 行为一致。下一步按真实 Flash 轨迹验证 `Move_arrow` 的事件状态转换，Gymnasium/Kaggle 门禁保持关闭。
+
+
+## 地图格 24 的四条独立分支：静态顺序与作用域审计
+
+基于同一份通过 SHA256 清单核验的原版 scripts/frame_4346/DoAction_2.as，Move_arrow(arrow_id) 中地图格 24 的四个条件是按源码顺序排列的四个独立 if，不是 if/else if 互斥链：
+
+1. 第 710 行：Display_say[0] == 0，启动第一组对话。
+2. 第 734 行：mt_changes == 1 && my_love == 0，执行 say_three，清除 mt_changes 并写入 mt_LastGame_ID = 1。
+3. 第 744 行：my_love == 1，选择相关对话、修改 mt_line_20[7][5]，并清除 my_love、mt_changes。
+4. 第 762 行：Now_line == 22，根据三项 mt_GetMoney 状态选择 say_six 或 say_five。
+
+新增 tools/audit_tile24_branch_order.py 和 8 项回归测试，核对四个守卫的存在、数量、顺序及关键写入是否仍处于对应的花括号作用域。结果作为 original_terminal_tile_locations.json 的 tile24_branch_order 字段归档，保留运行时验证为 false。尤其注意：多个独立 if 可能在一次调用中依次满足；目前未证明实际是否会连续执行，也不能把上述静态分支视为剧情或结局已通过验收。下一步应在原版 Flash 中采集 tile-24 触发前后状态轨迹，并在 Pygame/HTML5 双端重放。强化学习门禁不变。

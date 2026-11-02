@@ -11,6 +11,7 @@ from pathlib import Path
 from tools.audit_terminal_candidates import sha256
 from tools.audit_terminal_guard_paths import CONTROL, audit_paths
 from tools.audit_move_arrow_binding import verify_move_arrow_binding
+from tools.audit_tile24_branch_order import verify_tile24_branch_order
 from tools.verify_original_floors import verify_original_floors
 
 # Locked against the original Flash 1.12 initial 27 x 11 x 11 maps.
@@ -96,6 +97,7 @@ def audit_locations(committed: dict, extracted: dict, manifest: dict,
     if sha256(control_bytes) != guard["sources"][CONTROL]:
         raise ValueError("Move_arrow source changed after provenance check")
     report["move_arrow_lookup"] = verify_move_arrow_binding(control_bytes.decode("utf-8-sig"))
+    report["tile24_branch_order"] = verify_tile24_branch_order(control_bytes.decode("utf-8-sig"))
     return report
 
 
