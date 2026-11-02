@@ -72,7 +72,24 @@ def _verify_floor22_dialogue_arms(branch_body: str) -> None:
         '_root.Display_say[0] = 1;',
         '_root.CopyMovie("mt_say_01","mtsay_001",1350,380,207);',
     ):
-        if not re.search(r'(?m)^[ \t]*' + re.escape(statement) + r'[ \t\r]*
+        if not re.search(r'(?m)^[ \t]*' + re.escape(statement) + r'[ \t\r]*$', setup):
+            raise ValueError(f'tile-24 floor22_dialogue missing pre-choice setup: {statement}')
+    yes_body = _braced_body(branch_body, start.end() - 1)
+    closing_brace = start.end() - 1 + len(yes_body) + 1
+    else_match = re.match(r'\s*else\s*\{', branch_body[closing_brace + 1:])
+    if else_match is None:
+        raise ValueError('tile-24 floor22_dialogue missing else arm')
+    else_brace = closing_brace + 1 + else_match.end() - 1
+    no_body = _braced_body(branch_body, else_brace)
+    for label, body, statement in (
+        ('if', yes_body, '_root.mtsay_001.gotoAndPlay("say_six");'),
+        ('else', no_body, '_root.mtsay_001.gotoAndPlay("say_five");'),
+    ):
+        if not re.search(r'(?m)^[ \t]*' + re.escape(statement) + r'[ \t\r]*$', body):
+            raise ValueError(f'tile-24 floor22_dialogue {label} arm missing statement: {statement}')
+
+
+def verify_tile24_branch_order(source: str) -> dict:
     declarations = list(re.finditer(r'(?m)^function[ \t]+Move_arrow\(arrow_id\)[ \t]*\r?\n\{', source))
     if len(declarations) != 1:
         raise ValueError('expected exactly one Move_arrow declaration')
@@ -111,101 +128,6 @@ def _verify_floor22_dialogue_arms(branch_body: str) -> None:
     return {'source_order': output, 'independent_if_statements_verified': True,
             'love_dialogue_both_arms_verified': True,
             'floor22_three_item_both_arms_verified': True,
-            'runtime_combined_branch_execution_verified': False,
-            'runtime_event_reachability_verified': False,
-            'flash_parity_verified': False}
-, setup):
-            raise ValueError(f'tile-24 floor22_dialogue missing pre-choice setup: {statement}')
-    yes_body = _braced_body(branch_body, start.end() - 1)
-    closing_brace = start.end() - 1 + len(yes_body) + 1
-    else_match = re.match(r'\s*else\s*\{', branch_body[closing_brace + 1:])
-    if else_match is None:
-        raise ValueError('tile-24 floor22_dialogue missing else arm')
-    else_brace = closing_brace + 1 + else_match.end() - 1
-    no_body = _braced_body(branch_body, else_brace)
-    for label, body, statement in (
-        ('if', yes_body, '_root.mtsay_001.gotoAndPlay("say_six");'),
-        ('else', no_body, '_root.mtsay_001.gotoAndPlay("say_five");'),
-    ):
-        if not re.search(r'(?m)^[ \t]*' + re.escape(statement) + r'[ \t\r]*
-    declarations = list(re.finditer(r'(?m)^function[ \t]+Move_arrow\(arrow_id\)[ \t]*\r?\n\{', source))
-    if len(declarations) != 1:
-        raise ValueError('expected exactly one Move_arrow declaration')
-    tail = source[declarations[0].end():]
-    end = re.search(r'(?m)^}[ \t\r]*$', tail)
-    if end is None:
-        raise ValueError('missing Move_arrow closing brace')
-    body = tail[:end.start()]
-    prefix = r'(?m)^[ \t]+if\s*\(\s*Number\(eval\(temp_lines\)\[temp_x\]\[temp_y\]\)\s*==\s*24\s*&&\s*'
-    tile_guards = list(re.finditer(prefix, body))
-    if len(tile_guards) != 4:
-        raise ValueError(f'expected four independent tile-24 guards, found {len(tile_guards)}')
-    positions = []
-    output = []
-    for label, condition, statements in GUARDS:
-        cond_regex = re.escape(condition).replace(r'\ ', r'\s*')
-        pattern = prefix + cond_regex + r'\s*\)\s*\{'
-        matches = list(re.finditer(pattern, body))
-        if len(matches) != 1:
-            raise ValueError(f'tile-24 {label} guard missing or duplicated')
-        match = matches[0]
-        positions.append(match.start())
-        branch_body = _braced_body(body, match.end() - 1)
-        for statement in statements:
-            if not re.search(r'(?m)^[ \t]*' + re.escape(statement) + r'[ \t\r]*$', branch_body):
-                raise ValueError(f'tile-24 {label} missing branch statement: {statement}')
-        if label == 'love_dialogue':
-            _verify_love_dialogue_arms(branch_body)
-        output.append({'branch': label, 'guard': condition,
-                       'line': source.count('\n', 0, declarations[0].end())
-                       + body.count('\n', 0, match.start()) + 1})
-    if positions != sorted(positions) or positions != [m.start() for m in tile_guards]:
-        raise ValueError('tile-24 independent guard order differs from original')
-    return {'source_order': output, 'independent_if_statements_verified': True,
-            'love_dialogue_both_arms_verified': True,
-            'runtime_combined_branch_execution_verified': False,
-            'runtime_event_reachability_verified': False,
-            'flash_parity_verified': False}
-, body):
-            raise ValueError(f'tile-24 floor22_dialogue {label} arm missing statement: {statement}')
-
-
-def verify_tile24_branch_order(source: str) -> dict:
-    declarations = list(re.finditer(r'(?m)^function[ \t]+Move_arrow\(arrow_id\)[ \t]*\r?\n\{', source))
-    if len(declarations) != 1:
-        raise ValueError('expected exactly one Move_arrow declaration')
-    tail = source[declarations[0].end():]
-    end = re.search(r'(?m)^}[ \t\r]*$', tail)
-    if end is None:
-        raise ValueError('missing Move_arrow closing brace')
-    body = tail[:end.start()]
-    prefix = r'(?m)^[ \t]+if\s*\(\s*Number\(eval\(temp_lines\)\[temp_x\]\[temp_y\]\)\s*==\s*24\s*&&\s*'
-    tile_guards = list(re.finditer(prefix, body))
-    if len(tile_guards) != 4:
-        raise ValueError(f'expected four independent tile-24 guards, found {len(tile_guards)}')
-    positions = []
-    output = []
-    for label, condition, statements in GUARDS:
-        cond_regex = re.escape(condition).replace(r'\ ', r'\s*')
-        pattern = prefix + cond_regex + r'\s*\)\s*\{'
-        matches = list(re.finditer(pattern, body))
-        if len(matches) != 1:
-            raise ValueError(f'tile-24 {label} guard missing or duplicated')
-        match = matches[0]
-        positions.append(match.start())
-        branch_body = _braced_body(body, match.end() - 1)
-        for statement in statements:
-            if not re.search(r'(?m)^[ \t]*' + re.escape(statement) + r'[ \t\r]*$', branch_body):
-                raise ValueError(f'tile-24 {label} missing branch statement: {statement}')
-        if label == 'love_dialogue':
-            _verify_love_dialogue_arms(branch_body)
-        output.append({'branch': label, 'guard': condition,
-                       'line': source.count('\n', 0, declarations[0].end())
-                       + body.count('\n', 0, match.start()) + 1})
-    if positions != sorted(positions) or positions != [m.start() for m in tile_guards]:
-        raise ValueError('tile-24 independent guard order differs from original')
-    return {'source_order': output, 'independent_if_statements_verified': True,
-            'love_dialogue_both_arms_verified': True,
             'runtime_combined_branch_execution_verified': False,
             'runtime_event_reachability_verified': False,
             'flash_parity_verified': False}
