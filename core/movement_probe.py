@@ -13,6 +13,9 @@ KEY_PICKUPS = {6: "yellow", 7: "blue", 8: "red"}
 KEY_DOORS = {2: "yellow", 3: "blue", 4: "red"}
 STAT_PICKUPS = {9: ("defense", 3), 10: ("attack", 3), 11: ("hp", 200), 12: ("hp", 500)}
 
+# JSON/HTML5 Number.isSafeInteger domain; applies to every grid cell.
+MAX_SAFE_INTEGER = (1 << 53) - 1
+
 
 class UnsupportedTileError(ValueError):
     """A tile has original side effects not yet implemented or verified."""
@@ -28,7 +31,10 @@ def step_move_arrow(snapshot: dict, arrow_id: int) -> dict:
         raise ValueError("arrow_id must be one of Flash 1,2,3,4")
     state = deepcopy(snapshot)
     grid = state["grid"]
-    if len(grid) != 11 or any(len(row) != 11 for row in grid):
+    if (type(grid) is not list or len(grid) != 11 or any(
+            type(line) is not list or len(line) != 11 or any(
+                type(value) is not int or abs(value) > MAX_SAFE_INTEGER
+                for value in line) for line in grid)):
         raise ValueError("expected 11x11 original floor")
     row, col = state["row"], state["col"]
     if not (type(row) is int and type(col) is int and 0 <= row < 11 and 0 <= col < 11):

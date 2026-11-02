@@ -19,3 +19,9 @@ Both JavaScript probes now share `isDenseOriginalGrid`, requiring all 121 cells 
 ## 2026-11-02: Python arrow-router JSON-safe preflight parity
 
 The Python router accepted out-of-range integer keyboard flags and non-target map cells that the JavaScript router rejected with `Number.isSafeInteger`. It also treated `display_kill=False` as idle because Python compares `False == 0`. The Python router now rejects non-JSON-safe integers in every keyboard gate flag and all 121 grid cells, and requires an actual integer zero for the idle battle flag. Regression tests include untouched input checks and JS-side contract checks. These guards prevent silent cross-runtime divergence; they do not establish Flash runtime parity, implement tile-24 gameplay events, or authorize Gymnasium/Kaggle.
+
+## 2026-11-02: Standalone Python Move_arrow grid preflight parity
+
+The Python `step_move_arrow` probe could accept a boolean, float, string or integer outside JavaScript's safe-integer range in a **non-target** grid cell, because it checked only the 11x11 dimensions and then the target tile type. It also accepted tuple/dict rows that the HTML5 `isDenseOriginalGrid` rejects. The arrow-turn composition had already added a stronger guard, but direct calls to the standalone movement probe still diverged from the JavaScript counterpart.
+
+The standalone Python probe now requires a real list of 11 real list rows, with all 121 cells exactly `int` and within ±(2^53−1). Two regression methods reject non-target malformed values and non-list containers while asserting no input mutation. This is a **cross-language input preflight correction only**, not a new Flash tile handler, not Pygame/HTML5 gameplay parity and not a reason to open the Gymnasium/Kaggle gate. Tile 24 still requires a source-verified runtime event handoff and original Flash capture.

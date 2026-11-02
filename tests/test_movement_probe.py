@@ -1,6 +1,7 @@
 """Python half of cross-runtime deterministic movement vectors."""
 import json
 import unittest
+from copy import deepcopy
 from pathlib import Path
 
 from core.movement_probe import UnsupportedTileError, step_move_arrow, DELTAS
@@ -55,6 +56,32 @@ class MovementProbeTests(unittest.TestCase):
         state['grid'].pop()
         with self.assertRaisesRegex(ValueError,'11x11'):
             step_move_arrow(state,1)
+
+    def test_reject_invalid_non_target_cells_without_mutation(self):
+        # A non-target cell must not bypass Python validation when JS rejects it.
+        for invalid in (True, 2**53, -(2**53), "0", 0.0):
+            with self.subTest(invalid=repr(invalid)):
+                state = make_state(CASES[0])
+                state["grid"][9][9] = invalid
+                before = deepcopy(state)
+                with self.assertRaisesRegex(ValueError, "11x11"):
+                    step_move_arrow(state, 2)
+                self.assertEqual(state, before)
+
+    def test_reject_non_list_grid_and_row(self):
+        for kind in ("tuple_grid", "tuple_row", "dict_row"):
+            with self.subTest(kind=kind):
+                state = make_state(CASES[0])
+                if kind == "tuple_grid":
+                    state["grid"] = tuple(state["grid"])
+                elif kind == "tuple_row":
+                    state["grid"][9] = tuple(state["grid"][9])
+                else:
+                    state["grid"][9] = dict(enumerate(state["grid"][9]))
+                before = deepcopy(state)
+                with self.assertRaisesRegex(ValueError, "11x11"):
+                    step_move_arrow(state, 2)
+                self.assertEqual(state, before)
 
     def test_reject_bad_direction(self):
         with self.assertRaisesRegex(ValueError,'arrow_id'):
