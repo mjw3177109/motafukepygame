@@ -77,6 +77,11 @@ def step_move_arrow(snapshot: dict, arrow_id: int) -> dict:
         return {"state": state, "event": "open_" + key + "_door"}
     if tile in STAT_PICKUPS:
         stat, amount = STAT_PICKUPS[tile]
+        # Reject coerced/missing stats and precision loss before modifying a tile.
+        if type(state.get(stat)) is not int or abs(state[stat]) > MAX_SAFE_INTEGER:
+            raise ValueError("expected safe-integer hero stat")
+        if state[stat] > MAX_SAFE_INTEGER - amount:
+            raise ValueError("hero stat overflow")
         state[stat] += amount
         grid[nr][nc] = 0
         return {"state": state, "event": "pickup_" + stat + "_" + str(amount)}

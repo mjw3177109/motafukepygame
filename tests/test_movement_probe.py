@@ -108,6 +108,37 @@ class MovementProbeTests(unittest.TestCase):
             step_move_arrow(state, 2)
         self.assertEqual(state, before)
 
+    def test_stat_pickup_rejects_malformed_hero_values_without_mutation(self):
+        for tile, stat in ((9, "defense"), (10, "attack"), (11, "hp"), (12, "hp")):
+            for invalid in (True, "1", 1.5, None, 2**53, -(2**53)):
+                with self.subTest(tile=tile, invalid=repr(invalid)):
+                    state = make_state({"arrow": 2, "tile": tile})
+                    state[stat] = invalid
+                    before = deepcopy(state)
+                    with self.assertRaisesRegex(ValueError, "hero stat"):
+                        step_move_arrow(state, 2)
+                    self.assertEqual(state, before)
+            state = make_state({"arrow": 2, "tile": tile})
+            del state[stat]
+            with self.assertRaisesRegex(ValueError, "hero stat"):
+                step_move_arrow(state, 2)
+
+    def test_stat_pickup_safe_integer_boundary(self):
+        max_safe = (1 << 53) - 1
+        for tile, stat, amount in ((9, "defense", 3), (10, "attack", 3),
+                                   (11, "hp", 200), (12, "hp", 500)):
+            with self.subTest(tile=tile):
+                state = make_state({"arrow": 2, "tile": tile})
+                state[stat] = max_safe - amount + 1
+                before = deepcopy(state)
+                with self.assertRaisesRegex(ValueError, "hero stat overflow"):
+                    step_move_arrow(state, 2)
+                self.assertEqual(state, before)
+                state[stat] = max_safe - amount
+                result = step_move_arrow(state, 2)
+                self.assertEqual(result["state"][stat], max_safe)
+                self.assertEqual(result["state"]["grid"][5][6], 0)
+
     def test_reject_bad_direction(self):
         with self.assertRaisesRegex(ValueError,'arrow_id'):
             step_move_arrow(make_state(CASES[0]),5)

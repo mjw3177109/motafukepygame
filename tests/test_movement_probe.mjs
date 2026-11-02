@@ -85,3 +85,32 @@ test('key pickup cannot overflow JavaScript safe integer',()=>{
   assert.throws(()=>stepMoveArrow(state,2),/key inventory overflow/);
   assert.deepEqual(state,before);
 });
+
+
+test('stat pickups reject malformed and inherited hero stats without mutation',()=>{
+  for (const [tile,stat] of [[9,'defense'],[10,'attack'],[11,'hp'],[12,'hp']]) {
+    for (const invalid of [true,'1',1.5,null,Number.MAX_SAFE_INTEGER+1,-Number.MAX_SAFE_INTEGER-1]) {
+      const state=makeState({arrow:2,tile});state[stat]=invalid;
+      const before=structuredClone(state);
+      assert.throws(()=>stepMoveArrow(state,2),/hero stat/);
+      assert.deepEqual(state,before);
+    }
+    const missing=makeState({arrow:2,tile});delete missing[stat];
+    assert.throws(()=>stepMoveArrow(missing,2),/hero stat/);
+    const inherited=makeState({arrow:2,tile});delete inherited[stat];
+    Object.setPrototypeOf(inherited,{[stat]:1});
+    assert.throws(()=>stepMoveArrow(inherited,2),/hero stat/);
+  }
+});
+test('stat pickups respect JavaScript safe integer boundary',()=>{
+  for (const [tile,stat,amount] of [[9,'defense',3],[10,'attack',3],[11,'hp',200],[12,'hp',500]]) {
+    const state=makeState({arrow:2,tile});state[stat]=Number.MAX_SAFE_INTEGER-amount+1;
+    const before=structuredClone(state);
+    assert.throws(()=>stepMoveArrow(state,2),/hero stat overflow/);
+    assert.deepEqual(state,before);
+    state[stat]=Number.MAX_SAFE_INTEGER-amount;
+    const result=stepMoveArrow(state,2);
+    assert.equal(result.state[stat],Number.MAX_SAFE_INTEGER);
+    assert.equal(result.state.grid[5][6],0);
+  }
+});

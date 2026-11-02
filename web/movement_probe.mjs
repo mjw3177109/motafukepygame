@@ -62,6 +62,10 @@ export function stepMoveArrow(snapshot, arrowId) {
   }
   if (Object.hasOwn(statPickups,tile)) {
     const [stat,amount]=statPickups[tile];
+    if (!Object.hasOwn(state,stat) || !Number.isSafeInteger(state[stat]))
+      throw new Error('expected safe-integer hero stat');
+    if (state[stat] > Number.MAX_SAFE_INTEGER-amount)
+      throw new Error('hero stat overflow');
     state[stat]+=amount; grid[nr][nc]=0;
     return {state,event:'pickup_'+stat+'_'+amount};
   }
