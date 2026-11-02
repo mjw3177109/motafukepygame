@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {classifyArrowInput,stepArrowTurn,replayArrowTurns} from '../web/arrow_turn_probe.mjs';
+import {classifyArrowInput,stepArrowTurn,replayArrowTurns,Tile24HandoffRequired} from '../web/arrow_turn_probe.mjs';
 import {DELTAS} from '../web/movement_probe.mjs';
 
 const cases=JSON.parse(readFileSync(new URL('./fixtures/arrow_turn_cases.json',import.meta.url),'utf8'));
@@ -97,4 +97,18 @@ test('arrow-turn rejects inherited keyboard gate flags and array worlds',()=>{
   Object.assign(arrayWorld,baseline);
   assert.throws(()=>classifyArrowInput(arrayWorld,2),/flags/);
   assert.throws(()=>stepArrowTurn(arrayWorld,2,monsters),/flags/);
+});
+
+test('tile24 handoff is typed, source-pending and cannot mutate movement state',()=>{
+  const world=worldFor(cases[0]);world.grid[5][6]=24;
+  const before=structuredClone(world);
+  assert.throws(()=>stepArrowTurn(world,2,monsters),error=>
+    error instanceof Tile24HandoffRequired && error.tile_id===24 &&
+    error.target[0]===5 && error.target[1]===6 &&
+    error.flash_runtime_verified===false);
+  assert.deepEqual(world,before);
+  assert.throws(()=>stepArrowTurn(world,2,monsters,[0]),/non-monster movement/);
+  const blocked=structuredClone(world);blocked.key_flag=0;
+  assert.equal(stepArrowTurn(blocked,2,monsters).event,'input_blocked');
+  assert.deepEqual(world,before);
 });

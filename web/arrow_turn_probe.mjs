@@ -2,6 +2,16 @@
 import {DELTAS, stepMoveArrow, isDenseOriginalGrid} from './movement_probe.mjs';
 import {resolveEncounter} from './encounter_pipeline_probe.mjs';
 
+export class Tile24HandoffRequired extends Error {
+  constructor(row, col) {
+    super('tile 24 requires original event handoff');
+    this.name = 'Tile24HandoffRequired';
+    this.tile_id = 24;
+    this.target = [row, col];
+    this.flash_runtime_verified = false;
+  }
+}
+
 export function classifyArrowInput(world, arrowId) {
   if (!Number.isSafeInteger(arrowId) || !Object.hasOwn(DELTAS, arrowId))
     throw new Error('arrow_id must be one of Flash 1,2,3,4');
@@ -38,6 +48,7 @@ export function stepArrowTurn(world, arrowId, monsters, criticalRolls=[]) {
     return {state:result.state,event:result.events.at(-1).event,events:result.events,rolls_used:used,cleared:result.cleared};
   }
   if (criticalRolls.length) throw new Error('non-monster movement cannot consume critical rolls');
+  if (tile===24) throw new Tile24HandoffRequired(nr,nc);
   const result=stepMoveArrow(world,arrowId),state=result.state,event=result.event;
   if (event.startsWith('pickup_')) {state.key_flag=0;state.display_text=1;}
   else if (event.startsWith('open_')) {

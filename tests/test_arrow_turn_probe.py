@@ -3,7 +3,7 @@ import json
 import unittest
 from copy import deepcopy
 from pathlib import Path
-from core.arrow_turn_probe import classify_arrow_input, step_arrow_turn, replay_arrow_turns
+from core.arrow_turn_probe import classify_arrow_input, step_arrow_turn, replay_arrow_turns, Tile24HandoffRequired
 from core.movement_probe import DELTAS
 
 CASES = json.loads((Path(__file__).parent / "fixtures" / "arrow_turn_cases.json").read_text(encoding="utf-8"))
@@ -92,6 +92,23 @@ class ArrowTurnTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "11x11"):
                     step_arrow_turn(world, 2, MONSTERS)
                 self.assertEqual(world, before)
+
+    def test_tile24_handoff_is_typed_and_fails_closed(self):
+        world = world_for(CASES[0])
+        world["grid"][5][6] = 24
+        before = deepcopy(world)
+        with self.assertRaises(Tile24HandoffRequired) as caught:
+            step_arrow_turn(world, 2, MONSTERS)
+        self.assertEqual(caught.exception.tile_id, 24)
+        self.assertEqual(caught.exception.target, (5, 6))
+        self.assertFalse(caught.exception.flash_runtime_verified)
+        self.assertEqual(world, before)
+        with self.assertRaisesRegex(ValueError, "non-monster movement"):
+            step_arrow_turn(world, 2, MONSTERS, [0])
+        blocked = deepcopy(world)
+        blocked["key_flag"] = 0
+        self.assertEqual(step_arrow_turn(blocked, 2, MONSTERS)["event"], "input_blocked")
+        self.assertEqual(world, before)
 
     def test_reject_boolean_idle_battle_flag(self):
         world = world_for(CASES[0])

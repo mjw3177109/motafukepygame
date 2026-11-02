@@ -4,7 +4,7 @@ No real UI, modal completion, animation clock or full game is implemented.
 """
 from __future__ import annotations
 from copy import deepcopy
-from core.movement_probe import DELTAS, step_move_arrow
+from core.movement_probe import DELTAS, step_move_arrow, UnsupportedTileError
 from core.encounter_pipeline_probe import resolve_encounter
 
 # Match JavaScript Number.isSafeInteger at the JSON/HTML5 boundary.
@@ -12,6 +12,15 @@ MAX_SAFE_INTEGER = (1 << 53) - 1
 
 class UnsupportedModalInputError(ValueError):
     """Original Flash would navigate a modal instead of moving."""
+
+class Tile24HandoffRequired(UnsupportedTileError):
+    """Typed, fail-closed boundary; no tile-24 dialogue or movement is executed."""
+
+    def __init__(self, row: int, col: int):
+        self.tile_id = 24
+        self.target = (row, col)
+        self.flash_runtime_verified = False
+        super().__init__("tile 24 requires original event handoff")
 
 def classify_arrow_input(world: dict, arrow_id: int) -> str:
     if type(arrow_id) is not int or arrow_id not in DELTAS:
@@ -63,6 +72,8 @@ def step_arrow_turn(world: dict, arrow_id: int, monsters: dict,
                 "events": result["events"], "rolls_used": used, "cleared": result["cleared"]}
     if critical_rolls:
         raise ValueError("non-monster movement cannot consume critical rolls")
+    if tile == 24:
+        raise Tile24HandoffRequired(nr, nc)
     result = step_move_arrow(world, arrow_id)
     state, event = result["state"], result["event"]
     if event.startswith("pickup_"):
