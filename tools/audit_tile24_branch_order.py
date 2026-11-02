@@ -73,7 +73,13 @@ def _verify_floor22_dialogue_arms(branch_body: str) -> None:
         '_root.Display_say[0] = 1;',
         '_root.CopyMovie("mt_say_01","mtsay_001",1350,380,207);',
     ):
-        matches = list(re.finditer(r'(?m)^[ \t]*' + re.escape(statement) + r'[ \t\r]*
+        matches = list(re.finditer(r'(?m)^[ \t]*' + re.escape(statement) + r'[ \t\r]*(?=\n|\Z)', setup))
+        if len(matches) != 1:
+            raise ValueError(f'tile-24 floor22_dialogue missing or duplicated pre-choice setup: {statement}')
+        setup_positions.append(matches[0].start())
+    if setup_positions != sorted(setup_positions):
+        raise ValueError('tile-24 floor22_dialogue pre-choice setup order differs from original')
+
     yes_body = _braced_body(branch_body, start.end() - 1)
     closing_brace = start.end() - 1 + len(yes_body) + 1
     else_match = re.match(r'\s*else\s*\{', branch_body[closing_brace + 1:])
