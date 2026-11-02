@@ -23,7 +23,7 @@ export function traceTile24State(input) {
     throw new Error('invalid tile, floor or map cell');
   }
   if (!Array.isArray(input.get_money) || input.get_money.length !== 3 ||
-      !input.get_money.every(binary)) {
+      ![0, 1, 2].every(index => Object.hasOwn(input.get_money, index) && binary(input.get_money[index]))) {
     throw new Error('exactly three binary item flags required');
   }
   const state = structuredClone(input), trace = [];

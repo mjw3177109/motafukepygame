@@ -43,3 +43,20 @@ test('reject malformed and coerced state without mutation', () => {
     assert.throws(() => traceTile24State(bad));
   }
 });
+
+test('reject sparse three-item list before floor22 dialogue', () => {
+  const base = cases.find(c => c.name === 'floor22_all_items').input;
+  for (const items of [[1, , 1], Array(3)]) {
+    const input = {...base, get_money: items};
+    assert.throws(() => traceTile24State(input), /exactly three binary item flags required/);
+    assert.equal(Object.hasOwn(items, 1), false, 'validation mutated sparse input');
+  }
+});
+test('reject inherited item slot rather than accepting prototype values', () => {
+  const base = cases.find(c => c.name === 'floor22_all_items').input;
+  const items = [1, , 1], proto = Object.create(Array.prototype);
+  proto[1] = 1;
+  Object.setPrototypeOf(items, proto);
+  assert.throws(() => traceTile24State({...base, get_money: items}), /exactly three binary item flags required/);
+  assert.equal(Object.hasOwn(items, 1), false, 'validation filled inherited slot');
+});

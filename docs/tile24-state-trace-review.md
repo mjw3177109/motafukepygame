@@ -19,3 +19,7 @@ Previous shared tests checked branch names, dialogue commands, and final state, 
 ## Cross-language integer precision guard (2026-11-02)
 
 The Python tile-24 tracer previously accepted arbitrarily large `tile_id` and `floor20_7_5` integers while the JavaScript probe correctly rejected values outside `Number.isSafeInteger`. Passing these values through JSON/JavaScript could silently change the event tile or map-cell state. Python now enforces the same inclusive ±(2^53−1) safe-integer domain as JavaScript (with `tile_id` still nonnegative); both suites test the accepted boundary and reject ±2^53 without mutating inputs. This fixes **synthetic probe input parity only**, not original Flash numeric semantics, Pygame/HTML5 gameplay, or runtime parity. Flash baselines and Gymnasium/Kaggle gates remain unverified/closed.
+
+## Sparse-array item guard (2026-11-02)
+
+The JavaScript review probe previously used `get_money.every(binary)`, which skips missing array indices. A sparse three-slot array such as `[1, , 1]` could pass validation and the floor-22 all-items check could incorrectly select `say_six`; inherited array values could also be accepted. The probe now requires each of the three indices to be an **own** array element with a binary integer value. Two Node regressions cover sparse and inherited slots and preserve the input. Local reproduction failed before the fix (2 tests), then passed after the fix (3/3 focused checks). This repairs review-probe validation only; it is not a Flash runtime capture or a playable HTML5/Pygame event handler.
