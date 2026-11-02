@@ -1,0 +1,169 @@
+[
+  {
+    "name": "lethal_first_hit_no_counterattack",
+    "monster": [
+      10,
+      20,
+      1,
+      1,
+      1,
+      "绿头怪"
+    ],
+    "hero": {
+      "hp": 100,
+      "attack": 11,
+      "defense": 10
+    },
+    "life": 0,
+    "rolls": [
+      199
+    ],
+    "expected": {
+      "actions": 1,
+      "counterattacks": 0,
+      "right_hp": 100,
+      "left_hp": 0,
+      "kill_number": 1,
+      "rolls_used": 1,
+      "transitions": [
+        "frame34_to_35"
+      ]
+    }
+  },
+  {
+    "name": "three_hits_two_counterattacks",
+    "monster": [
+      25,
+      20,
+      1,
+      1,
+      1,
+      "绿头怪"
+    ],
+    "hero": {
+      "hp": 100,
+      "attack": 11,
+      "defense": 10
+    },
+    "life": 0,
+    "rolls": [
+      199,
+      199,
+      199
+    ],
+    "expected": {
+      "actions": 5,
+      "counterattacks": 2,
+      "right_hp": 80,
+      "left_hp": 0,
+      "kill_number": 5,
+      "rolls_used": 3,
+      "transitions": [
+        "frame34_to_24",
+        "frame34_to_24",
+        "frame34_to_24",
+        "frame34_to_24",
+        "frame34_to_35"
+      ]
+    }
+  },
+  {
+    "name": "critical_first_hit",
+    "monster": [
+      15,
+      20,
+      1,
+      1,
+      1,
+      "绿头怪"
+    ],
+    "hero": {
+      "hp": 100,
+      "attack": 11,
+      "defense": 10
+    },
+    "life": 0,
+    "rolls": [
+      0
+    ],
+    "expected": {
+      "actions": 1,
+      "counterattacks": 0,
+      "right_hp": 100,
+      "left_hp": 0,
+      "kill_number": 1,
+      "rolls_used": 1,
+      "transitions": [
+        "frame34_to_35"
+      ]
+    }
+  },
+  {
+    "name": "second_hit_critical",
+    "monster": [
+      25,
+      20,
+      1,
+      1,
+      1,
+      "绿头怪"
+    ],
+    "hero": {
+      "hp": 100,
+      "attack": 11,
+      "defense": 10
+    },
+    "life": 0,
+    "rolls": [
+      199,
+      0
+    ],
+    "expected": {
+      "actions": 3,
+      "counterattacks": 1,
+      "right_hp": 90,
+      "left_hp": 0,
+      "kill_number": 3,
+      "rolls_used": 2,
+      "transitions": [
+        "frame34_to_24",
+        "frame34_to_24",
+        "frame34_to_35"
+      ]
+    }
+  },
+  {
+    "name": "zero_damage_monster",
+    "monster": [
+      15,
+      5,
+      1,
+      1,
+      1,
+      "绿头怪"
+    ],
+    "hero": {
+      "hp": 100,
+      "attack": 11,
+      "defense": 10
+    },
+    "life": 0,
+    "rolls": [
+      199,
+      199
+    ],
+    "expected": {
+      "actions": 3,
+      "counterattacks": 1,
+      "right_hp": 100,
+      "left_hp": 0,
+      "kill_number": 3,
+      "rolls_used": 2,
+      "transitions": [
+        "frame34_to_24",
+        "frame34_to_24",
+        "frame34_to_35"
+      ]
+    }
+  }
+]

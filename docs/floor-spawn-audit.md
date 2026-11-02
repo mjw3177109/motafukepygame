@@ -1,0 +1,7 @@
+# SetLineDisplay(1): original floor-jump hero spawn (partial rule)
+
+Source: `game.swf` SHA256 `04b317b7fd9d32c5b083c993e99a3eea527f392e5fc938d23928e953bb638db9`; FFDec/Java 8 artifact `12952870432` from run `40998902161`. Exported `frame_4346/DoAction_2.as` SHA256 `0de19a0338cd966446acb4fd2acb82f82cf77992c8839356e17afc8f3085d034`; floor data `frame_4346/DoAction.as` SHA256 `2372dc16f71b6ede1110b61101b47ff11dd529803fc4077accd075381bffe97c`.
+
+In `SetLineDisplay(arrow_id)`, the `arrow_id == 1` branch converts tile `97` into `mt_man`, records `Now_xid=i`, `Now_yid=j`, and copies `mt_99` as `mt_man` at depth 1000 and pixel `(207+j*32, 47+i*32)`. Tile `98` is skipped in that branch. The raw map uses `[row][column]` without transposition. All original floors `01..26` contain exactly one `97`; floor `00` contains none and cannot be planned by this entry rule. The JSON fixture records **only markers 97, 98 and 99** extracted from original 11x11 matrices; it is not a complete map fixture.
+
+The Python/JS probes plan only the hero sprite and suppressed tile-98 coordinates. They fail closed on missing/duplicate spawn markers (a validation policy, not a claim that original Flash throws). They do **not** execute `SetLineDisplay`, render other map tiles, choose background music, restore keyboard input, or prove animation timing. The previously established `floor_refresh_pending` guard remains in effect; do not remove it until full map redraw and original runtime traces have been verified. The RL/Kaggle gate remains closed.

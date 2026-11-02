@@ -1,0 +1,38 @@
+name: Python tooling tests
+on:
+  push:
+    branches: [main, feature/**]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install --disable-pip-version-check 'Pillow==11.3.0'
+      - run: python -m unittest discover -s tests -v
+      - run: node --test tests/test_movement_probe.mjs
+      - run: node --test tests/test_combat_probe.mjs
+      - run: node --test tests/test_battle_frame_probe.mjs
+      - run: node --test tests/test_battle_settlement_probe.mjs
+      - run: node --test tests/test_encounter_start_probe.mjs
+      - run: node --test tests/test_battle_timeline_probe.mjs
+      - run: node --test tests/test_encounter_pipeline_probe.mjs
+      - run: node --test tests/test_arrow_turn_probe.mjs
+      - run: node --test tests/test_text_lifecycle_probe.mjs
+      - run: node --test tests/test_text_turn_replay.mjs
+      - run: node --test tests/test_door_lifecycle_probe.mjs
+      - run: node --test tests/test_jump_selection_probe.mjs
+      - run: node --test tests/test_jump_lifecycle_probe.mjs
+      - run: node --test tests/test_jump_turn_replay.mjs
+      - run: node --test tests/test_floor_spawn_probe.mjs
+      - run: node --test tests/test_jump_spawn_handoff.mjs
+      - run: node --test tests/test_floor_tile_plan.mjs
+      - run: node --test tests/test_floor_render.mjs
+      - run: node --test tests/test_static_svg_assets.mjs
+      - run: node --test tests/test_verified_static_preview.mjs
+      - run: python tools/swf_probe.py game.swf --output /tmp/swf_original.json

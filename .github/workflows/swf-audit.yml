@@ -1,0 +1,234 @@
+name: SWF Original Audit
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/mota112-swf-audit-foundation]
+    paths:
+      - 'game.swf'
+      - 'FFDec/**'
+      - 'data/original_floors.json'
+      - 'data/original_combat_tables.json'
+      - 'data/original_sprite_symbol_anchors.json'
+      - 'data/original_sprite_frame_anchors.json'
+      - 'data/original_sprite_placement_anchors.json'
+      - 'data/original_shape_registration_anchors.json'
+      - 'core/floor_tile_plan.py'
+      - 'core/floor_render.py'
+      - 'core/static_svg_assets.py'
+      - 'core/verified_static_preview.py'
+      - 'web/static_svg_assets.mjs'
+      - 'web/verified_static_preview.mjs'
+      - 'web/floor_render.mjs'
+      - 'tests/test_floor_render.py'
+      - 'tests/test_static_svg_assets.py'
+      - 'tests/test_verified_static_preview.py'
+      - 'tests/test_static_svg_assets.mjs'
+      - 'tests/test_verified_static_preview.mjs'
+      - 'tools/**'
+      - 'tests/test_swf_audit_triggers.py'
+      - 'tests/test_trace_swf_symbols.py'
+      - 'tests/test_audit_swf_sprite_frames.py'
+      - 'tests/test_audit_sprite_placements.py'
+      - 'tests/test_audit_shape_registration.py'
+      - 'tests/test_smoke_mt06_candidate.py'
+      - 'tests/test_audit_mt06_flash_baseline.py'
+      - 'tests/test_verify_original_combat_tables.py'
+      - 'tests/test_audit_original_battle_transitions.py'
+      - 'tests/test_audit_say08_handoff.py'
+      - 'tests/test_audit_terminal_guard_paths.py'
+      - 'tests/fixtures/original_mt_other_04_frame*.as'
+      - 'data/flash_baselines/**'
+      - 'tests/test_smoke_original_static_render.py'
+      - 'tests/test_smoke_original_browser_static.py'
+      - 'tests/test_audit_dual_raster_pixels.py'
+      - 'tests/test_audit_svg_sampling.py'
+      - 'tests/test_experiment_svg_image_rendering.py'
+      - '.github/workflows/swf-audit.yml'
+  pull_request:
+    paths:
+      - 'game.swf'
+      - 'FFDec/**'
+      - 'data/original_floors.json'
+      - 'data/original_combat_tables.json'
+      - 'data/original_sprite_symbol_anchors.json'
+      - 'data/original_sprite_frame_anchors.json'
+      - 'data/original_sprite_placement_anchors.json'
+      - 'data/original_shape_registration_anchors.json'
+      - 'core/floor_tile_plan.py'
+      - 'core/floor_render.py'
+      - 'core/static_svg_assets.py'
+      - 'core/verified_static_preview.py'
+      - 'web/static_svg_assets.mjs'
+      - 'web/verified_static_preview.mjs'
+      - 'web/floor_render.mjs'
+      - 'tests/test_floor_render.py'
+      - 'tests/test_static_svg_assets.py'
+      - 'tests/test_verified_static_preview.py'
+      - 'tests/test_static_svg_assets.mjs'
+      - 'tests/test_verified_static_preview.mjs'
+      - 'tools/**'
+      - 'tests/test_swf_audit_triggers.py'
+      - 'tests/test_trace_swf_symbols.py'
+      - 'tests/test_audit_swf_sprite_frames.py'
+      - 'tests/test_audit_sprite_placements.py'
+      - 'tests/test_audit_shape_registration.py'
+      - 'tests/test_smoke_mt06_candidate.py'
+      - 'tests/test_audit_mt06_flash_baseline.py'
+      - 'tests/test_verify_original_combat_tables.py'
+      - 'tests/test_audit_original_battle_transitions.py'
+      - 'tests/test_audit_say08_handoff.py'
+      - 'tests/test_audit_terminal_guard_paths.py'
+      - 'tests/fixtures/original_mt_other_04_frame*.as'
+      - 'data/flash_baselines/**'
+      - 'tests/test_smoke_original_static_render.py'
+      - 'tests/test_smoke_original_browser_static.py'
+      - 'tests/test_audit_dual_raster_pixels.py'
+      - 'tests/test_audit_svg_sampling.py'
+      - 'tests/test_experiment_svg_image_rendering.py'
+      - '.github/workflows/swf-audit.yml'
+permissions:
+  contents: read
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '8'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python tools/extract_swf.py --swf game.swf --ffdec FFDec/ffdec.jar --out .swf_audit
+      - name: Verify renderer ActionScript anchor and diagnose FFDec drift (fail closed)
+        run: |
+          python -m tools.diagnose_ffdec_script_drift --committed data/original_floors.json --manifest .swf_audit/manifest.json --swf game.swf --ffdec FFDec/ffdec.jar --export-root .swf_audit/export --out .swf_audit/ffdec_script_drift_diagnostic.json
+      - name: Extract original map and monster tables
+        run: |
+          SWF_SHA=$(python -c 'import json; print(json.load(open(".swf_audit/manifest.json"))["original"]["sha256"])')
+          python tools/extract_original_tables.py --script .swf_audit/export/scripts/frame_4346/DoAction.as --swf-sha256 "$SWF_SHA" --out .swf_audit/original_tables.json
+      - name: Verify original raw monster arrays and base stats against FFDec (not combat parity)
+        run: |
+          python -m tools.verify_original_combat_tables --committed data/original_combat_tables.json --extracted .swf_audit/original_tables.json --floor-anchors data/original_floors.json --export-root .swf_audit --swf game.swf --out .swf_audit/original_combat_tables_audit.json
+      - name: Audit original monster field roles and encounter formula (not full battle)
+        run: |
+          python -m tools.audit_combat_field_semantics --script .swf_audit/export/scripts/frame_4346/DoAction_2.as --swf game.swf --floors data/original_floors.json --combat data/original_combat_tables.json --out .swf_audit/original_combat_semantics_audit.json
+      - name: Verify original frame-24 critical and alternating-turn source (not battle parity)
+        run: |
+          python -m tools.audit_original_battle_frame24 --script .swf_audit/export/scripts/DefineSprite_453_mt_other_04/frame_24/DoAction.as --swf game.swf --out .swf_audit/original_battle_frame24_audit.json
+      - name: Verify original frame-34/35/54 battle transition source (not Flash parity)
+        run: |
+          python -m tools.audit_original_battle_transitions --export-root .swf_audit/export --swf game.swf --out .swf_audit/original_battle_transitions_audit.json
+      - name: Audit original battle completion and reward source (not death parity)
+        run: |
+          python -m tools.audit_original_battle_completion --export-root .swf_audit/export --swf game.swf --out .swf_audit/original_battle_completion_audit.json
+      - name: Index source-hashed game-over and HP-condition candidates (not death parity)
+        run: |
+          python -m tools.audit_terminal_candidates --manifest .swf_audit/manifest.json --export-root .swf_audit/export --swf game.swf --out .swf_audit/original_terminal_candidates.json
+      - name: Verify say-08 frame writes and Sprite 855 consumer source (not runtime)
+        run: |
+          python -m tools.audit_say08_handoff --manifest .swf_audit/manifest.json --export-root .swf_audit/export --swf game.swf --out .swf_audit/original_say08_handoff.json
+      - name: Verify tile-24 ending guard and SaveData/LoadData source scopes (not runtime)
+        run: |
+          python -m tools.audit_terminal_guard_paths --manifest .swf_audit/manifest.json --export-root .swf_audit/export --swf game.swf --out .swf_audit/original_terminal_guard_paths.json
+      - name: Verify all 3267 committed floor cells against hashed original ActionScript
+        run: |
+          python tools/verify_original_floors.py --committed data/original_floors.json --extracted .swf_audit/original_tables.json --export-root .swf_audit
+      - name: Locate source-verified ending/dialogue tiles in original initial maps (not runtime)
+        run: |
+          python -m tools.audit_terminal_tile_locations --committed data/original_floors.json --extracted .swf_audit/original_tables.json --manifest .swf_audit/manifest.json --export-root .swf_audit/export --swf game.swf --out .swf_audit/original_terminal_tile_locations.json
+      - name: Audit original floor sprite alias coverage (no false parity)
+        run: python tools/audit_floor_assets.py --floors data/original_floors.json --manifest .swf_audit/manifest.json --out .swf_audit/floor_asset_coverage.json
+      - name: Trace original ExportAssets sprites to hashed shape exports
+        run: |
+          python tools/trace_swf_symbols.py --tags .swf_audit/ffdec_tags.log --manifest .swf_audit/manifest.json --coverage .swf_audit/floor_asset_coverage.json --export-root .swf_audit/export --anchors data/original_sprite_symbol_anchors.json --out .swf_audit/swf_symbol_trace.json
+      - name: Verify original sprite declared frames against ShowFrame tags
+        run: |
+          python -m tools.audit_swf_sprite_frames --tags .swf_audit/ffdec_tags.log --trace .swf_audit/swf_symbol_trace.json --anchors data/original_sprite_frame_anchors.json --out .swf_audit/swf_sprite_frames.json
+      - name: Verify original mt_00-mt_03 and mt_06 per-frame PlaceObject2 transforms
+        run: |
+          python -m tools.audit_sprite_placements --tags .swf_audit/ffdec_tags.log --trace .swf_audit/swf_symbol_trace.json --frames .swf_audit/swf_sprite_frames.json --anchors data/original_sprite_placement_anchors.json --out .swf_audit/swf_sprite_placements.json
+      - name: Build source-linked floor asset review queue (no visual approval)
+        run: |
+          python -m tools.build_asset_review_queue --coverage .swf_audit/floor_asset_coverage.json --trace .swf_audit/swf_symbol_trace.json --frames .swf_audit/swf_sprite_frames.json --placements .swf_audit/swf_sprite_placements.json --out .swf_audit/asset_review_queue.json
+      - name: Verify original Shape RECT and static sprite registration offsets
+        run: |
+          python -m tools.audit_shape_registration --tags .swf_audit/ffdec_tags.log --manifest .swf_audit/manifest.json --trace .swf_audit/swf_symbol_trace.json --placements .swf_audit/swf_sprite_placements.json --export-root .swf_audit/export --anchors data/original_shape_registration_anchors.json --out .swf_audit/shape_registration_report.json
+      - name: Inventory source-hashed FFDec SVG pattern and embedded image sampling
+        run: |
+          python -m tools.audit_svg_sampling --manifest .swf_audit/manifest.json --registration .swf_audit/shape_registration_report.json --export-root .swf_audit/export --out .swf_audit/svg_sampling_report.json
+      - name: Render original FFDec static SVGs with real headless Pygame
+        run: |
+          python -m pip install --disable-pip-version-check 'pygame==2.6.1' 'CairoSVG==2.8.2'
+          SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy python -m tools.smoke_original_static_render --manifest .swf_audit/manifest.json --report .swf_audit/shape_registration_report.json --anchors data/original_shape_registration_anchors.json --export-root .swf_audit/export --out-dir .swf_audit/static_preview
+      - name: Render original FFDec static SVGs in real Chromium Canvas
+        run: |
+          python -m pip install --disable-pip-version-check 'playwright==1.56.0'
+          python -m playwright install --with-deps chromium
+          python -m tools.smoke_original_browser_static --manifest .swf_audit/manifest.json --report .swf_audit/shape_registration_report.json --anchors data/original_shape_registration_anchors.json --pygame .swf_audit/static_preview/report.json --export-root .swf_audit/export --out-dir .swf_audit/browser_preview
+      - name: Compare source-hashed Pygame and Chromium RGBA pixels (diagnostic only)
+        run: |
+          python -m tools.audit_dual_raster_pixels --pygame-dir .swf_audit/static_preview --browser-dir .swf_audit/browser_preview --registration .swf_audit/shape_registration_report.json --anchors data/original_shape_registration_anchors.json --out .swf_audit/dual_raster_pixel_report.json
+      - name: Compare original FFDec SVG image-rendering hints (diagnostic only)
+        run: |
+          python -m tools.experiment_svg_image_rendering --manifest .swf_audit/manifest.json --registration .swf_audit/shape_registration_report.json --anchors data/original_shape_registration_anchors.json --export-root .swf_audit/export --pygame-dir .swf_audit/static_preview --browser-dir .swf_audit/browser_preview --out .swf_audit/svg_image_rendering_experiment.json
+      - name: Render isolated mt_06 source candidate in real Pygame and Chromium (no binding)
+        run: |
+          SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy python -m tools.smoke_mt06_candidate --manifest .swf_audit/manifest.json --registration .swf_audit/shape_registration_report.json --anchors data/original_shape_registration_anchors.json --export-root .swf_audit/export --out-dir .swf_audit/mt06_candidate
+      - name: Verify saved mt_06 PNG evidence against source pins and reported pixels
+        run: |
+          python -m tools.verify_mt06_artifacts --report .swf_audit/mt06_candidate/report.json --png-dir .swf_audit/mt06_candidate --anchors data/original_shape_registration_anchors.json --out .swf_audit/mt06_candidate/artifact_verification.json
+      - name: Build mt_06 source-checked two-renderer visual review sheet (not Flash parity)
+        run: |
+          python -m tools.build_mt06_visual_review --report .swf_audit/mt06_candidate/report.json --png-dir .swf_audit/mt06_candidate --anchors data/original_shape_registration_anchors.json --out-dir .swf_audit/mt06_candidate
+      - name: Audit independent mt_06 Flash capture when present (no parity approval)
+        run: |
+          python -m tools.audit_mt06_flash_baseline --report .swf_audit/mt06_candidate/report.json --anchors data/original_shape_registration_anchors.json --png-dir .swf_audit/mt06_candidate --baseline-dir data/flash_baselines/mt_06 --out .swf_audit/mt06_candidate/flash_baseline_audit.json
+      - name: Preserve case-distinct FFDec exports and verify archive bytes
+        run: |
+          python tools/package_swf_audit.py --manifest .swf_audit/manifest.json --export-root .swf_audit/export --archive .swf_audit/ffdec_export.tar.gz --report .swf_audit/export_archive_report.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: original-flash-audit
+          # Never upload raw export/: upload-artifact treats case-only filenames as duplicates.
+          path: |
+            .swf_audit/swf_header.json
+            .swf_audit/ffdec_script_drift_diagnostic.json
+            .swf_audit/manifest.json
+            .swf_audit/original_tables.json
+            .swf_audit/original_combat_tables_audit.json
+            .swf_audit/original_combat_semantics_audit.json
+            .swf_audit/original_battle_frame24_audit.json
+            .swf_audit/original_battle_transitions_audit.json
+            .swf_audit/original_battle_completion_audit.json
+            .swf_audit/original_terminal_candidates.json
+            .swf_audit/original_say08_handoff.json
+            .swf_audit/original_terminal_guard_paths.json
+            .swf_audit/original_terminal_tile_locations.json
+            .swf_audit/floor_asset_coverage.json
+            .swf_audit/swf_symbol_trace.json
+            .swf_audit/swf_sprite_frames.json
+            .swf_audit/swf_sprite_placements.json
+            .swf_audit/asset_review_queue.json
+            .swf_audit/shape_registration_report.json
+            .swf_audit/svg_sampling_report.json
+            .swf_audit/svg_image_rendering_experiment.json
+            .swf_audit/export_archive_report.json
+            .swf_audit/static_preview/*.png
+            .swf_audit/static_preview/report.json
+            .swf_audit/browser_preview/*.png
+            .swf_audit/browser_preview/report.json
+            .swf_audit/dual_raster_pixel_report.json
+            .swf_audit/mt06_candidate/*.png
+            .swf_audit/mt06_candidate/report.json
+            .swf_audit/mt06_candidate/artifact_verification.json
+            .swf_audit/mt06_candidate/visual_review.json
+            .swf_audit/mt06_candidate/flash_baseline_audit.json
+            .swf_audit/ffdec_*.log
+            .swf_audit/ffdec_export.tar.gz
+          retention-days: 14
+          if-no-files-found: error
+          include-hidden-files: true
