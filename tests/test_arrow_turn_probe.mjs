@@ -70,3 +70,12 @@ test('arrow-turn rejects sparse and inherited 11x11 grid entries',()=>{
       assert.equal(Object.hasOwn(world.grid[2],4),false);
   }
 });
+
+test('arrow-turn JS safe-integer and idle flag preflight matches Python',()=>{
+  for (const field of ['key_flag','display_list','display_jump','display_text','display_buy']) {
+    const world=worldFor(cases[0]);world[field]=Number.MAX_SAFE_INTEGER+1;
+    assert.throws(()=>stepArrowTurn(world,2,monsters),/flags/);
+  }
+  const world=worldFor(cases[0]);world.display_kill=false;
+  assert.throws(()=>stepArrowTurn(world,2,monsters),/idle/);
+});

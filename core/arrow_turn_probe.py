@@ -7,6 +7,9 @@ from copy import deepcopy
 from core.movement_probe import DELTAS, step_move_arrow
 from core.encounter_pipeline_probe import resolve_encounter
 
+# Match JavaScript Number.isSafeInteger at the JSON/HTML5 boundary.
+MAX_SAFE_INTEGER = (1 << 53) - 1
+
 class UnsupportedModalInputError(ValueError):
     """Original Flash would navigate a modal instead of moving."""
 
@@ -14,7 +17,7 @@ def classify_arrow_input(world: dict, arrow_id: int) -> str:
     if type(arrow_id) is not int or arrow_id not in DELTAS:
         raise ValueError("arrow_id must be one of Flash 1,2,3,4")
     flags = ("key_flag", "display_list", "display_jump", "display_text", "display_buy")
-    if not isinstance(world, dict) or any(type(world.get(k)) is not int for k in flags):
+    if not isinstance(world, dict) or any(type(world.get(k)) is not int or abs(world[k]) > MAX_SAFE_INTEGER for k in flags):
         raise ValueError("original keyboard gate flags required")
     if (world["key_flag"] == 1 and world["display_list"] == 0
             and world["display_jump"] == 0 and world["display_text"] == 0):
@@ -40,14 +43,14 @@ def step_arrow_turn(world: dict, arrow_id: int, monsters: dict,
         return {"state": deepcopy(world), "event": gate,
                 "events": [{"stage": "keyboard", "event": gate}],
                 "rolls_used": 0, "cleared": []}
-    if world.get("display_kill") != 0:
+    if type(world.get("display_kill")) is not int or world["display_kill"] != 0:
         raise ValueError("arrow router requires idle display_kill=0")
     row, col = world.get("row"), world.get("col")
     if type(row) is not int or type(col) is not int or not (0 <= row < 11 and 0 <= col < 11):
         raise ValueError("invalid original row/column")
     grid = world.get("grid")
     if not isinstance(grid, list) or len(grid) != 11 or any(
-            not isinstance(line, list) or len(line) != 11 or any(type(v) is not int for v in line)
+            not isinstance(line, list) or len(line) != 11 or any(type(v) is not int or abs(v) > MAX_SAFE_INTEGER for v in line)
             for line in grid):
         raise ValueError("expected original 11x11 integer grid")
     dr, dc = DELTAS[arrow_id]

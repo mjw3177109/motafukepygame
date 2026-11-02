@@ -73,5 +73,33 @@ class ArrowTurnTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "arrow_id"):
             classify_arrow_input(walk, 5)
 
+    def test_reject_non_json_safe_flags_and_grid_before_movement(self):
+        base = world_for(CASES[0])
+        for field in ("key_flag", "display_list", "display_jump", "display_text", "display_buy"):
+            for invalid in (2**53, -(2**53), True):
+                with self.subTest(field=field, invalid=invalid):
+                    world = deepcopy(base)
+                    world[field] = invalid
+                    before = deepcopy(world)
+                    with self.assertRaisesRegex(ValueError, "flags"):
+                        step_arrow_turn(world, 2, MONSTERS)
+                    self.assertEqual(world, before)
+        for invalid in (2**53, -(2**53), True):
+            with self.subTest(grid_value=invalid):
+                world = deepcopy(base)
+                world["grid"][9][9] = invalid  # not just the target cell
+                before = deepcopy(world)
+                with self.assertRaisesRegex(ValueError, "11x11"):
+                    step_arrow_turn(world, 2, MONSTERS)
+                self.assertEqual(world, before)
+
+    def test_reject_boolean_idle_battle_flag(self):
+        world = world_for(CASES[0])
+        world["display_kill"] = False  # False == 0 in Python, but not in JS
+        before = deepcopy(world)
+        with self.assertRaisesRegex(ValueError, "idle"):
+            step_arrow_turn(world, 2, MONSTERS)
+        self.assertEqual(world, before)
+
 if __name__ == "__main__":
     unittest.main()
