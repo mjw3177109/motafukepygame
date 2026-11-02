@@ -49,3 +49,24 @@ test('pure walking replay and malformed flags fail closed',()=>{
   assert.throws(()=>classifyArrowInput({key_flag:1},2),/flags/);
   assert.throws(()=>classifyArrowInput(world,5),/arrow_id/);
 });
+
+test('arrow-turn rejects sparse and inherited 11x11 grid entries',()=>{
+  for (const kind of ['missing_row','missing_cell','inherited_cell','unsafe_cell']) {
+    const world=worldFor(cases[0]);
+    if (kind==='missing_row') delete world.grid[2];
+    if (kind==='missing_cell') delete world.grid[2][4];
+    if (kind==='inherited_cell') {
+      delete world.grid[2][4];
+      const proto=Object.create(Array.prototype);
+      proto[4]=0;
+      Object.setPrototypeOf(world.grid[2],proto);
+    }
+    if (kind==='unsafe_cell') world.grid[2][4]=Number.MAX_SAFE_INTEGER+1;
+    const before=JSON.stringify(world);
+    assert.throws(()=>stepArrowTurn(world,2,monsters),/11x11/);
+    assert.equal(JSON.stringify(world),before,'input must remain unchanged');
+    if (kind==='missing_row') assert.equal(Object.hasOwn(world.grid,2),false);
+    if (kind==='missing_cell' || kind==='inherited_cell')
+      assert.equal(Object.hasOwn(world.grid[2],4),false);
+  }
+});

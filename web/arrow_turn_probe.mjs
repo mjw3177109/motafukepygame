@@ -1,5 +1,5 @@
 /** Original button-gate and arrow-turn composition; not a playable UI. */
-import {DELTAS, stepMoveArrow} from './movement_probe.mjs';
+import {DELTAS, stepMoveArrow, isDenseOriginalGrid} from './movement_probe.mjs';
 import {resolveEncounter} from './encounter_pipeline_probe.mjs';
 
 export function classifyArrowInput(world, arrowId) {
@@ -27,7 +27,7 @@ export function stepArrowTurn(world, arrowId, monsters, criticalRolls=[]) {
   const {row,col,grid}=world;
   if (![row,col].every(Number.isSafeInteger) || row<0 || row>=11 || col<0 || col>=11)
     throw new Error('invalid original row/column');
-  if (!Array.isArray(grid) || grid.length!==11 || grid.some(line=>!Array.isArray(line) || line.length!==11 || !line.every(Number.isSafeInteger)))
+  if (!isDenseOriginalGrid(grid))
     throw new Error('expected original 11x11 integer grid');
   const [dr,dc]=DELTAS[arrowId],nr=row+dr,nc=col+dc;
   const tile=nr>=0 && nr<11 && nc>=0 && nc<11 ? grid[nr][nc] : null;

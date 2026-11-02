@@ -4,13 +4,25 @@ const keyPickups = {6:'yellow',7:'blue',8:'red'};
 const keyDoors = {2:'yellow',3:'blue',4:'red'};
 const statPickups = {9:['defense',3],10:['attack',3],11:['hp',200],12:['hp',500]};
 
+// Dense, own-indexed grid is required: Array#some/every skip holes.
+export function isDenseOriginalGrid(grid) {
+  if (!Array.isArray(grid) || grid.length !== 11) return false;
+  for (let row = 0; row < 11; row++) {
+    if (!Object.hasOwn(grid, row) || !Array.isArray(grid[row]) || grid[row].length !== 11) return false;
+    for (let col = 0; col < 11; col++) {
+      if (!Object.hasOwn(grid[row], col) || !Number.isSafeInteger(grid[row][col])) return false;
+    }
+  }
+  return true;
+}
+
 export function stepMoveArrow(snapshot, arrowId) {
   if (!Number.isInteger(arrowId) || !Object.hasOwn(DELTAS, arrowId)) {
     throw new Error('arrow_id must be one of Flash 1,2,3,4');
   }
   const state = structuredClone(snapshot);
   const grid = state.grid;
-  if (!Array.isArray(grid) || grid.length !== 11 || grid.some(row => !Array.isArray(row) || row.length !== 11)) {
+  if (!isDenseOriginalGrid(grid)) {
     throw new Error('expected 11x11 original floor');
   }
   const {row, col} = state;
@@ -21,7 +33,7 @@ export function stepMoveArrow(snapshot, arrowId) {
   const nr = row+dr, nc = col+dc;
   if (nr < 0 || nr > 10 || nc < 0 || nc > 10) return {state,event:'boundary'};
   const tile = grid[nr][nc];
-  if (!Number.isInteger(tile)) throw new Error('tile must be an integer');
+  if (!Number.isSafeInteger(tile)) throw new Error('tile must be a safe integer');
   if ([0,97,98,99].includes(tile)) {
     // Flash Move_arrow erases the previous cell only if it was 0 or 99.
     if (grid[row][col] === 0 || grid[row][col] === 99) grid[row][col]=0;

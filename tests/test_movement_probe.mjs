@@ -38,3 +38,24 @@ test('invalid grid rejected',()=>{
   const state=makeState(cases[0]); state.grid.pop();
   assert.throws(()=>stepMoveArrow(state,1),/11x11/);
 });
+
+test('reject sparse, inherited and unsafe grid slots before movement',()=>{
+  for (const kind of ['missing_row','missing_cell','inherited_cell','unsafe_cell']) {
+    const state=makeState(cases[0]);
+    if (kind==='missing_row') delete state.grid[2];
+    if (kind==='missing_cell') delete state.grid[2][4];
+    if (kind==='inherited_cell') {
+      delete state.grid[2][4];
+      const proto=Object.create(Array.prototype);
+      proto[4]=0;
+      Object.setPrototypeOf(state.grid[2],proto);
+    }
+    if (kind==='unsafe_cell') state.grid[2][4]=Number.MAX_SAFE_INTEGER+1;
+    const before=JSON.stringify(state);
+    assert.throws(()=>stepMoveArrow(state,2),/11x11/);
+    assert.equal(JSON.stringify(state),before,'input must remain unchanged');
+    if (kind==='missing_row') assert.equal(Object.hasOwn(state.grid,2),false);
+    if (kind==='missing_cell' || kind==='inherited_cell')
+      assert.equal(Object.hasOwn(state.grid[2],4),false);
+  }
+});
