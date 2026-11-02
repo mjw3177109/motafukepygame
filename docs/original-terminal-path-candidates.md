@@ -30,3 +30,9 @@ python -m tools.audit_terminal_candidates --manifest .swf_audit/manifest.json --
 ## 2026-11-01 增量：结局相关状态写入候选索引
 
 同一条已校验 SWF SHA256 + FFDec 完整脚本清单的 CI 链，现在还索引 \`Display_text\`、\`mt_LastGame_ID\`、\`Display_say\`（含下标）和 \`mt_line_26\`（含下标）的文本赋值、复合赋值及后置自增/自减。结果在 \`.swf_audit/original_terminal_candidates.json\` 的 \`terminal_state_write\` 候选中保留文件、行号、完整脚本 SHA256、目标、运算符和相邻源码；\`state_write_candidate_count\` 单独计数，不改变旧候选计数字段。此索引用于定位潜在状态来源，不是 ActionScript 解析器，可能包含注释或无法执行的分支，亦可能漏掉间接赋值。只有源码控制流与 Flash 实机回放确认后，才能将候选写入转成双端游戏规则。新增 4 项测试覆盖写入、比较误判、动态下标和哈希篡改拒绝。
+
+## 2026-11-02 增量：同一行多次状态写入不得漏记
+
+修复候选索引在同一行仅保留一个 `terminal_state_write` 的问题。FFDec 的 ActionScript 可能将多个赋值、复合赋值或自增表达式放在一行；旧的 `(kind, line)` 去重键会悄悄漏掉后续写入。现在对状态写入按源码偏移分别保留，并增加 1 起始的 `column` 字段；旧的 `game_over_mention`、`hero_hp_comparison` 仍保持逐行候选计数。增加同一行四种状态写入、重复目标两次赋值及非写入候选去重的回归测试。
+
+这只改善原始反编译文本的取证完整性，**不**证明这些写入会执行，也不证明它们构成游戏结局控制链。审计仍需 SWF 哈希、导出清单和逐文件 SHA256 校验；Flash 实机轨迹、死亡/结局、双端一致性与 Kaggle 门禁状态均保持未验收。
