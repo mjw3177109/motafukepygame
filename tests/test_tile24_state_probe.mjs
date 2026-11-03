@@ -60,3 +60,14 @@ test('reject inherited item slot rather than accepting prototype values', () => 
   assert.throws(() => traceTile24State({...base, get_money: items}), /exactly three binary item flags required/);
   assert.equal(Object.hasOwn(items, 1), false, 'validation filled inherited slot');
 });
+
+test('reject Date and class instances masquerading as review-state records', () => {
+  const base = cases[1].input;
+  const date = Object.assign(new Date('2020-01-01T00:00:00Z'), base);
+  class ReviewRecord { constructor() { Object.assign(this, base); } }
+  for (const invalid of [date, new ReviewRecord()]) {
+    assert.equal(Object.keys(invalid).length, Object.keys(base).length);
+    assert.throws(() => traceTile24State(invalid), /exact tile-24 review state fields required/);
+    assert.equal(invalid.tile_id, base.tile_id, 'validation mutated input');
+  }
+});
