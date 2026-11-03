@@ -11,7 +11,7 @@ const binary = value => Number.isSafeInteger(value) && (value === 0 || value ===
 export function traceTile24State(input) {
   if (input === null || typeof input !== 'object' || Array.isArray(input) ||
       (Object.getPrototypeOf(input) !== Object.prototype && Object.getPrototypeOf(input) !== null) ||
-      Object.keys(input).length !== REQUIRED.length ||
+      Reflect.ownKeys(input).length !== REQUIRED.length ||
       REQUIRED.some(key => !Object.hasOwn(input, key))) {
     throw new Error('exact tile-24 review state fields required');
   }
@@ -34,7 +34,7 @@ export function traceTile24State(input) {
     throw new Error('tile-24 item flags require data properties');
   }
   if (!Array.isArray(input.get_money) || Object.getPrototypeOf(input.get_money) !== Array.prototype ||
-      input.get_money.length !== 3 || Object.keys(input.get_money).length !== 3 ||
+      input.get_money.length !== 3 || Reflect.ownKeys(input.get_money).length !== 4 ||
       ![0, 1, 2].every(index => Object.hasOwn(input.get_money, index) && binary(input.get_money[index]))) {
     throw new Error('exactly three binary item flags required');
   }
