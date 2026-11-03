@@ -85,3 +85,19 @@ test('reject noncanonical item arrays before structured cloning', () => {
     assert.deepEqual(Array.from(items), [1, 1, 1]);
   }
 });
+
+test('reject accessor-backed review fields and item slots without invoking getters', () => {
+  const base = cases.find(c => c.name === 'floor22_all_items').input;
+  let calls = 0;
+  const accessorState = {...base};
+  Object.defineProperty(accessorState, 'my_love', {
+    enumerable: true, configurable: true, get() { calls++; return 1; },
+  });
+  assert.throws(() => traceTile24State(accessorState), /data properties/);
+  const accessorItems = [1, 1, 1];
+  Object.defineProperty(accessorItems, '1', {
+    enumerable: true, configurable: true, get() { calls++; return 1; },
+  });
+  assert.throws(() => traceTile24State({...base, get_money: accessorItems}), /data properties/);
+  assert.equal(calls, 0, 'validation invoked an untrusted getter');
+});
