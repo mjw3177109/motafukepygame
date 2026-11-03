@@ -47,10 +47,21 @@ def _verify_love_dialogue_arms(branch_body: str) -> None:
     # The original resets run after the entire if/else, regardless of item choice.
     # Checking only the outer branch would incorrectly accept a reset in one arm.
     after_choice = branch_body[else_brace + len(no_body) + 2:]
+    # Require direct execution after the item choice, not a nested conditional.
+    depth = 0
+    direct_resets = []
+    for line in after_choice.splitlines():
+        stripped = line.strip()
+        if depth == 0:
+            direct_resets.append(stripped)
+        depth += line.count('{') - line.count('}')
+        if depth < 0:
+            raise ValueError('tile-24 love_dialogue unbalanced post-choice block')
+    if depth != 0:
+        raise ValueError('tile-24 love_dialogue unbalanced post-choice block')
     for statement in ('_root.my_love = 0;', '_root.mt_changes = 0;'):
-        matches = list(re.finditer(r'(?m)^[ \t]*' + re.escape(statement) + r'[ \t\r]*(?=\n|\Z)', after_choice))
-        if len(matches) != 1:
-            raise ValueError(f'tile-24 love_dialogue missing shared post-choice reset: {statement}')
+        if direct_resets.count(statement) != 1:
+            raise ValueError(f'tile-24 love_dialogue missing direct shared post-choice reset: {statement}')
     for label, body, expected in (
         ('if', yes_body, '_root.mtsay_001.gotoAndPlay("say_four");'),
         ('else', no_body, '_root.mtsay_001.gotoAndPlay("say_two");'),
