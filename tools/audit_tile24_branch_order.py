@@ -62,6 +62,11 @@ def _verify_love_dialogue_arms(branch_body: str) -> None:
     for statement in ('_root.my_love = 0;', '_root.mt_changes = 0;'):
         if direct_resets.count(statement) != 1:
             raise ValueError(f'tile-24 love_dialogue missing shared post-choice reset (not direct): {statement}')
+    # Original ActionScript clears my_love before mt_changes at the same level.
+    reset_order = [line for line in direct_resets if line in (
+        '_root.my_love = 0;', '_root.mt_changes = 0;')]
+    if reset_order != ['_root.my_love = 0;', '_root.mt_changes = 0;']:
+        raise ValueError('tile-24 love_dialogue shared reset order differs from original')
     for label, body, expected in (
         ('if', yes_body, '_root.mtsay_001.gotoAndPlay("say_four");'),
         ('else', no_body, '_root.mtsay_001.gotoAndPlay("say_two");'),
