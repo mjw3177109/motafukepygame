@@ -116,19 +116,19 @@ class Tile24BranchOrderTests(unittest.TestCase):
 
     def test_love_reset_nested_after_choice_is_rejected(self):
         changed = SOURCE.replace(
-            '      _root.my_love = 0;\\n      _root.mt_changes = 0;',
-            '      if(_root.Now_line == 22)\\n      {\\n'
-            '         _root.my_love = 0;\\n      }\\n'
+            '      _root.my_love = 0;\n      _root.mt_changes = 0;',
+            '      if(_root.Now_line == 22)\n      {\n'
+            '         _root.my_love = 0;\n      }\n'
             '      _root.mt_changes = 0;')
         with self.assertRaisesRegex(ValueError, 'missing shared post-choice reset'):
             verify_tile24_branch_order(changed)
 
     def test_changes_reset_nested_after_choice_is_rejected(self):
         changed = SOURCE.replace(
-            '      _root.my_love = 0;\\n      _root.mt_changes = 0;',
-            '      _root.my_love = 0;\\n'
-            '      if(_root.Now_line == 22)\\n      {\\n'
-            '         _root.mt_changes = 0;\\n      }')
+            '      _root.my_love = 0;\n      _root.mt_changes = 0;',
+            '      _root.my_love = 0;\n'
+            '      if(_root.Now_line == 22)\n      {\n'
+            '         _root.mt_changes = 0;\n      }')
         with self.assertRaisesRegex(ValueError, 'missing shared post-choice reset'):
             verify_tile24_branch_order(changed)
 
