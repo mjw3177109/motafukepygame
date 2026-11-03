@@ -16,7 +16,7 @@ export function traceTile24State(input) {
     throw new Error('exact tile-24 review state fields required');
   }
   // Reject accessor fields before reading values or structuredClone: getters can run code.
-  if (REQUIRED.some(key => !Object.hasOwn(Object.getOwnPropertyDescriptor(input, key), 'value'))) {
+  if (REQUIRED.some(key => !Object.hasOwn(Object.getOwnPropertyDescriptor(input, key), 'value') || !Object.getOwnPropertyDescriptor(input, key).enumerable)) {
     throw new Error('tile-24 review state requires data properties');
   }
   for (const key of ['display_say0','mt_changes','my_love','now_key_flag','last_game_id']) {
@@ -29,7 +29,7 @@ export function traceTile24State(input) {
   }
   if (Array.isArray(input.get_money) && [0, 1, 2].some(index => {
     const descriptor = Object.getOwnPropertyDescriptor(input.get_money, String(index));
-    return descriptor && !Object.hasOwn(descriptor, 'value');
+    return descriptor && !Object.hasOwn(descriptor, 'value') || !descriptor.enumerable;
   })) {
     throw new Error('tile-24 item flags require data properties');
   }
