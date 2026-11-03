@@ -36,3 +36,14 @@ test('blocked, non-event and malformed review input fail closed',()=>{
     assert.throws(()=>previewTile24Handoff(w,2,{},bad));
   assert.deepEqual(w,before);
 });
+
+test('inherited tile_id cannot authorize a tile-24 review handoff',()=>{
+  const w=world();
+  const review=structuredClone(cases.find(c=>c.name==='three_independent_guards').input);
+  const inherited=Object.assign(Object.create({tile_id:24}),review);
+  delete inherited.tile_id;
+  const before=structuredClone(w);
+  assert.throws(()=>previewTile24Handoff(w,2,{},inherited),
+    /explicit tile-24 review state required/);
+  assert.deepEqual(w,before);
+});
