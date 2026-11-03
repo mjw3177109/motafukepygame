@@ -10,6 +10,7 @@ const binary = value => Number.isSafeInteger(value) && (value === 0 || value ===
 
 export function traceTile24State(input) {
   if (input === null || typeof input !== 'object' || Array.isArray(input) ||
+      (Object.getPrototypeOf(input) !== Object.prototype && Object.getPrototypeOf(input) !== null) ||
       Object.keys(input).length !== REQUIRED.length ||
       REQUIRED.some(key => !Object.hasOwn(input, key))) {
     throw new Error('exact tile-24 review state fields required');
