@@ -48,7 +48,7 @@ def _verify_love_dialogue_arms(branch_body: str) -> None:
     # Checking only the outer branch would incorrectly accept a reset in one arm.
     after_choice = branch_body[else_brace + len(no_body) + 2:]
     for statement in ('_root.my_love = 0;', '_root.mt_changes = 0;'):
-        matches = list(re.finditer(r'(?m)^[ \\t]*' + re.escape(statement) + r'[ \\t\\r]*(?=\\n|\\Z)', after_choice))
+        matches = list(re.finditer(r'(?m)^[ \t]*' + re.escape(statement) + r'[ \t\r]*(?=\n|\Z)', after_choice))
         if len(matches) != 1:
             raise ValueError(f'tile-24 love_dialogue missing shared post-choice reset: {statement}')
     for label, body, expected in (
