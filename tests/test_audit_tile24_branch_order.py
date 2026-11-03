@@ -96,6 +96,24 @@ class Tile24BranchOrderTests(unittest.TestCase):
                 '   if(Number(eval(temp_lines)[temp_x][temp_y]) == 24 && _root.my_love == 1)\n   {}\n   if(Number(eval(temp_lines)[temp_x][temp_y]) == 24 && _root.my_love == 1)'))
 
 
+    def test_love_reset_cannot_move_into_item_if_arm(self):
+        changed = SOURCE.replace(
+            '         _root.mt_line_20[7][5] = 13;\\n      }\\n      else',
+            '         _root.mt_line_20[7][5] = 13;\\n         _root.my_love = 0;\\n      }\\n      else')
+        changed = changed.replace('      _root.my_love = 0;\\n      _root.mt_changes = 0;',
+                                  '      _root.mt_changes = 0;')
+        with self.assertRaisesRegex(ValueError, 'missing shared post-choice reset'):
+            verify_tile24_branch_order(changed)
+
+    def test_love_reset_cannot_move_into_item_else_arm(self):
+        changed = SOURCE.replace(
+            '         _root.mt_line_20[7][5] = 13;\\n      }\\n      _root.my_love = 0;',
+            '         _root.mt_line_20[7][5] = 13;\\n         _root.mt_changes = 0;\\n      }\\n      _root.my_love = 0;')
+        changed = changed.replace('      _root.my_love = 0;\\n      _root.mt_changes = 0;',
+                                  '      _root.my_love = 0;')
+        with self.assertRaisesRegex(ValueError, 'missing shared post-choice reset'):
+            verify_tile24_branch_order(changed)
+
     def test_love_else_dialogue_cannot_be_replaced_by_first_arm(self):
         changed = SOURCE.replace('gotoAndPlay("say_two")', 'gotoAndPlay("say_four")')
         with self.assertRaisesRegex(ValueError, 'love_dialogue else arm'):
