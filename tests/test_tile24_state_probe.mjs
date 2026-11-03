@@ -101,3 +101,17 @@ test('reject accessor-backed review fields and item slots without invoking gette
   assert.throws(() => traceTile24State({...base, get_money: accessorItems}), /data properties/);
   assert.equal(calls, 0, 'validation invoked an untrusted getter');
 });
+
+test('reject hidden and symbol properties before state cloning', () => {
+  const base = cases.find(c => c.name === 'floor22_all_items').input;
+  const hidden = {...base};
+  Object.defineProperty(hidden, 'hidden', {value: 1, enumerable: false});
+  const symbolic = {...base, [Symbol('unverified')]: 1};
+  const hiddenItems = [1, 1, 1];
+  Object.defineProperty(hiddenItems, 'hidden', {value: 1, enumerable: false});
+  const symbolicItems = [1, 1, 1];
+  symbolicItems[Symbol('unverified')] = 1;
+  for (const invalid of [hidden, symbolic, {...base, get_money: hiddenItems}, {...base, get_money: symbolicItems}]) {
+    assert.throws(() => traceTile24State(invalid), /exact|three binary/);
+  }
+});
