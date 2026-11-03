@@ -134,8 +134,8 @@ class Tile24BranchOrderTests(unittest.TestCase):
 
     def test_shared_reset_order_cannot_be_swapped(self):
         changed = SOURCE.replace(
-            '      _root.my_love = 0;\\n      _root.mt_changes = 0;',
-            '      _root.mt_changes = 0;\\n      _root.my_love = 0;')
+            '      _root.my_love = 0;\n      _root.mt_changes = 0;',
+            '      _root.mt_changes = 0;\n      _root.my_love = 0;')
         self.assertNotEqual(changed, SOURCE)
         with self.assertRaisesRegex(ValueError, 'shared reset order'):
             verify_tile24_branch_order(changed)
