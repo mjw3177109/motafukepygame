@@ -23,7 +23,8 @@ export function traceTile24State(input) {
       !Number.isSafeInteger(input.floor20_7_5)) {
     throw new Error('invalid tile, floor or map cell');
   }
-  if (!Array.isArray(input.get_money) || input.get_money.length !== 3 ||
+  if (!Array.isArray(input.get_money) || Object.getPrototypeOf(input.get_money) !== Array.prototype ||
+      input.get_money.length !== 3 || Object.keys(input.get_money).length !== 3 ||
       ![0, 1, 2].every(index => Object.hasOwn(input.get_money, index) && binary(input.get_money[index]))) {
     throw new Error('exactly three binary item flags required');
   }
