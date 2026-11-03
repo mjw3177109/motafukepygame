@@ -29,7 +29,7 @@ export function traceTile24State(input) {
   }
   if (Array.isArray(input.get_money) && [0, 1, 2].some(index => {
     const descriptor = Object.getOwnPropertyDescriptor(input.get_money, String(index));
-    return descriptor && !Object.hasOwn(descriptor, 'value') || !descriptor.enumerable;
+    return descriptor !== undefined && (!Object.hasOwn(descriptor, 'value') || !descriptor.enumerable);
   })) {
     throw new Error('tile-24 item flags require data properties');
   }
