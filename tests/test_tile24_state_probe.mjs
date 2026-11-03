@@ -115,3 +115,15 @@ test('reject hidden and symbol properties before state cloning', () => {
     assert.throws(() => traceTile24State(invalid), /exact|three binary/);
   }
 });
+
+test('reject non-enumerable required state and item slots before structuredClone', () => {
+  const base = cases.find(c => c.name === 'floor22_all_items').input;
+  const hiddenField = {...base};
+  Object.defineProperty(hiddenField, 'my_love', {value: 1, enumerable: false, configurable: true});
+  const hiddenSlot = [1, 1, 1];
+  Object.defineProperty(hiddenSlot, '1', {value: 1, enumerable: false, configurable: true});
+  assert.throws(() => traceTile24State(hiddenField), /data properties/);
+  assert.throws(() => traceTile24State({...base, get_money: hiddenSlot}), /data properties/);
+  assert.equal(Object.getOwnPropertyDescriptor(hiddenField, 'my_love').enumerable, false);
+  assert.equal(Object.getOwnPropertyDescriptor(hiddenSlot, '1').enumerable, false);
+});
