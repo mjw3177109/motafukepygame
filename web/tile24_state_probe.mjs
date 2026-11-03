@@ -15,6 +15,10 @@ export function traceTile24State(input) {
       REQUIRED.some(key => !Object.hasOwn(input, key))) {
     throw new Error('exact tile-24 review state fields required');
   }
+  // Reject accessor fields before reading values or structuredClone: getters can run code.
+  if (REQUIRED.some(key => !Object.hasOwn(Object.getOwnPropertyDescriptor(input, key), 'value'))) {
+    throw new Error('tile-24 review state requires data properties');
+  }
   for (const key of ['display_say0','mt_changes','my_love','now_key_flag','last_game_id']) {
     if (!binary(input[key])) throw new Error('binary state flags required');
   }
@@ -27,6 +31,9 @@ export function traceTile24State(input) {
       input.get_money.length !== 3 || Object.keys(input.get_money).length !== 3 ||
       ![0, 1, 2].every(index => Object.hasOwn(input.get_money, index) && binary(input.get_money[index]))) {
     throw new Error('exactly three binary item flags required');
+  }
+  if (![0, 1, 2].every(index => Object.hasOwn(Object.getOwnPropertyDescriptor(input.get_money, String(index)), 'value'))) {
+    throw new Error('tile-24 item flags require data properties');
   }
   const state = structuredClone(input), trace = [];
   if (state.tile_id === 24) {
