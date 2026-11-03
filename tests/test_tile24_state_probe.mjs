@@ -71,3 +71,17 @@ test('reject Date and class instances masquerading as review-state records', () 
     assert.equal(invalid.tile_id, base.tile_id, 'validation mutated input');
   }
 });
+
+test('reject noncanonical item arrays before structured cloning', () => {
+  const base = cases.find(c => c.name === 'floor22_all_items').input;
+  const subclass = class ItemFlags extends Array {};
+  const subclassItems = new subclass(1, 1, 1);
+  const extraItems = [1, 1, 1];
+  extraItems.note = 'unverified';
+  for (const items of [subclassItems, extraItems]) {
+    const input = {...base, get_money: items};
+    assert.throws(() => traceTile24State(input), /exactly three binary item flags required/);
+    assert.equal(input.get_money, items, 'validation replaced input array');
+    assert.deepEqual(Array.from(items), [1, 1, 1]);
+  }
+});
