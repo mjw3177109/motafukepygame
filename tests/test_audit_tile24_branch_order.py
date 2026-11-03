@@ -120,7 +120,7 @@ class Tile24BranchOrderTests(unittest.TestCase):
             '      if(_root.Now_line == 22)\\n      {\\n'
             '         _root.my_love = 0;\\n      }\\n'
             '      _root.mt_changes = 0;')
-        with self.assertRaisesRegex(ValueError, 'missing direct shared post-choice reset'):
+        with self.assertRaisesRegex(ValueError, 'missing shared post-choice reset'):
             verify_tile24_branch_order(changed)
 
     def test_changes_reset_nested_after_choice_is_rejected(self):
@@ -129,7 +129,7 @@ class Tile24BranchOrderTests(unittest.TestCase):
             '      _root.my_love = 0;\\n'
             '      if(_root.Now_line == 22)\\n      {\\n'
             '         _root.mt_changes = 0;\\n      }')
-        with self.assertRaisesRegex(ValueError, 'missing direct shared post-choice reset'):
+        with self.assertRaisesRegex(ValueError, 'missing shared post-choice reset'):
             verify_tile24_branch_order(changed)
 
     def test_love_else_dialogue_cannot_be_replaced_by_first_arm(self):
