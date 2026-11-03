@@ -61,7 +61,7 @@ def _verify_love_dialogue_arms(branch_body: str) -> None:
         raise ValueError('tile-24 love_dialogue unbalanced post-choice block')
     for statement in ('_root.my_love = 0;', '_root.mt_changes = 0;'):
         if direct_resets.count(statement) != 1:
-            raise ValueError(f'tile-24 love_dialogue missing direct shared post-choice reset: {statement}')
+            raise ValueError(f'tile-24 love_dialogue missing shared post-choice reset (not direct): {statement}')
     for label, body, expected in (
         ('if', yes_body, '_root.mtsay_001.gotoAndPlay("say_four");'),
         ('else', no_body, '_root.mtsay_001.gotoAndPlay("say_two");'),
