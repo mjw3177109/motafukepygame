@@ -132,6 +132,14 @@ class Tile24BranchOrderTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'missing shared post-choice reset'):
             verify_tile24_branch_order(changed)
 
+    def test_shared_reset_order_cannot_be_swapped(self):
+        changed = SOURCE.replace(
+            '      _root.my_love = 0;\\n      _root.mt_changes = 0;',
+            '      _root.mt_changes = 0;\\n      _root.my_love = 0;')
+        self.assertNotEqual(changed, SOURCE)
+        with self.assertRaisesRegex(ValueError, 'shared reset order'):
+            verify_tile24_branch_order(changed)
+
     def test_love_else_dialogue_cannot_be_replaced_by_first_arm(self):
         changed = SOURCE.replace('gotoAndPlay("say_two")', 'gotoAndPlay("say_four")')
         with self.assertRaisesRegex(ValueError, 'love_dialogue else arm'):
