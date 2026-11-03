@@ -15,7 +15,8 @@ export function previewTile24Handoff(world, arrowId, monsters, reviewState) {
   }
   if (!target) throw new Error('no tile-24 handoff for this input');
   if (!reviewState || typeof reviewState !== 'object' ||
-      Array.isArray(reviewState) || reviewState.tile_id !== 24)
+      Array.isArray(reviewState) ||
+      !Object.hasOwn(reviewState, 'tile_id') || reviewState.tile_id !== 24)
     throw new Error('explicit tile-24 review state required');
   const review = traceTile24State(reviewState);
   return {
