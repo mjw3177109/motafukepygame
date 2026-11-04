@@ -193,8 +193,7 @@ def verify_tile24_branch_order(source: str) -> dict:
         if label == 'floor22_dialogue':
             _verify_floor22_dialogue_arms(branch_body)
         for statement in statements:
-            pattern = r'(?m)^[ \t]*' + re.escape(statement) + r'[ \t\r]*
-            code = _code_only(branch_body)
+            pattern = r'(?m)^[ \t]*' + re.escape(statement) + r'[ \t\r]*            code = _code_only(branch_body)
             if not any(code[m.start():].lstrip().startswith('_root.')
                        for m in re.finditer(pattern, branch_body)):
                 raise ValueError(f'tile-24 {label} missing branch statement: {statement}')
@@ -211,6 +210,7 @@ def verify_tile24_branch_order(source: str) -> dict:
             'runtime_combined_branch_execution_verified': False,
             'runtime_event_reachability_verified': False,
             'flash_parity_verified': False}
+
 
             code = _code_only(branch_body)
             if not any(code[m.start():].lstrip().startswith('_root.')
@@ -229,3 +229,4 @@ def verify_tile24_branch_order(source: str) -> dict:
             'runtime_combined_branch_execution_verified': False,
             'runtime_event_reachability_verified': False,
             'flash_parity_verified': False}
+
