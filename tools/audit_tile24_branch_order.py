@@ -81,13 +81,13 @@ def _verify_love_dialogue_arms(branch_body: str) -> None:
     """Require both original item-dependent arms; a shared write alone is insufficient."""
     start = re.search(
         r'(?m)^[ \t]*if\s*\(\s*Number\(_root\.mt_GetMoney\[0\]\)\s*==\s*1\s*\)\s*\{',
-        branch_body,
+        _code_only(branch_body),
     )
     if start is None:
         raise ValueError('tile-24 love_dialogue missing item-dependent if arm')
     yes_body = _braced_body(branch_body, start.end() - 1)
     closing_brace = start.end() - 1 + len(yes_body) + 1
-    else_match = re.match(r'\s*else\s*\{', branch_body[closing_brace + 1:])
+    else_match = re.match(r'\s*else\s*\{', _code_only(branch_body)[closing_brace + 1:])
     if else_match is None:
         raise ValueError('tile-24 love_dialogue missing else arm')
     else_brace = closing_brace + 1 + else_match.end() - 1
@@ -132,7 +132,7 @@ def _verify_floor22_dialogue_arms(branch_body: str) -> None:
         r'Number\(_root\.mt_GetMoney\[1\]\)\s*==\s*1\s*&&\s*'
         r'Number\(_root\.mt_GetMoney\[2\]\)\s*==\s*1\s*\)\s*\{'
     )
-    matches = list(re.finditer(item_guard, branch_body))
+    matches = list(re.finditer(item_guard, _code_only(branch_body)))
     if len(matches) != 1:
         raise ValueError('tile-24 floor22_dialogue missing exact three-item AND guard')
     start = matches[0]
@@ -153,7 +153,7 @@ def _verify_floor22_dialogue_arms(branch_body: str) -> None:
 
     yes_body = _braced_body(branch_body, start.end() - 1)
     closing_brace = start.end() - 1 + len(yes_body) + 1
-    else_match = re.match(r'\s*else\s*\{', branch_body[closing_brace + 1:])
+    else_match = re.match(r'\s*else\s*\{', _code_only(branch_body)[closing_brace + 1:])
     if else_match is None:
         raise ValueError('tile-24 floor22_dialogue missing else arm')
     else_brace = closing_brace + 1 + else_match.end() - 1
