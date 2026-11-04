@@ -96,6 +96,18 @@ class Tile24BranchOrderTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'missing branch statement'):
             verify_tile24_branch_order(changed)
 
+    def test_commented_guard_cannot_replace_real_guard(self):
+        changed = SOURCE.replace(
+            '   if(Number(eval(temp_lines)[temp_x][temp_y]) == 24 && _root.mt_changes == 1 && _root.my_love == 0)',
+            '   /* if(Number(eval(temp_lines)[temp_x][temp_y]) == 24 && _root.mt_changes == 1 && _root.my_love == 0) */')
+        with self.assertRaisesRegex(ValueError, 'expected four independent'):
+            verify_tile24_branch_order(changed)
+
+    def test_commented_duplicate_guard_is_not_counted(self):
+        marker = '   if(Number(eval(temp_lines)[temp_x][temp_y]) == 24 && _root.Display_say[0] == 0)'
+        changed = SOURCE.replace(marker, '   // ' + marker.strip() + '\\n' + marker, 1)
+        self.assertTrue(verify_tile24_branch_order(changed)['independent_if_statements_verified'])
+
     def test_duplicate_guard_fails_closed(self):
         with self.assertRaisesRegex(ValueError, 'expected four independent'):
             verify_tile24_branch_order(SOURCE.replace(
