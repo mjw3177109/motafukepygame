@@ -215,5 +215,24 @@ class Tile24BranchOrderTests(unittest.TestCase):
             verify_tile24_branch_order(changed)
 
 
+    def test_comment_braces_do_not_hide_shared_resets(self):
+        changed = SOURCE.replace(
+            '      _root.my_love = 0;\n      _root.mt_changes = 0;',
+            '      /* } { */\n      _root.my_love = 0;\n      _root.mt_changes = 0;')
+        self.assertTrue(verify_tile24_branch_order(changed)['independent_if_statements_verified'])
+
+    def test_multiline_comment_braces_do_not_hide_shared_resets(self):
+        changed = SOURCE.replace(
+            '      _root.my_love = 0;\n      _root.mt_changes = 0;',
+            '      /* }\n         { */\n      _root.my_love = 0;\n      _root.mt_changes = 0;')
+        self.assertTrue(verify_tile24_branch_order(changed)['independent_if_statements_verified'])
+
+    def test_string_brace_does_not_close_branch(self):
+        changed = SOURCE.replace(
+            '      _root.my_love = 0;\n      _root.mt_changes = 0;',
+            '      trace("}");\n      _root.my_love = 0;\n      _root.mt_changes = 0;')
+        self.assertTrue(verify_tile24_branch_order(changed)['independent_if_statements_verified'])
+
+
 if __name__ == '__main__':
     unittest.main()
