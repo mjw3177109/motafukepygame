@@ -16,13 +16,61 @@ GUARDS = (
 )
 
 
+def _code_only(source: str) -> str:
+    """Mask comments and string contents while preserving offsets and newlines."""
+    out = list(source)
+    state = 'code'
+    i = 0
+    while i < len(source):
+        c = source[i]
+        nxt = source[i + 1] if i + 1 < len(source) else ''
+        if state == 'code':
+            if c in ('"', "'"):
+                state = c
+                out[i] = ' '
+            elif c == '/' and nxt in ('/', '*'):
+                state = 'line' if nxt == '/' else 'block'
+                out[i] = out[i + 1] = ' '
+                i += 1
+        elif state in ('"', "'"):
+            if c == chr(92) and nxt:
+                out[i] = ' '
+                i += 1
+                if source[i] not in '\r\n':
+                    out[i] = ' '
+            elif c == state:
+                out[i] = ' '
+                state = 'code'
+            elif c not in '\r\n':
+                out[i] = ' '
+        elif state == 'line':
+            if c in '\r\n':
+                state = 'code'
+            else:
+                out[i] = ' '
+        elif state == 'block':
+            if c == '*' and nxt == '/':
+                out[i] = out[i + 1] = ' '
+                i += 1
+                state = 'code'
+            elif c not in '\r\n':
+                out[i] = ' '
+        i += 1
+    if state in ('"', "'", 'block'):
+        raise ValueError('unterminated ActionScript string or comment')
+    return ''.join(out)
+
+
 def _braced_body(source: str, brace_index: int) -> str:
-    """Return a brace-delimited block, accounting for nested if/else blocks."""
+    """Return a code brace-delimited block, ignoring braces in literals/comments."""
+    code = _code_only(source)
+    if code[brace_index] != '{':
+        raise ValueError('expected code opening brace')
     depth = 0
-    for i in range(brace_index, len(source)):
-        if source[i] == '{':
+    for i in range(brace_index, len(code)):
+        if code[i] == '{':
             depth += 1
-        elif source[i] == '}':
+        elif code[i] == '}':
             depth -= 1
             if depth == 0:
                 return source[brace_index + 1:i]
@@ -54,7 +102,8 @@ def _verify_love_dialogue_arms(branch_body: str) -> None:
         stripped = line.strip()
         if depth == 0:
             direct_resets.append(stripped)
-        depth += line.count('{') - line.count('}')
+        code_line = _code_only(line)
+        depth += code_line.count('{') - code_line.count('}')
         if depth < 0:
             raise ValueError('tile-24 love_dialogue unbalanced post-choice block')
     if depth != 0:
