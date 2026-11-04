@@ -105,7 +105,7 @@ class Tile24BranchOrderTests(unittest.TestCase):
 
     def test_commented_duplicate_guard_is_not_counted(self):
         marker = '   if(Number(eval(temp_lines)[temp_x][temp_y]) == 24 && _root.Display_say[0] == 0)'
-        changed = SOURCE.replace(marker, '   // ' + marker.strip() + '\\n' + marker, 1)
+        changed = SOURCE.replace(marker, '   // ' + marker.strip() + '\n' + marker, 1)
         self.assertTrue(verify_tile24_branch_order(changed)['independent_if_statements_verified'])
 
     def test_duplicate_guard_fails_closed(self):
