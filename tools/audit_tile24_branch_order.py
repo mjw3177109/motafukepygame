@@ -193,8 +193,7 @@ def verify_tile24_branch_order(source: str) -> dict:
         if label == 'floor22_dialogue':
             _verify_floor22_dialogue_arms(branch_body)
         for statement in statements:
-            if not any(_code_only(branch_body)[m.start():].lstrip().startswith('_root.')
-                       for m in re.finditer(r'(?m)^[ \t]*' + re.escape(statement) + r'[ \t\r]*
+            if not any(_code_only(branch_body)[m.start():].lstrip().startswith('_root.') for m in re.finditer(r'(?m)^[ \t]*' + re.escape(statement) + r'[ \t\r]*
                 raise ValueError(f'tile-24 {label} missing branch statement: {statement}')
         if label == 'love_dialogue':
             _verify_love_dialogue_arms(branch_body)
