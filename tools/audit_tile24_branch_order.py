@@ -193,7 +193,25 @@ def verify_tile24_branch_order(source: str) -> dict:
         if label == 'floor22_dialogue':
             _verify_floor22_dialogue_arms(branch_body)
         for statement in statements:
-            pattern = r'(?m)^[ \\t]*' + re.escape(statement) + r'[ \\t\\r]*$'
+            pattern = r'(?m)^[ \t]*' + re.escape(statement) + r'[ \t\r]*
+            code = _code_only(branch_body)
+            if not any(code[m.start():].lstrip().startswith('_root.')
+                       for m in re.finditer(pattern, branch_body)):
+                raise ValueError(f'tile-24 {label} missing branch statement: {statement}')
+        if label == 'love_dialogue':
+            _verify_love_dialogue_arms(branch_body)
+        output.append({'branch': label, 'guard': condition,
+                       'line': source.count('\n', 0, declarations[0].end())
+                       + body.count('\n', 0, match.start()) + 1})
+    if positions != sorted(positions) or positions != [m.start() for m in tile_guards]:
+        raise ValueError('tile-24 independent guard order differs from original')
+    return {'source_order': output, 'independent_if_statements_verified': True,
+            'love_dialogue_both_arms_verified': True,
+            'floor22_three_item_both_arms_verified': True,
+            'runtime_combined_branch_execution_verified': False,
+            'runtime_event_reachability_verified': False,
+            'flash_parity_verified': False}
+
             code = _code_only(branch_body)
             if not any(code[m.start():].lstrip().startswith('_root.')
                        for m in re.finditer(pattern, branch_body)):
