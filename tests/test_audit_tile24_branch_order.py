@@ -59,6 +59,27 @@ class Tile24BranchOrderTests(unittest.TestCase):
         self.assertFalse(report['runtime_combined_branch_execution_verified'])
         self.assertFalse(report['flash_parity_verified'])
 
+    def test_commented_nested_love_guard_cannot_replace_real_guard(self):
+        changed = SOURCE.replace(
+            '      if(Number(_root.mt_GetMoney[0]) == 1)',
+            '      /* if(Number(_root.mt_GetMoney[0]) == 1) */')
+        with self.assertRaisesRegex(ValueError, 'love_dialogue missing item-dependent if arm'):
+            verify_tile24_branch_order(changed)
+
+    def test_commented_floor22_item_guard_cannot_replace_real_guard(self):
+        guard = ('      if(Number(_root.mt_GetMoney[0]) == 1 && '
+                 'Number(_root.mt_GetMoney[1]) == 1 && Number(_root.mt_GetMoney[2]) == 1)')
+        changed = SOURCE.replace(guard, '      /* ' + guard.strip() + ' */')
+        with self.assertRaisesRegex(ValueError, 'floor22_dialogue missing exact three-item AND guard'):
+            verify_tile24_branch_order(changed)
+
+    def test_commented_nested_else_cannot_replace_real_else(self):
+        changed = SOURCE.replace(
+            '      else\n      {\n         _root.mtsay_001.gotoAndPlay("say_two");',
+            '      /* else */\n      {\n         _root.mtsay_001.gotoAndPlay("say_two");')
+        with self.assertRaisesRegex(ValueError, 'love_dialogue missing else arm'):
+            verify_tile24_branch_order(changed)
+
     def test_crlf(self):
         self.assertTrue(verify_tile24_branch_order(SOURCE.replace('\n', '\r\n'))['independent_if_statements_verified'])
 
