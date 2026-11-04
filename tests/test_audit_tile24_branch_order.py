@@ -89,6 +89,13 @@ class Tile24BranchOrderTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'missing branch statement'):
             verify_tile24_branch_order(changed)
 
+    def test_block_comment_cannot_fake_required_write(self):
+        changed = SOURCE.replace(
+            '      _root.mt_LastGame_ID = 1;',
+            '      /*\n      _root.mt_LastGame_ID = 1;\n      */')
+        with self.assertRaisesRegex(ValueError, 'missing branch statement'):
+            verify_tile24_branch_order(changed)
+
     def test_duplicate_guard_fails_closed(self):
         with self.assertRaisesRegex(ValueError, 'expected four independent'):
             verify_tile24_branch_order(SOURCE.replace(
