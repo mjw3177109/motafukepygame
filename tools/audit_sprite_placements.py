@@ -1,6 +1,6 @@
-"""Evidence-only SWF PlaceObject2 frame snapshots for selected original mt_* sprites.
+"""Evidence-only SWF PlaceObject2 snapshots for every original mt_* sprite.
 
-No SVG registration, bitmap rendering, ActionScript behavior or pixel parity is inferred.
+No SVG registration, bitmap rendering, ActionScript execution or pixel parity is inferred.
 """
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ TAG = re.compile(r'^([0-9a-fA-F]{8}):(\s+)(\d+)\.\s+(.*?)\s+tagId=\s*(\d+)\s+len
 CHAR = re.compile(r'\((\d+)\)')
 DEPTH = re.compile(r'Depth:\s*(\d+)')
 HEX = re.compile(r'[0-9a-fA-F]{2}\Z')
-SELECTED = ('mt_00', 'mt_01', 'mt_02', 'mt_03', 'mt_06')
+SHA = re.compile(r'[0-9a-f]{64}\Z')
 
 
 class Bits:
@@ -55,9 +55,9 @@ def matrix(data: bytes) -> tuple[dict, int]:
 
 def payload_bytes(raw: str, length: int) -> bytes:
     tokens = raw.split()
-    if len(tokens) != length or not all(HEX.fullmatch(t) for t in tokens):
+    if len(tokens) != length or not all(HEX.fullmatch(token) for token in tokens):
         raise ValueError('truncated or nonhex FFDec tag payload')
-    return bytes(int(t, 16) for t in tokens)
+    return bytes(int(token, 16) for token in tokens)
 
 
 def placement(data: bytes, previous: dict | None) -> tuple[int, dict]:
@@ -90,7 +90,7 @@ def placement(data: bytes, previous: dict | None) -> tuple[int, dict]:
     if has_clip:
         if len(data) < pos + 2:
             raise ValueError('truncated PlaceObject2 clip depth')
-        clip = int.from_bytes(data[pos:pos+2], 'little')
+        clip = int.from_bytes(data[pos:pos + 2], 'little')
         pos += 2
         if clip <= depth:
             raise ValueError('invalid PlaceObject2 clip depth')
@@ -99,8 +99,21 @@ def placement(data: bytes, previous: dict | None) -> tuple[int, dict]:
     return depth, {'character_id': char_id, 'matrix': transform, 'clip_depth': clip}
 
 
+def frame_label(data: bytes) -> str:
+    """Decode the null-terminated SWF FrameLabel string; reject anchor/trailing bytes."""
+    if not data or data[-1] != 0 or 0 in data[:-1]:
+        raise ValueError('invalid FrameLabel string')
+    try:
+        value = data[:-1].decode('utf-8')
+    except UnicodeDecodeError as exc:
+        raise ValueError('invalid FrameLabel encoding') from exc
+    if not value:
+        raise ValueError('empty FrameLabel')
+    return value
+
+
 def snapshots(tag_text: str, character_id: int, offset: str, expected_frames: int) -> dict:
-    active, found, state, frames, pending_actions = False, False, {}, [], []
+    active, found, state, frames, pending_actions, pending_labels = False, False, {}, [], [], []
     for line in tag_text.splitlines():
         match = TAG.match(line)
         if not match:
@@ -142,21 +155,26 @@ def snapshots(tag_text: str, character_id: int, offset: str, expected_frames: in
             del state[depth]
         elif tag_id == 12:
             pending_actions.append(at)
+        elif tag_id == 43:
+            pending_labels.append(frame_label(payload_bytes(raw, length)))
         elif tag_id == 1:
             if length:
                 raise ValueError('nonempty ShowFrame')
-            frames.append({'frame': len(frames) + 1,
-                           'placements': [{'depth': depth, **state[depth]} for depth in sorted(state)],
-                           'uninterpreted_action_offsets': pending_actions})
-            pending_actions = []
+            frame = {'frame': len(frames) + 1,
+                     'placements': [{'depth': depth, **state[depth]} for depth in sorted(state)],
+                     'uninterpreted_action_offsets': pending_actions}
+            if pending_labels:
+                frame['labels'] = pending_labels
+            frames.append(frame)
+            pending_actions, pending_labels = [], []
         elif tag_id not in (45,):
             raise ValueError(f'unsupported nested sprite tag {tag_id}')
-    if not found or len(frames) != expected_frames or pending_actions:
+    if not found or len(frames) != expected_frames or pending_actions or pending_labels:
         raise ValueError('missing sprite or incomplete timeline')
     digest = hashlib.sha256(json.dumps(frames, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
     return {'character_id': character_id, 'frame_count': len(frames),
             'timeline_sha256': digest, 'frames': frames,
-            'uninterpreted_action_count': sum(len(f['uninterpreted_action_offsets']) for f in frames)}
+            'uninterpreted_action_count': sum(len(frame['uninterpreted_action_offsets']) for frame in frames)}
 
 
 def audit(tag_text: str, trace: dict, frame_report: dict, anchors: dict | None = None) -> dict:
@@ -166,41 +184,60 @@ def audit(tag_text: str, trace: dict, frame_report: dict, anchors: dict | None =
             frame_report.get('ffdec_tag_dump_sha256') != digest or
             trace.get('swf_sha256') != frame_report.get('swf_sha256')):
         raise ValueError('source provenance mismatch')
-    if anchors is not None and (anchors.get('schema_version') != 1 or
-            anchors.get('swf_sha256') != trace.get('swf_sha256') or
-            set(anchors.get('timelines', {})) != set(SELECTED)):
-        raise ValueError('placement anchors provenance mismatch')
+    symbols, frame_symbols = trace.get('symbols'), frame_report.get('sprites')
+    if (not isinstance(symbols, dict) or not symbols or not isinstance(frame_symbols, dict) or
+            set(symbols) != set(frame_symbols) or
+            trace.get('resolved_symbol_count') != len(symbols) or
+            frame_report.get('verified_symbol_count') != len(symbols) or
+            frame_report.get('frame_count_verified') is not True):
+        raise ValueError('incomplete traced sprite/frame coverage')
+    if anchors is not None:
+        if not isinstance(anchors, dict):
+            raise ValueError('placement anchors provenance mismatch')
+        timelines = anchors.get('timelines')
+        if (anchors.get('schema_version') != 1 or anchors.get('swf_sha256') != trace.get('swf_sha256') or
+                not isinstance(timelines, dict) or set(timelines) != set(symbols) or
+                any(not isinstance(value, str) or not SHA.fullmatch(value) for value in timelines.values())):
+            raise ValueError('placement anchors provenance mismatch')
     results = {}
-    for alias in SELECTED:
-        symbol = trace.get('symbols', {}).get(alias)
-        frame = frame_report.get('sprites', {}).get(alias)
-        if not symbol or not frame or symbol['character_id'] != frame['character_id'] or symbol['define_offset'] != frame['define_offset']:
+    for alias in sorted(symbols):
+        symbol, frame = symbols[alias], frame_symbols[alias]
+        if (not isinstance(symbol, dict) or not isinstance(frame, dict) or
+                symbol.get('character_id') != frame.get('character_id') or
+                symbol.get('define_offset') != frame.get('define_offset') or
+                type(frame.get('frame_count')) is not int or frame['frame_count'] < 1):
             raise ValueError(f'missing trace/frame evidence: {alias}')
         result = snapshots(tag_text, symbol['character_id'], symbol['define_offset'], frame['frame_count'])
         if anchors is not None and anchors['timelines'][alias] != result['timeline_sha256']:
             raise ValueError(f'original placement timeline drift: {alias}')
         results[alias] = result
+    action_count = sum(item['uninterpreted_action_count'] for item in results.values())
+    labelled_frame_count = sum('labels' in frame for item in results.values() for frame in item['frames'])
     return {'schema_version': 1, 'swf_sha256': trace['swf_sha256'], 'ffdec_tag_dump_sha256': digest,
-            'verified_aliases': list(SELECTED), 'sprites': results,
-            'matrix_source_verified': True, 'actionscript_executed': False,
+            'verified_aliases': sorted(results), 'verified_alias_count': len(results),
+            'total_frame_snapshots': sum(item['frame_count'] for item in results.values()),
+            'uninterpreted_action_count': action_count, 'labelled_frame_count': labelled_frame_count,
+            'sprites': results, 'matrix_source_verified': True, 'actionscript_executed': False,
             'registration_verified': False, 'visual_parity_verified': False}
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description=__doc__)
     for key in ('tags', 'trace', 'frames', 'out'):
-        p.add_argument('--' + key, type=Path, required=True)
-    p.add_argument('--anchors', type=Path)
-    args = p.parse_args()
+        parser.add_argument('--' + key, type=Path, required=True)
+    parser.add_argument('--anchors', type=Path)
+    args = parser.parse_args()
     try:
-        load = lambda f: json.loads(f.read_text(encoding='utf-8'))
+        load = lambda file: json.loads(file.read_text(encoding='utf-8'))
         result = audit(args.tags.read_text(encoding='utf-8'), load(args.trace), load(args.frames),
                        load(args.anchors) if args.anchors else None)
     except (ValueError, KeyError, TypeError, OSError, UnicodeError, json.JSONDecodeError) as exc:
-        p.exit(2, f'Sprite placement audit FAILED: {exc}\n')
+        parser.exit(2, f'Sprite placement audit FAILED: {exc}\n')
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-    print(f"PASS: {len(result['verified_aliases'])} source sprite placement timelines; "
+    print(f"PASS: {result['verified_alias_count']} source sprite placement timelines, "
+          f"{result['total_frame_snapshots']} frame snapshots, "
+          f"{result['labelled_frame_count']} labelled frames; "
           'ActionScript, registration and visual parity NOT VERIFIED')
 
 
