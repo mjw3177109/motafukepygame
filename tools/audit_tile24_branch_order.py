@@ -98,11 +98,10 @@ def _verify_love_dialogue_arms(branch_body: str) -> None:
     # Require direct execution after the item choice, not a nested conditional.
     depth = 0
     direct_resets = []
-    for line in after_choice.splitlines():
+    for line, code_line in zip(after_choice.splitlines(), _code_only(after_choice).splitlines()):
         stripped = line.strip()
         if depth == 0:
             direct_resets.append(stripped)
-        code_line = _code_only(line)
         depth += code_line.count('{') - code_line.count('}')
         if depth < 0:
             raise ValueError('tile-24 love_dialogue unbalanced post-choice block')
