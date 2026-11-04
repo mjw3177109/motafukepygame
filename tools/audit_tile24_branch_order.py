@@ -175,8 +175,10 @@ def verify_tile24_branch_order(source: str) -> dict:
     if end is None:
         raise ValueError('missing Move_arrow closing brace')
     body = tail[:end.start()]
+    # Match branch guards only in executable source, never inside comments/strings.
+    guard_code = _code_only(body)
     prefix = r'(?m)^[ \t]+if\s*\(\s*Number\(eval\(temp_lines\)\[temp_x\]\[temp_y\]\)\s*==\s*24\s*&&\s*'
-    tile_guards = list(re.finditer(prefix, body))
+    tile_guards = list(re.finditer(prefix, guard_code))
     if len(tile_guards) != 4:
         raise ValueError(f'expected four independent tile-24 guards, found {len(tile_guards)}')
     positions = []
@@ -184,7 +186,7 @@ def verify_tile24_branch_order(source: str) -> dict:
     for label, condition, statements in GUARDS:
         cond_regex = re.escape(condition).replace(r'\ ', r'\s*')
         pattern = prefix + cond_regex + r'\s*\)\s*\{'
-        matches = list(re.finditer(pattern, body))
+        matches = list(re.finditer(pattern, guard_code))
         if len(matches) != 1:
             raise ValueError(f'tile-24 {label} guard missing or duplicated')
         match = matches[0]
