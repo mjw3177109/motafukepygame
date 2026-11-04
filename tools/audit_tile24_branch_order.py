@@ -77,6 +77,26 @@ def _braced_body(source: str, brace_index: int) -> str:
     raise ValueError('unterminated tile-24 branch')
 
 
+def _executable_statement_matches(source: str, statement: str):
+    """Return exact statement lines whose characters are executable code.
+
+    Matching the original text alone is unsafe: a line inside a multiline
+    comment can look identical to an ActionScript statement. Compare the
+    same source span after comment/string masking with the masked expected
+    statement, preserving offsets so string arguments remain verifiable.
+    """
+    code = _code_only(source)
+    expected = _code_only(statement).strip(" \t\r")
+    pattern = re.compile(r'(?m)^[ \t]*' + re.escape(statement) + r'[ \t\r]*$')
+    matches = []
+    for match in pattern.finditer(source):
+        actual = code[match.start():match.end()].strip(" \t\r")
+        if actual == expected:
+            matches.append(match)
+    return matches
+
+
+
 def _verify_love_dialogue_arms(branch_body: str) -> None:
     """Require both original item-dependent arms; a shared write alone is insufficient."""
     start = re.search(
@@ -101,7 +121,8 @@ def _verify_love_dialogue_arms(branch_body: str) -> None:
     for line, code_line in zip(after_choice.splitlines(), _code_only(after_choice).splitlines()):
         stripped = line.strip()
         if depth == 0:
-            direct_resets.append(stripped)
+            # Masked code excludes comment text from the direct-reset ledger.
+            direct_resets.append(code_line.strip())
         depth += code_line.count('{') - code_line.count('}')
         if depth < 0:
             raise ValueError('tile-24 love_dialogue unbalanced post-choice block')
@@ -120,7 +141,7 @@ def _verify_love_dialogue_arms(branch_body: str) -> None:
         ('else', no_body, '_root.mtsay_001.gotoAndPlay("say_two");'),
     ):
         for statement in (expected, '_root.mt_line_20[7][5] = 13;'):
-            if not re.search(r'(?m)^[ \t]*' + re.escape(statement) + r'[ \t\r]*$', body):
+            if not _executable_statement_matches(body, statement):
                 raise ValueError(f'tile-24 love_dialogue {label} arm missing statement: {statement}')
 
 
@@ -144,7 +165,7 @@ def _verify_floor22_dialogue_arms(branch_body: str) -> None:
         '_root.Display_say[0] = 1;',
         '_root.CopyMovie("mt_say_01","mtsay_001",1350,380,207);',
     ):
-        matches = list(re.finditer(r'(?m)^[ \t]*' + re.escape(statement) + r'[ \t\r]*(?=\n|\Z)', setup))
+        matches = _executable_statement_matches(setup, statement)
         if len(matches) != 1:
             raise ValueError(f'tile-24 floor22_dialogue missing or duplicated pre-choice setup: {statement}')
         setup_positions.append(matches[0].start())
@@ -162,7 +183,7 @@ def _verify_floor22_dialogue_arms(branch_body: str) -> None:
         ('if', yes_body, '_root.mtsay_001.gotoAndPlay("say_six");'),
         ('else', no_body, '_root.mtsay_001.gotoAndPlay("say_five");'),
     ):
-        if not re.search(r'(?m)^[ \t]*' + re.escape(statement) + r'[ \t\r]*$', body):
+        if not _executable_statement_matches(body, statement):
             raise ValueError(f'tile-24 floor22_dialogue {label} arm missing statement: {statement}')
 
 
@@ -195,10 +216,7 @@ def verify_tile24_branch_order(source: str) -> dict:
         if label == 'floor22_dialogue':
             _verify_floor22_dialogue_arms(branch_body)
         for statement in statements:
-            pattern = r'(?m)^[ \t]*' + re.escape(statement) + r'[ \t\r]*$'
-            code = _code_only(branch_body)
-            if not any(code[m.start():].lstrip().startswith('_root.')
-                       for m in re.finditer(pattern, branch_body)):
+            if not _executable_statement_matches(branch_body, statement):
                 raise ValueError(f'tile-24 {label} missing branch statement: {statement}')
         if label == 'love_dialogue':
             _verify_love_dialogue_arms(branch_body)

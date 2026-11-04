@@ -274,5 +274,27 @@ class Tile24BranchOrderTests(unittest.TestCase):
         self.assertTrue(verify_tile24_branch_order(changed)['independent_if_statements_verified'])
 
 
+    def test_multiline_commented_required_statement_followed_by_code_is_rejected(self):
+        changed = SOURCE.replace(
+            '      _root.Display_say[0] = 1;',
+            '      /*\n      _root.Display_say[0] = 1;\n      */\n      _root.unrelated = 1;')
+        with self.assertRaisesRegex(ValueError, 'initial_dialogue missing branch statement'):
+            verify_tile24_branch_order(changed)
+
+    def test_multiline_commented_love_arm_statement_followed_by_code_is_rejected(self):
+        changed = SOURCE.replace(
+            '         _root.mtsay_001.gotoAndPlay("say_four");',
+            '         /*\n         _root.mtsay_001.gotoAndPlay("say_four");\n         */\n         _root.unrelated = 1;')
+        with self.assertRaisesRegex(ValueError, 'love_dialogue if arm missing statement'):
+            verify_tile24_branch_order(changed)
+
+    def test_multiline_commented_floor22_setup_followed_by_code_is_rejected(self):
+        changed = SOURCE.replace(
+            '      _root.Now_key_flag = 0;',
+            '      /*\n      _root.Now_key_flag = 0;\n      */\n      _root.unrelated = 1;')
+        with self.assertRaisesRegex(ValueError, 'floor22_dialogue missing or duplicated pre-choice setup'):
+            verify_tile24_branch_order(changed)
+
+
 if __name__ == '__main__':
     unittest.main()
