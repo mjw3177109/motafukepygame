@@ -1,8 +1,13 @@
 /** FFDec-evidenced SetLineDisplay(1) hero placement; NOT a floor renderer. */
 export function planJumpFloorSpawn(matrix) {
   if (!Array.isArray(matrix) || matrix.length !== 11 ||
-      matrix.some(row => !Array.isArray(row) || row.length !== 11 ||
-        row.some(tile => !Number.isSafeInteger(tile))))
+      Array.from({length: 11}, (_, rowIndex) => rowIndex).some(rowIndex => {
+        if (!Object.hasOwn(matrix, rowIndex)) return true;
+        const row = matrix[rowIndex];
+        return !Array.isArray(row) || row.length !== 11 ||
+          Array.from({length: 11}, (_, colIndex) => colIndex).some(colIndex =>
+            !Object.hasOwn(row, colIndex) || !Number.isSafeInteger(row[colIndex]));
+      }))
     throw new Error('original floor must be an 11x11 integer matrix');
   const starts = [], suppressed = [];
   for (let row = 0; row < 11; row++) {
