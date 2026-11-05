@@ -35,3 +35,29 @@ test('invalid matrices and ambiguous hero marker fail closed', () => {
   matrix[0][0] = 97;
   assert.throws(() => planJumpFloorSpawn(matrix), /tile 97/);
 });
+
+test('sparse and prototype-inherited floor cells fail closed without mutation', () => {
+  const base = makeFloor(DATA.floors['01']);
+  const badCases = [];
+  const missingRow = base.map(row => [...row]);
+  delete missingRow[0];
+  badCases.push(missingRow);
+  const missingCell = base.map(row => [...row]);
+  delete missingCell[0][0];
+  badCases.push(missingCell);
+  const inheritedRow = base.map(row => [...row]);
+  delete inheritedRow[0];
+  const rowProto = Object.create(Array.prototype);
+  rowProto[0] = [...base[0]];
+  Object.setPrototypeOf(inheritedRow, rowProto);
+  badCases.push(inheritedRow);
+  const inheritedCell = base.map(row => [...row]);
+  delete inheritedCell[0][0];
+  const cellProto = Object.create(Array.prototype);
+  cellProto[0] = 0;
+  Object.setPrototypeOf(inheritedCell[0], cellProto);
+  badCases.push(inheritedCell);
+  for (const bad of badCases)
+    assert.throws(() => planJumpFloorSpawn(bad), /11x11 integer matrix/);
+  assert.deepEqual(planJumpFloorSpawn(base), planJumpFloorSpawn(makeFloor(DATA.floors['01'])));
+});
