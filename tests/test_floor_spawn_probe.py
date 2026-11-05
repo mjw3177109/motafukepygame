@@ -37,6 +37,21 @@ class FloorSpawnProbeTests(unittest.TestCase):
                 self.assertEqual(actual['suppressed_98'], [
                     {'row': row, 'col': col} for row, col in case['98']])
 
+    def test_rejects_out_of_range_tile_integers_like_javascript(self):
+        matrix = make_floor(DATA['floors']['01'])
+        for value in (2**53, -(2**53)):
+            with self.subTest(value=value):
+                candidate = [row[:] for row in matrix]
+                candidate[0][0] = value
+                with self.assertRaisesRegex(ValueError, 'integer matrix'):
+                    plan_jump_floor_spawn(candidate)
+        candidate = [row[:] for row in matrix]
+        candidate[0][0] = 2**53 - 1
+        self.assertEqual(plan_jump_floor_spawn(candidate),
+                         plan_jump_floor_spawn([[2**53 - 1 if r == 0 and c == 0 else tile
+                                                 for c, tile in enumerate(row)]
+                                                for r, row in enumerate(matrix)]))
+
     def test_invalid_or_ambiguous_matrix_fails_closed(self):
         case = DATA['floors']['01']
         matrix = make_floor(case)
