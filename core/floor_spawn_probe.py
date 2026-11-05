@@ -4,7 +4,7 @@
 def plan_jump_floor_spawn(matrix: list) -> dict:
     if not isinstance(matrix, list) or len(matrix) != 11 or any(
         not isinstance(row, list) or len(row) != 11 or
-        any(type(tile) is not int for tile in row) for row in matrix
+        any(type(tile) is not int or abs(tile) > 9007199254740991 for tile in row) for row in matrix
     ):
         raise ValueError('original floor must be an 11x11 integer matrix')
     starts = [(row, col) for row in range(11) for col in range(11)
