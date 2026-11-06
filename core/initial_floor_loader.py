@@ -14,7 +14,7 @@ EXPECTED_RENDERER_SHA256 = '0de19a0338cd966446acb4fd2acb82f82cf77992c8839356e17a
 def plan_committed_floor_00_spawn(json_text: str) -> dict:
     """Fail closed on source drift, floor ID drift, and invalid tile data."""
     payload = load_original_floor_json(json_text)
-    if not isinstance(payload, dict) or payload.get('schema_version') != 1:
+    if not isinstance(payload, dict) or type(payload.get('schema_version')) is not int or payload['schema_version'] != 1:
         raise ValueError('invalid original floor schema version')
     source = payload.get('source')
     if not isinstance(source, dict) or (
