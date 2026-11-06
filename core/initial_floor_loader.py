@@ -6,6 +6,7 @@ checking FFDec exports against the original SWF in the audit workflow.
 from core.initial_spawn_probe import plan_initial_floor_spawn
 from core.original_floor_json import load_original_floor_json
 
+EXPECTED_SWF_SHA256 = '04b317b7fd9d32c5b083c993e99a3eea527f392e5fc938d23928e953bb638db9'
 EXPECTED_ACTIONSCRIPT_SHA256 = '2372dc16f71b6ede1110b61101b47ff11dd529803fc4077accd075381bffe97c'
 EXPECTED_RENDERER_SHA256 = '0de19a0338cd966446acb4fd2acb82f82cf77992c8839356e17afc8f3085d034'
 
@@ -17,10 +18,11 @@ def plan_committed_floor_00_spawn(json_text: str) -> dict:
         raise ValueError('invalid original floor schema version')
     source = payload.get('source')
     if not isinstance(source, dict) or (
+        source.get('swf_sha256') != EXPECTED_SWF_SHA256 or
         source.get('actionscript_sha256') != EXPECTED_ACTIONSCRIPT_SHA256 or
         source.get('renderer_actionscript_sha256') != EXPECTED_RENDERER_SHA256
     ):
-        raise ValueError('original ActionScript source pin mismatch')
+        raise ValueError('original SWF/ActionScript source pin mismatch')
     floors = payload.get('floors')
     if not isinstance(floors, dict) or '00' not in floors:
         raise ValueError('missing zero-padded original floor 00')
