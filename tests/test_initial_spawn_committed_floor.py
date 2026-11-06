@@ -2,11 +2,11 @@
 
 This is static-map parity only; it does not validate the Flash runtime.
 """
-import json
 from pathlib import Path
 import unittest
 
 from core.initial_spawn_probe import plan_initial_floor_spawn
+from core.original_floor_json import load_original_floor_json
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -14,8 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class CommittedInitialFloorTests(unittest.TestCase):
     def test_floor_00_source_pins_and_spawn(self):
-        with (ROOT / 'data' / 'original_floors.json').open(encoding='utf-8') as stream:
-            payload = json.load(stream)
+        payload = load_original_floor_json((ROOT / 'data' / 'original_floors.json').read_text(encoding='utf-8'))
         source = payload['source']
         self.assertEqual(source['renderer_actionscript_sha256'],
                          '0de19a0338cd966446acb4fd2acb82f82cf77992c8839356e17afc8f3085d034')
@@ -30,8 +29,7 @@ class CommittedInitialFloorTests(unittest.TestCase):
         self.assertNotIn(97, [tile for row in floor for tile in row])
 
     def test_committed_floor_00_marker_drift_fails_closed(self):
-        with (ROOT / 'data' / 'original_floors.json').open(encoding='utf-8') as stream:
-            floor = json.load(stream)['floors']['00']
+        floor = load_original_floor_json((ROOT / 'data' / 'original_floors.json').read_text(encoding='utf-8'))['floors']['00']
         for replacement in (0, 97):
             with self.subTest(replacement=replacement):
                 altered = [row[:] for row in floor]
