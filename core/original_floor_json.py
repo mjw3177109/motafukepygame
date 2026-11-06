@@ -1,7 +1,7 @@
 """Strict JSON boundary for source-pinned floor maps.
 
 This is an opt-in data loader, not an assertion of Flash runtime parity.
-Reject noncanonical numeric tokens before they lose their lexical form.
+Reject noncanonical numeric tokens and duplicate keys before they lose their lexical form.
 """
 import json
 
@@ -19,11 +19,21 @@ def _parse_integer(token):
     return value
 
 
+def _unique_object_pairs(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f'duplicate JSON object key: {key}')
+        result[key] = value
+    return result
+
+
 def load_original_floor_json(source: str):
-    """Parse JSON while preserving integer-only map input constraints.
+    """Parse source maps with strict numeric and unique-key constraints.
 
     The caller must still validate floor dimensions and tile semantics.
     """
     return json.loads(source, parse_int=_parse_integer,
                       parse_float=_reject_noninteger,
-                      parse_constant=_reject_noninteger)
+                      parse_constant=_reject_noninteger,
+                      object_pairs_hook=_unique_object_pairs)
