@@ -1,5 +1,6 @@
 """Contract tests for the first JSON-to-spawn handoff (not Flash parity)."""
 import json
+import hashlib
 import unittest
 from pathlib import Path
 from core.initial_floor_loader import (
@@ -27,6 +28,15 @@ class InitialFloorLoaderTests(unittest.TestCase):
         self.assertEqual((plan['hero']['x'], plan['hero']['y']), (367, 335))
         self.assertEqual(plan['suppressed_98'], [{'row': 1, 'col': 5}])
 
+
+    def test_committed_swf_bytes_match_floor_source_pin(self):
+        """Verify real SWF bytes, not only a JSON provenance claim."""
+        root = Path(__file__).resolve().parents[1]
+        swf = root / 'game.swf'
+        actual_sha256 = hashlib.file_digest(swf.open('rb'), 'sha256').hexdigest()
+        self.assertEqual(actual_sha256, EXPECTED_SWF_SHA256)
+        data = json.loads((root / 'data' / 'original_floors.json').read_text(encoding='utf-8'))
+        self.assertEqual(data['source']['swf_sha256'], actual_sha256)
 
     def test_valid_floor_handoff(self):
         plan = plan_committed_floor_00_spawn(json.dumps(payload()))
