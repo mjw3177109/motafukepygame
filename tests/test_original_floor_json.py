@@ -1,4 +1,4 @@
-"""Regression for numeric-token safety before original-floor planning."""
+"""Regression for numeric-token and duplicate-key safety before floor planning."""
 import unittest
 from core.original_floor_json import load_original_floor_json
 
@@ -21,6 +21,13 @@ class OriginalFloorJsonTests(unittest.TestCase):
     def test_invalid_json_rejected(self):
         with self.assertRaises(ValueError):
             load_original_floor_json('{"floors":')
+
+    def test_duplicate_floor_and_nested_keys_rejected(self):
+        for source in ('{"floors":{"00":[],"00":[]}}',
+                       '{"floors":{"00":[[99]]},"floors":{}}',
+                       '{"source":{"sha":"a","sha":"b"}}'):
+            with self.subTest(source=source), self.assertRaisesRegex(ValueError, 'duplicate JSON object key'):
+                load_original_floor_json(source)
 
 
 if __name__ == '__main__':
