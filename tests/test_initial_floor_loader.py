@@ -34,7 +34,7 @@ class InitialFloorLoaderTests(unittest.TestCase):
         self.assertEqual(plan['suppressed_98'], [{'row': 1, 'col': 5}])
 
     def test_reject_source_and_floor_id_drift(self):
-        for mutation in ('source', 'swf', 'missing_swf', 'floor_id', 'schema'):
+        for mutation in ('source', 'swf', 'missing_swf', 'floor_id', 'schema', 'boolean_schema'):
             data = payload()
             if mutation == 'source':
                 data['source']['renderer_actionscript_sha256'] = 'bad'
@@ -44,6 +44,8 @@ class InitialFloorLoaderTests(unittest.TestCase):
                 del data['source']['swf_sha256']
             elif mutation == 'floor_id':
                 data['floors']['0'] = data['floors'].pop('00')
+            elif mutation == 'boolean_schema':
+                data['schema_version'] = True
             else:
                 data['schema_version'] = 2
             with self.subTest(mutation=mutation), self.assertRaises(ValueError):
