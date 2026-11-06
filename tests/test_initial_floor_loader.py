@@ -3,6 +3,7 @@ import json
 import hashlib
 import unittest
 from pathlib import Path
+from core.original_floor_json import load_original_floor_json
 from core.initial_floor_loader import (
     plan_committed_floor_00_spawn, EXPECTED_SWF_SHA256, EXPECTED_ACTIONSCRIPT_SHA256,
     EXPECTED_RENDERER_SHA256,
@@ -36,8 +37,18 @@ class InitialFloorLoaderTests(unittest.TestCase):
         with swf.open('rb') as stream:
             actual_sha256 = hashlib.file_digest(stream, 'sha256').hexdigest()
         self.assertEqual(actual_sha256, EXPECTED_SWF_SHA256)
-        data = json.loads((root / 'data' / 'original_floors.json').read_text(encoding='utf-8'))
+        data = load_original_floor_json((root / 'data' / 'original_floors.json').read_text(encoding='utf-8'))
         self.assertEqual(data['source']['swf_sha256'], actual_sha256)
+
+    def test_reject_duplicate_source_pin_in_real_swf_handoff(self):
+        """The provenance check must not silently accept overwritten source keys."""
+        root = Path(__file__).resolve().parents[1]
+        raw = (root / 'data' / 'original_floors.json').read_text(encoding='utf-8')
+        pin = '"swf_sha256": "' + EXPECTED_SWF_SHA256 + '"'
+        self.assertEqual(raw.count(pin), 1)
+        tampered = raw.replace(pin, pin + ', "swf_sha256": "' + EXPECTED_SWF_SHA256 + '"')
+        with self.assertRaisesRegex(ValueError, 'duplicate JSON object key: swf_sha256'):
+            load_original_floor_json(tampered)
 
     def test_valid_floor_handoff(self):
         plan = plan_committed_floor_00_spawn(json.dumps(payload()))
