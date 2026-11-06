@@ -2,7 +2,7 @@
 import json
 import unittest
 from core.initial_floor_loader import (
-    plan_committed_floor_00_spawn, EXPECTED_ACTIONSCRIPT_SHA256,
+    plan_committed_floor_00_spawn, EXPECTED_SWF_SHA256, EXPECTED_ACTIONSCRIPT_SHA256,
     EXPECTED_RENDERER_SHA256,
 )
 
@@ -12,6 +12,7 @@ def payload():
     floor[9][5] = 99
     floor[1][5] = 98
     return {'schema_version': 1, 'source': {
+        'swf_sha256': EXPECTED_SWF_SHA256,
         'actionscript_sha256': EXPECTED_ACTIONSCRIPT_SHA256,
         'renderer_actionscript_sha256': EXPECTED_RENDERER_SHA256},
         'floors': {'00': floor}}
@@ -24,10 +25,14 @@ class InitialFloorLoaderTests(unittest.TestCase):
         self.assertEqual(plan['suppressed_98'], [{'row': 1, 'col': 5}])
 
     def test_reject_source_and_floor_id_drift(self):
-        for mutation in ('source', 'floor_id', 'schema'):
+        for mutation in ('source', 'swf', 'missing_swf', 'floor_id', 'schema'):
             data = payload()
             if mutation == 'source':
                 data['source']['renderer_actionscript_sha256'] = 'bad'
+            elif mutation == 'swf':
+                data['source']['swf_sha256'] = 'bad'
+            elif mutation == 'missing_swf':
+                del data['source']['swf_sha256']
             elif mutation == 'floor_id':
                 data['floors']['0'] = data['floors'].pop('00')
             else:
