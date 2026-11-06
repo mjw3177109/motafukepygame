@@ -33,7 +33,8 @@ class InitialFloorLoaderTests(unittest.TestCase):
         """Verify real SWF bytes, not only a JSON provenance claim."""
         root = Path(__file__).resolve().parents[1]
         swf = root / 'game.swf'
-        actual_sha256 = hashlib.file_digest(swf.open('rb'), 'sha256').hexdigest()
+        with swf.open('rb') as stream:
+            actual_sha256 = hashlib.file_digest(stream, 'sha256').hexdigest()
         self.assertEqual(actual_sha256, EXPECTED_SWF_SHA256)
         data = json.loads((root / 'data' / 'original_floors.json').read_text(encoding='utf-8'))
         self.assertEqual(data['source']['swf_sha256'], actual_sha256)
