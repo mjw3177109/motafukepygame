@@ -1,0 +1,9 @@
+[
+  {"name":"confirm_below_max","action":"confirm","mode":1,"key":0,"now":5,"max":9,"selected":8,"event":"jump_confirm_accepted","next_mode":2,"next_key":0,"next_now":8,"effects":["del_line_display","play_sound:music_07"]},
+  {"name":"confirm_equal_max_rejected","action":"confirm","mode":1,"key":0,"now":5,"max":9,"selected":9,"event":"jump_confirm_rejected","next_mode":2,"next_key":0,"next_now":5,"effects":["play_sound:music_10"]},
+  {"name":"confirm_above_max_rejected","action":"confirm","mode":1,"key":0,"now":5,"max":9,"selected":10,"event":"jump_confirm_rejected","next_mode":2,"next_key":0,"next_now":5,"effects":["play_sound:music_10"]},
+  {"name":"cancel_selection","action":"cancel","mode":1,"key":0,"now":5,"max":9,"selected":3,"event":"jump_cancel_requested","next_mode":4,"next_key":1,"next_now":5,"effects":[]},
+  {"name":"cancel_sprite_state_3","action":"cancel","mode":3,"key":0,"now":5,"max":9,"selected":3,"event":"jump_cancel_requested","next_mode":4,"next_key":0,"next_now":5,"effects":[]},
+  {"name":"cleanup_confirm","action":"cleanup","mode":2,"key":0,"now":8,"max":9,"selected":8,"event":"jump_confirm_cleanup","next_mode":0,"next_key":0,"next_now":8,"effects":["del_movie:mt_line_jump","set_line_display:1"]},
+  {"name":"cleanup_cancel","action":"cleanup","mode":4,"key":0,"now":5,"max":9,"selected":3,"event":"jump_cancel_cleanup","next_mode":0,"next_key":1,"next_now":5,"effects":["del_movie:mt_line_jump"]}
+]

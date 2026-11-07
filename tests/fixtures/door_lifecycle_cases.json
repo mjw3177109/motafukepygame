@@ -1,0 +1,33 @@
+[
+  {
+    "name": "yellow_door",
+    "tile": 2,
+    "key": "yellow",
+    "sprite": "mt_02",
+    "frame": 10
+  },
+  {
+    "name": "blue_door",
+    "tile": 3,
+    "key": "blue",
+    "sprite": "mt_03",
+    "frame": 10
+  },
+  {
+    "name": "red_door",
+    "tile": 4,
+    "key": "red",
+    "sprite": "mt_04",
+    "frame": 10
+  },
+  {
+    "name": "special_sprite_05",
+    "sprite": "mt_05",
+    "frame": 10
+  },
+  {
+    "name": "special_sprite_15",
+    "sprite": "mt_15",
+    "frame": 5
+  }
+]

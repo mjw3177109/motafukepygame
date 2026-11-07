@@ -1,0 +1,146 @@
+[
+  {
+    "name": "original_green_one_hit",
+    "tile": 40,
+    "monster": [
+      50,
+      20,
+      1,
+      1,
+      1,
+      "绿头怪"
+    ],
+    "hero": {
+      "hp": 100,
+      "attack": 51,
+      "defense": 10,
+      "life": 0,
+      "line": 1
+    },
+    "rolls": [
+      199
+    ],
+    "expected": {
+      "event": "battle_reward",
+      "hp": 100,
+      "money": 1,
+      "mp": 1,
+      "actions": 1,
+      "counterattacks": 0,
+      "cleared": [
+        [
+          5,
+          6
+        ]
+      ],
+      "display_kill": 0
+    }
+  },
+  {
+    "name": "original_green_two_hits",
+    "tile": 40,
+    "monster": [
+      50,
+      20,
+      1,
+      1,
+      1,
+      "绿头怪"
+    ],
+    "hero": {
+      "hp": 100,
+      "attack": 26,
+      "defense": 10,
+      "life": 0,
+      "line": 1
+    },
+    "rolls": [
+      199,
+      199
+    ],
+    "expected": {
+      "event": "battle_reward",
+      "hp": 90,
+      "money": 1,
+      "mp": 1,
+      "actions": 3,
+      "counterattacks": 1,
+      "cleared": [
+        [
+          5,
+          6
+        ]
+      ],
+      "display_kill": 0
+    }
+  },
+  {
+    "name": "original_green_blocked",
+    "tile": 40,
+    "monster": [
+      50,
+      20,
+      1,
+      1,
+      1,
+      "绿头怪"
+    ],
+    "hero": {
+      "hp": 100,
+      "attack": 1,
+      "defense": 10,
+      "life": 0,
+      "line": 1
+    },
+    "rolls": [],
+    "expected": {
+      "event": "encounter_blocked",
+      "hp": 100,
+      "money": 0,
+      "mp": 0,
+      "actions": 0,
+      "counterattacks": 0,
+      "cleared": [],
+      "display_kill": 0
+    }
+  },
+  {
+    "name": "original_mage_prebattle_damage",
+    "tile": 60,
+    "monster": [
+      250,
+      120,
+      70,
+      20,
+      17,
+      "麻衣法师"
+    ],
+    "hero": {
+      "hp": 1000,
+      "attack": 170,
+      "defense": 100,
+      "life": 0,
+      "line": 1
+    },
+    "rolls": [
+      199,
+      199,
+      199
+    ],
+    "expected": {
+      "event": "battle_reward",
+      "hp": 860,
+      "money": 20,
+      "mp": 17,
+      "actions": 5,
+      "counterattacks": 2,
+      "cleared": [
+        [
+          5,
+          6
+        ]
+      ],
+      "display_kill": 0
+    }
+  }
+]
