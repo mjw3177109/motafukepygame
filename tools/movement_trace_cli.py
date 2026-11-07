@@ -12,6 +12,8 @@ from core.movement_trace import trace_move_arrows
 def run(request: dict) -> str:
     if type(request) is not dict or set(request) != {"initial_state", "arrow_ids"}:
         raise ValueError("expected initial_state and arrow_ids only")
+    if type(request["initial_state"]) is not dict:
+        raise ValueError("initial_state must be an object")
     result = trace_move_arrows(request["initial_state"], request["arrow_ids"])
     return json.dumps(result, ensure_ascii=False, allow_nan=False,
                       sort_keys=True, separators=(",", ":"))
