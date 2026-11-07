@@ -35,8 +35,8 @@ class TraceCliTests(unittest.TestCase):
         ):
             with self.subTest(payload=payload):
                 stdout, stderr = io.StringIO(), io.StringIO()
-                with patch("sys.stdin", io.StringIO(payload)), \\
-                     patch("sys.stdout", stdout), patch("sys.stderr", stderr):
+                with (patch("sys.stdin", io.StringIO(payload)),
+                      patch("sys.stdout", stdout), patch("sys.stderr", stderr)):
                     self.assertEqual(main(), 2)
                 self.assertEqual(stdout.getvalue(), "")
                 self.assertIn("duplicate JSON key", stderr.getvalue())
