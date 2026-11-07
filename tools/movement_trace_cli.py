@@ -17,9 +17,19 @@ def run(request: dict) -> str:
                       sort_keys=True, separators=(",", ":"))
 
 
+def _reject_duplicate_keys(pairs):
+    """Reject ambiguous JSON objects before running any game rule."""
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError("duplicate JSON key: " + key)
+        result[key] = value
+    return result
+
+
 def main() -> int:
     try:
-        request = json.load(sys.stdin, parse_constant=lambda x: (_ for _ in ()).throw(
+        request = json.load(sys.stdin, object_pairs_hook=_reject_duplicate_keys,\n                            parse_constant=lambda x: (_ for _ in ()).throw(
             ValueError("non-finite JSON constant: " + x)))
         output = run(request)
     except (ValueError, TypeError, KeyError, IndexError, json.JSONDecodeError) as exc:
