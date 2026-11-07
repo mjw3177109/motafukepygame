@@ -30,10 +30,15 @@ class Floor00AdjacentInputAuditTests(unittest.TestCase):
                     expected = "locked_" + expected + "_door"
                 elif tile in (6, 7, 8):
                     expected = "pickup_" + {6: "yellow", 7: "blue", 8: "red"}[tile] + "_key"
+                elif tile in (9, 10, 11, 12):
+                    expected = "missing_stat"
                 else:
                     expected = None
             with self.subTest(direction=direction, expected=expected):
-                if expected is None:
+                if expected == "missing_stat":
+                    with self.assertRaisesRegex(ValueError, "hero stat"):
+                        run({"keys": keys, "arrow_ids": [direction]})
+                elif expected is None:
                     with self.assertRaises(UnsupportedTileError):
                         run({"keys": keys, "arrow_ids": [direction]})
                 else:
