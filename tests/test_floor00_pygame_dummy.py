@@ -27,8 +27,7 @@ class Floor00PygameDummyTests(unittest.TestCase):
                 captured.append(tuple(surface.get_at(hero_pixel)[:3]))
                 original_flip()
 
-            with patch.object(pygame.event, "get", return_value=[pygame.event.Event(pygame.QUIT)]), \\
-                 patch.object(pygame.display, "flip", side_effect=inspect_frame) as flip:
+            with (\n                patch.object(pygame.event, "get", return_value=[pygame.event.Event(pygame.QUIT)]),\n                patch.object(pygame.display, "flip", side_effect=inspect_frame) as flip,\n            ):
                 try:
                     main()
                     self.assertEqual(flip.call_count, 1)
