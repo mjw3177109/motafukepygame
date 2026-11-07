@@ -1,8 +1,10 @@
 """Regression for the strict JSON movement trace CLI contract."""
 import json
+import io
 import unittest
+from unittest.mock import patch
 
-from tools.movement_trace_cli import run
+from tools.movement_trace_cli import run, main
 from core.movement_probe import UnsupportedTileError
 
 
@@ -25,6 +27,19 @@ class TraceCliTests(unittest.TestCase):
         self.assertEqual([f["event"] for f in result["frames"]],
                          ["pickup_yellow_key", "move", "open_yellow_door", "move"])
         self.assertEqual(request["initial_state"]["keys"]["yellow"], 0)
+
+    def test_duplicate_json_keys_rejected_at_all_depths(self):
+        for payload in (
+            '{"initial_state":{},"initial_state":{},"arrow_ids":[]}',
+            '{"initial_state":{"keys":{"yellow":0,"yellow":1}},"arrow_ids":[]}',
+        ):
+            with self.subTest(payload=payload):
+                stdout, stderr = io.StringIO(), io.StringIO()
+                with patch("sys.stdin", io.StringIO(payload)), \\
+                     patch("sys.stdout", stdout), patch("sys.stderr", stderr):
+                    self.assertEqual(main(), 2)
+                self.assertEqual(stdout.getvalue(), "")
+                self.assertIn("duplicate JSON key", stderr.getvalue())
 
     def test_reject_extra_request_fields(self):
         with self.assertRaises(ValueError):
