@@ -41,6 +41,21 @@ class TraceCliTests(unittest.TestCase):
                 self.assertEqual(stdout.getvalue(), "")
                 self.assertIn("duplicate JSON key", stderr.getvalue())
 
+    def test_reject_non_object_initial_state_even_without_moves(self):
+        for invalid in (None, [], 3, "state"):
+            with self.subTest(invalid=invalid):
+                with self.assertRaisesRegex(ValueError, "initial_state must be an object"):
+                    run({"initial_state": invalid, "arrow_ids": []})
+
+    def test_reject_nonfinite_json_input(self):
+        payload = '{"initial_state":{},"arrow_ids":[NaN]}'
+        stdout, stderr = io.StringIO(), io.StringIO()
+        with (patch("sys.stdin", io.StringIO(payload)),
+              patch("sys.stdout", stdout), patch("sys.stderr", stderr)):
+            self.assertEqual(main(), 2)
+        self.assertEqual(stdout.getvalue(), "")
+        self.assertIn("non-finite JSON constant", stderr.getvalue())
+
     def test_reject_extra_request_fields(self):
         with self.assertRaises(ValueError):
             run({"initial_state": state(), "arrow_ids": [], "ignored": True})
