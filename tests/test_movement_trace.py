@@ -40,6 +40,24 @@ class MovementTraceTests(unittest.TestCase):
         with self.assertRaises(UnsupportedTileError):
             trace_move_arrows(initial, [2])
 
+    def test_frames_are_independent_deep_snapshots(self):
+        initial = snapshot()
+        trace = trace_move_arrows(initial, [3, 3])
+        trace["frames"][0]["state"]["grid"][4][5] = 777
+        trace["frames"][0]["state"]["keys"]["yellow"] = 888
+        self.assertEqual(trace["frames"][1]["state"]["grid"][4][5], 0)
+        self.assertEqual(trace["frames"][1]["state"]["keys"]["yellow"], 1)
+        self.assertEqual(trace["final_state"]["grid"][4][5], 0)
+        self.assertEqual(initial["grid"][4][5], 6)
+
+    def test_later_unsupported_tile_does_not_mutate_input(self):
+        initial = snapshot()
+        initial["grid"][3][5] = 24
+        before = deepcopy(initial)
+        with self.assertRaises(UnsupportedTileError):
+            trace_move_arrows(initial, [3, 3, 3])
+        self.assertEqual(initial, before)
+
     def test_invalid_input_fails_closed(self):
         with self.assertRaises(ValueError):
             trace_move_arrows(snapshot(), [0])
