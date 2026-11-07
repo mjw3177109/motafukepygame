@@ -29,7 +29,8 @@ def _reject_duplicate_keys(pairs):
 
 def main() -> int:
     try:
-        request = json.load(sys.stdin, object_pairs_hook=_reject_duplicate_keys,\n                            parse_constant=lambda x: (_ for _ in ()).throw(
+        request = json.load(sys.stdin, object_pairs_hook=_reject_duplicate_keys,
+                            parse_constant=lambda x: (_ for _ in ()).throw(
             ValueError("non-finite JSON constant: " + x)))
         output = run(request)
     except (ValueError, TypeError, KeyError, IndexError, json.JSONDecodeError) as exc:
