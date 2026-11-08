@@ -40,10 +40,10 @@ class OriginalTablesTests(unittest.TestCase):
             b'boss_man[32] = new Array(32,2,3,4,5,"',
             b'boss_man[32] = new Array(32, 2,3,4,5,"',
         )
-        with self.assertRaisesRegex(ValueError, r"missing=\[32\]") as caught:
+        with self.assertRaisesRegex(ValueError, "unparsed boss_man assignments") as caught:
             parse_tables(source, swf_sha256=SWF_HASH)
         self.assertIn("boss_man[32]", str(caught.exception))
-        self.assertIn("source candidates", str(caught.exception))
+        self.assertIn("357", str(caught.exception))
 
     def test_extra_malformed_monster_assignment_rejected(self):
         source = fixture() + b'\nboss_man[33] = new Array(1, 2,3,4,5,"extra");'
