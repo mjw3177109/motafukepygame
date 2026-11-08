@@ -178,5 +178,32 @@ class Floor00PygameDummyTests(unittest.TestCase):
             self.assertFalse(pygame.get_init())
 
 
+    def test_escape_ignores_later_queued_reset_and_move(self):
+        # Escape and window-close must share the same fail-closed event ordering.
+        with patch.dict(os.environ, {"SDL_VIDEODRIVER": "dummy", "SDL_AUDIODRIVER": "dummy"}):
+            import pygame
+            from tools import floor00_pygame_probe as probe
+
+            queued = [
+                pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE),
+                pygame.event.Event(pygame.KEYDOWN, key=pygame.K_r),
+                pygame.event.Event(pygame.KEYDOWN, key=pygame.K_LEFT),
+            ]
+            with (
+                patch.object(pygame.event, "get", return_value=queued),
+                patch.object(pygame.display, "flip") as flip,
+                patch.object(probe, "attempt", side_effect=AssertionError("input after escape")) as attempt,
+                patch.object(probe, "replay", wraps=probe.replay) as replay,
+            ):
+                try:
+                    probe.main()
+                    flip.assert_not_called()
+                    attempt.assert_not_called()
+                    self.assertEqual(replay.call_count, 1)
+                finally:
+                    pygame.quit()
+            self.assertFalse(pygame.get_init())
+
+
 if __name__ == "__main__":
     unittest.main()
