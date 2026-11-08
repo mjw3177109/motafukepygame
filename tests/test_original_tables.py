@@ -40,7 +40,7 @@ class OriginalTablesTests(unittest.TestCase):
             b'boss_man[32] = new Array(32,2,3,4,5,"',
             b'boss_man[32] = new Array(32, 2,3,4,5,"',
         )
-        with self.assertRaisesRegex(ValueError, r"missing=\\[32\\]") as caught:
+        with self.assertRaisesRegex(ValueError, r"missing=\[32\]") as caught:
             parse_tables(source, swf_sha256=SWF_HASH)
         self.assertIn("boss_man[32]", str(caught.exception))
         self.assertIn("source candidates", str(caught.exception))
