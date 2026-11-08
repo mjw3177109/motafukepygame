@@ -55,5 +55,23 @@ class Floor00PygameDummyTests(unittest.TestCase):
             self.assertFalse(pygame.get_init())
 
 
+    def test_escape_key_quits_without_rendering(self):
+        # ESC must behave like window-close: no stale frame after exit.
+        with patch.dict(os.environ, {"SDL_VIDEODRIVER": "dummy", "SDL_AUDIODRIVER": "dummy"}):
+            import pygame
+            from tools.floor00_pygame_probe import main
+            escape = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE)
+            with (
+                patch.object(pygame.event, "get", return_value=[escape]),
+                patch.object(pygame.display, "flip") as flip,
+            ):
+                try:
+                    main()
+                    flip.assert_not_called()
+                finally:
+                    pygame.quit()
+            self.assertFalse(pygame.get_init())
+
+
 if __name__ == "__main__":
     unittest.main()
