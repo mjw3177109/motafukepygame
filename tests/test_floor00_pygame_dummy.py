@@ -73,5 +73,36 @@ class Floor00PygameDummyTests(unittest.TestCase):
             self.assertFalse(pygame.get_init())
 
 
+    def test_reset_key_renders_source_spawn(self):
+        # Reset must discard an earlier accepted move and render the original spawn.
+        with patch.dict(os.environ, {"SDL_VIDEODRIVER": "dummy", "SDL_AUDIODRIVER": "dummy"}):
+            import pygame
+            from tools.floor00_pygame_probe import main, replay
+
+            spawn = replay([])["final_state"]
+            hero_pixel = (spawn["col"] * 42 + 21, spawn["row"] * 42 + 21)
+            pixels = []
+            original_flip = pygame.display.flip
+
+            def inspect_frame():
+                surface = pygame.display.get_surface()
+                pixels.append(tuple(surface.get_at(hero_pixel)[:3]))
+                original_flip()
+
+            reset = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_r)
+            quit_event = pygame.event.Event(pygame.QUIT)
+            with (
+                patch.object(pygame.event, "get", side_effect=[[reset], [quit_event]]),
+                patch.object(pygame.display, "flip", side_effect=inspect_frame) as flip,
+            ):
+                try:
+                    main()
+                    self.assertEqual(flip.call_count, 1)
+                    self.assertEqual(pixels, [(255, 220, 75)])
+                finally:
+                    pygame.quit()
+            self.assertFalse(pygame.get_init())
+
+
 if __name__ == "__main__":
     unittest.main()
