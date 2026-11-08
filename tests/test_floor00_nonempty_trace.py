@@ -14,23 +14,24 @@ class Floor00NonemptyTraceTests(unittest.TestCase):
         keys = {"yellow": 0, "blue": 0, "red": 0}
         initial = json.loads(run({"keys": keys, "arrow_ids": []}))["initial_state"]
         row, col, grid = initial["row"], initial["col"], initial["grid"]
-        # Pick an adjacent boundary or wall from the *committed original map*.
-        # Never substitute a synthetic tile or assume an unverified event.
+        # Select an actual walkable neighbor from the pinned source map.
+        # Fail rather than silently skip when the source fixture changes.
         candidates = [
-            direction for direction, (dr, dc) in DELTAS.items()
-            if not (0 <= row + dr < 11 and 0 <= col + dc < 11)
-            or grid[row + dr][col + dc] == 1
+            (direction, row + dr, col + dc)
+            for direction, (dr, dc) in DELTAS.items()
+            if 0 <= row + dr < 11 and 0 <= col + dc < 11
+            and grid[row + dr][col + dc] in (0, 97, 98, 99)
         ]
-        if not candidates:
-            self.skipTest("original spawn has no adjacent wall/boundary; no fabricated move")
-        direction = candidates[0]
+        self.assertTrue(candidates, "floor-00 source spawn has no walkable neighbor")
+        direction, next_row, next_col = candidates[0]
         result = json.loads(run({"keys": keys, "arrow_ids": [direction]}))
+        self.assertEqual(result["initial_state"], initial)
         self.assertEqual(len(result["frames"]), 1)
         self.assertEqual(result["frames"][0]["arrow_id"], direction)
-        self.assertIn(result["frames"][0]["event"], ("wall", "boundary"))
-        self.assertEqual(result["initial_state"], initial)
-        self.assertEqual(result["final_state"], initial)
-        self.assertEqual(result["frames"][0]["state"], initial)
+        self.assertEqual(result["frames"][0]["event"], "move")
+        self.assertEqual((result["final_state"]["row"], result["final_state"]["col"]),
+                         (next_row, next_col))
+        self.assertEqual(result["frames"][0]["state"], result["final_state"])
 
     def test_invalid_nonempty_direction_fails_closed(self):
         with self.assertRaises(ValueError):
