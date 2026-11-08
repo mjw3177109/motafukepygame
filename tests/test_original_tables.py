@@ -45,6 +45,11 @@ class OriginalTablesTests(unittest.TestCase):
         self.assertIn("boss_man[32]", str(caught.exception))
         self.assertIn("source candidates", str(caught.exception))
 
+    def test_extra_malformed_monster_assignment_rejected(self):
+        source = fixture() + b'\\nboss_man[33] = new Array(1, 2,3,4,5,"extra");'
+        with self.assertRaisesRegex(ValueError, "unparsed boss_man assignments"):
+            parse_tables(source, swf_sha256=SWF_HASH)
+
     def test_missing_base_stat_rejected(self):
         with self.assertRaisesRegex(ValueError, "incomplete original base"):
             parse_tables(fixture().replace(b"Base_hp = 1;", b""), swf_sha256=SWF_HASH)
