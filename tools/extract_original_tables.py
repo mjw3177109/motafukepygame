@@ -29,6 +29,17 @@ def parse_tables(script: bytes, *, swf_sha256: str) -> dict:
     expected_floors = [f"{i:02d}" for i in range(27)]
     if sorted(declared) != expected_floors or set(declared.values()) != {11}:
         raise ValueError("original floor declarations must be 00..26 with 11 outer entries")
+    # Fail closed on malformed or extra map row assignments, just as for monsters.
+    # Check the entire source line rather than only FLOOR_ROW regex matches.
+    map_assignments = [
+        (line_no, line.strip())
+        for line_no, line in enumerate(source.splitlines(), 1)
+        if re.match(r"^\\s*mt_line_\\d{2}\\s*\\[\\s*\\d+\\s*\\]\\s*=", line)
+    ]
+    unmatched_rows = [(line_no, line[:180]) for line_no, line in map_assignments
+                      if FLOOR_ROW.fullmatch(line) is None]
+    if unmatched_rows:
+        raise ValueError(f"unparsed mt_line row assignments (line, source): {unmatched_rows[:40]}")
     floors = {f: [None] * 11 for f in expected_floors}
     for floor, row_number, csv in FLOOR_ROW.findall(source):
         if floor not in floors:
