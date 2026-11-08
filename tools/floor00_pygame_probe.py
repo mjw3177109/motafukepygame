@@ -58,6 +58,8 @@ def main():
                     accepted, trace, error = attempt(accepted, bindings[event.key])
                     status = ("REJECTED: " + error) if error else (
                         "Event: " + trace["frames"][-1]["event"])
+        if not running:
+            break
         state = trace["final_state"]
         screen.fill((22, 24, 30))
         for row, line in enumerate(state["grid"]):
