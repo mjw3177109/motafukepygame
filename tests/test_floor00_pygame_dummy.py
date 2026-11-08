@@ -11,8 +11,7 @@ class Floor00PygameDummyTests(unittest.TestCase):
             import pygame
             from tools.floor00_pygame_probe import main
 
-            # A QUIT event is processed, but the current loop still draws one
-            # complete frame and flips the dummy display before leaving.
+            # Render one frame, then consume QUIT on the next iteration.
             from tools.floor00_pygame_probe import replay
             spawn = replay([])["final_state"]
             hero_pixel = (spawn["col"] * 42 + 21, spawn["row"] * 42 + 21)
@@ -28,13 +27,29 @@ class Floor00PygameDummyTests(unittest.TestCase):
                 original_flip()
 
             with (
-                patch.object(pygame.event, "get", return_value=[pygame.event.Event(pygame.QUIT)]),
+                patch.object(pygame.event, "get", side_effect=[[], [pygame.event.Event(pygame.QUIT)]]),
                 patch.object(pygame.display, "flip", side_effect=inspect_frame) as flip,
             ):
                 try:
                     main()
                     self.assertEqual(flip.call_count, 1)
                     self.assertEqual(captured, [(255, 220, 75)])
+                finally:
+                    pygame.quit()
+            self.assertFalse(pygame.get_init())
+
+
+    def test_immediate_quit_does_not_render_extra_frame(self):
+        with patch.dict(os.environ, {"SDL_VIDEODRIVER": "dummy", "SDL_AUDIODRIVER": "dummy"}):
+            import pygame
+            from tools.floor00_pygame_probe import main
+            with (
+                patch.object(pygame.event, "get", return_value=[pygame.event.Event(pygame.QUIT)]),
+                patch.object(pygame.display, "flip") as flip,
+            ):
+                try:
+                    main()
+                    self.assertEqual(flip.call_count, 0)
                 finally:
                     pygame.quit()
             self.assertFalse(pygame.get_init())
