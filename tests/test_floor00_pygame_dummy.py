@@ -73,6 +73,33 @@ class Floor00PygameDummyTests(unittest.TestCase):
             self.assertFalse(pygame.get_init())
 
 
+    def test_quit_ignores_later_queued_reset_and_move(self):
+        # A batch of events may contain input after QUIT; none may mutate state.
+        with patch.dict(os.environ, {"SDL_VIDEODRIVER": "dummy", "SDL_AUDIODRIVER": "dummy"}):
+            import pygame
+            from tools import floor00_pygame_probe as probe
+
+            queued = [
+                pygame.event.Event(pygame.QUIT),
+                pygame.event.Event(pygame.KEYDOWN, key=pygame.K_r),
+                pygame.event.Event(pygame.KEYDOWN, key=pygame.K_LEFT),
+            ]
+            with (
+                patch.object(pygame.event, "get", return_value=queued),
+                patch.object(pygame.display, "flip") as flip,
+                patch.object(probe, "attempt", side_effect=AssertionError("input after quit")) as attempt,
+                patch.object(probe, "replay", wraps=probe.replay) as replay,
+            ):
+                try:
+                    probe.main()
+                    flip.assert_not_called()
+                    attempt.assert_not_called()
+                    self.assertEqual(replay.call_count, 1)  # initial spawn only
+                finally:
+                    pygame.quit()
+            self.assertFalse(pygame.get_init())
+
+
     def test_reset_key_renders_source_spawn(self):
         # Reset must discard an earlier accepted move and render the original spawn.
         with patch.dict(os.environ, {"SDL_VIDEODRIVER": "dummy", "SDL_AUDIODRIVER": "dummy"}):
