@@ -42,6 +42,18 @@ def parse_tables(script: bytes, *, swf_sha256: str) -> dict:
         floors[floor][idx] = [int(v) for v in values]
     if any(row is None for rows in floors.values() for row in rows):
         raise ValueError("missing floor rows")
+    # Fail closed on every literal boss_man[index] assignment, including ones
+    # whose value syntax MONSTER cannot parse. A complete 0..32 match alone
+    # does not prove there are no ignored definitions in the original script.
+    assignments = [
+        (line_no, line.strip())
+        for line_no, line in enumerate(source.splitlines(), 1)
+        if re.match(r"^\\s*boss_man\\s*\\[\\d+\\]\\s*=", line)
+    ]
+    unmatched = [(line_no, line[:180]) for line_no, line in assignments
+                 if MONSTER.fullmatch(line) is None]
+    if unmatched:
+        raise ValueError(f"unparsed boss_man assignments (line, source): {unmatched[:40]}")
     monsters = {}
     for fields in MONSTER.findall(source):
         idx = int(fields[0])
