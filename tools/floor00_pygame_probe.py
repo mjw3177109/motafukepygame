@@ -46,6 +46,8 @@ def main():
     running = True
     while running:
         for event in pygame.event.get():
+            if not running:
+                break  # Ignore events queued after QUIT/Escape.
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN:
