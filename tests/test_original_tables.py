@@ -32,7 +32,7 @@ class OriginalTablesTests(unittest.TestCase):
             parse_tables(source, swf_sha256=SWF_HASH)
 
     def test_extra_malformed_map_assignment_rejected(self):
-        source = fixture() + b"\nmt_line_00[11] = new Array(1, 2,3);"
+        source = fixture() + b"\nmt_line_00[11] = new Array(1, 2,3;"
         with self.assertRaisesRegex(ValueError, "unparsed mt_line row assignments") as caught:
             parse_tables(source, swf_sha256=SWF_HASH)
         self.assertIn("mt_line_00[11]", str(caught.exception))
