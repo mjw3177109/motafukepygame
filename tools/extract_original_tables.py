@@ -56,7 +56,7 @@ def parse_tables(script: bytes, *, swf_sha256: str) -> dict:
         candidates = [
             (line_no, line.strip()[:180])
             for line_no, line in enumerate(source.splitlines(), 1)
-            if re.search(r"boss_man\\s*\\[", line)
+            if re.search(r"boss_man\s*\[", line)
         ]
         raise ValueError(
             "expected original monster ids 0..32; "
