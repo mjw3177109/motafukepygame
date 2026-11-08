@@ -49,7 +49,20 @@ def parse_tables(script: bytes, *, swf_sha256: str) -> dict:
             raise ValueError(f"duplicate monster id {idx}")
         monsters[idx] = [int(v) for v in fields[1:6]] + [fields[6]]
     if sorted(monsters) != list(range(33)):
-        raise ValueError("expected original monster ids 0..32")
+        missing = sorted(set(range(33)) - set(monsters))
+        unexpected = sorted(set(monsters) - set(range(33)))
+        # Report source line numbers, not guessed monster values. This keeps the
+        # original 33-ID gate strict while making FFDec formatting drift auditable.
+        candidates = [
+            (line_no, line.strip()[:180])
+            for line_no, line in enumerate(source.splitlines(), 1)
+            if re.search(r"boss_man\\s*\\[", line)
+        ]
+        raise ValueError(
+            "expected original monster ids 0..32; "
+            f"matched={sorted(monsters)}; missing={missing}; unexpected={unexpected}; "
+            f"boss_man source candidates (first 40)={candidates[:40]}"
+        )
     bases = {}
     for name, number in BASE.findall(source):
         if name in bases:
