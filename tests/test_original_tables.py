@@ -46,7 +46,7 @@ class OriginalTablesTests(unittest.TestCase):
         self.assertIn("source candidates", str(caught.exception))
 
     def test_extra_malformed_monster_assignment_rejected(self):
-        source = fixture() + b'\\nboss_man[33] = new Array(1, 2,3,4,5,"extra");'
+        source = fixture() + b'\nboss_man[33] = new Array(1, 2,3,4,5,"extra");'
         with self.assertRaisesRegex(ValueError, "unparsed boss_man assignments"):
             parse_tables(source, swf_sha256=SWF_HASH)
 
