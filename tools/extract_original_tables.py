@@ -48,7 +48,7 @@ def parse_tables(script: bytes, *, swf_sha256: str) -> dict:
     assignments = [
         (line_no, line.strip())
         for line_no, line in enumerate(source.splitlines(), 1)
-        if re.match(r"^\\s*boss_man\\s*\\[\\d+\\]\\s*=", line)
+        if re.match(r"^\s*boss_man\s*\[\d+\]\s*=", line)
     ]
     unmatched = [(line_no, line[:180]) for line_no, line in assignments
                  if MONSTER.fullmatch(line) is None]
