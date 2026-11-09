@@ -29,6 +29,19 @@ class CombatProbeTests(unittest.TestCase):
                 self.assertEqual(monster, before_monster)
                 self.assertEqual(hero, before_hero)
 
+    def test_original_hp_gate_accepts_equal_loss_and_rejects_greater_loss(self):
+        # Move_arrow blocks only when tmp_kills > Now_hp.
+        # Synthetic boundary vectors, not recorded Flash gameplay.
+        monster = [1, 5, 0, 0, 0, "probe"]
+        for hp, allowed, reason in ((5, True, "ok"), (4, False, "insufficient_hp")):
+            with self.subTest(hp=hp):
+                hero = {"hp": hp, "attack": 1, "defense": 0}
+                self.assertEqual(
+                    preview_encounter(40, monster, hero),
+                    {"enemy_id": 0, "can_start": allowed, "reason": reason,
+                     "base_loss": 5, "special_loss": 0, "estimated_loss": 5},
+                )
+
     def test_reject_non_monster_tile(self):
         with self.assertRaisesRegex(ValueError, 'monster tile'):
             preview_encounter(71, CASES[0]['monster'], CASES[0]['hero'])
