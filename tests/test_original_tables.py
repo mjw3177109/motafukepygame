@@ -44,6 +44,12 @@ class OriginalTablesTests(unittest.TestCase):
             parse_tables(source, swf_sha256=SWF_HASH)
         self.assertIn("mt_line_00[11]", str(caught.exception))
 
+    def test_nonnumeric_map_row_assignment_rejected(self):
+        source = fixture() + b"\nmt_line_00[unknown] = new Array(1,2,3);"
+        with self.assertRaisesRegex(ValueError, "unparsed mt_line row assignments") as caught:
+            parse_tables(source, swf_sha256=SWF_HASH)
+        self.assertIn("mt_line_00[unknown]", str(caught.exception))
+
     def test_duplicate_monster_rejected(self):
         with self.assertRaisesRegex(ValueError, "duplicate monster"):
             parse_tables(fixture() + b'\nboss_man[0] = new Array(1,2,3,4,5,"X");', swf_sha256=SWF_HASH)
