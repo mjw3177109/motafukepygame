@@ -16,6 +16,19 @@ class CombatProbeTests(unittest.TestCase):
                 self.assertEqual(preview_encounter(case['tile'], case['monster'], case['hero']), case['expected'])
                 self.assertEqual(json.dumps(case, ensure_ascii=False, sort_keys=True), original)
 
+    def test_special_hp_fraction_truncates_and_does_not_mutate(self):
+        # Synthetic boundary probes; these are not recorded Flash gameplay traces.
+        for tile, enemy_id, hp, expected_special in ((50, 10, 7, 1), (57, 17, 8, 2)):
+            with self.subTest(enemy_id=enemy_id):
+                monster = [1, 0, 0, 0, 0, "probe"]
+                hero = {"hp": hp, "attack": 1, "defense": 0}
+                before_monster, before_hero = monster.copy(), hero.copy()
+                result = preview_encounter(tile, monster, hero)
+                self.assertEqual(result["special_loss"], expected_special)
+                self.assertEqual(result["estimated_loss"], expected_special)
+                self.assertEqual(monster, before_monster)
+                self.assertEqual(hero, before_hero)
+
     def test_reject_non_monster_tile(self):
         with self.assertRaisesRegex(ValueError, 'monster tile'):
             preview_encounter(71, CASES[0]['monster'], CASES[0]['hero'])
