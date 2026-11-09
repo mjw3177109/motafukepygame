@@ -54,6 +54,14 @@ class BattleTraceValidationTests(unittest.TestCase):
         self.row["monster_id"] = False
         self.assertTrue(self.check([self.row]))
 
+    def test_rejects_whitespace_only_case_id(self):
+        self.row["case_id"] = "  \t "
+        self.assertTrue(self.check([self.row]))
+
+    def test_rejects_whitespace_only_action(self):
+        self.row["action"] = "  \t "
+        self.assertTrue(self.check([self.row]))
+
     def test_rejects_skipped_step(self):
         self.assertTrue(self.check([self.row, dict(self.row, step=2)]))
 
