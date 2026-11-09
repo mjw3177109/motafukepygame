@@ -28,7 +28,7 @@ def parse_tables(script: bytes, *, swf_sha256: str) -> dict:
         declared[floor] = int(size)
     expected_floors = [f"{i:02d}" for i in range(27)]
     if sorted(declared) != expected_floors or set(declared.values()) != {11}:
-        candidates = [(line_no, line.strip()[:180]) for line_no, line in enumerate(source.splitlines(), 1) if re.search(r"mt_line_\\d{2}\\s*=", line) and "[" not in line.split("=", 1)[0]]
+        candidates = [(line_no, line.strip()[:180]) for line_no, line in enumerate(source.splitlines(), 1) if re.search(r"mt_line_\d{2}\s*=", line) and "[" not in line.split("=", 1)[0]]
         missing = sorted(set(expected_floors) - set(declared))
         unexpected = sorted(set(declared) - set(expected_floors))
         raise ValueError(
