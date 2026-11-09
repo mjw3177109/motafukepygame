@@ -26,6 +26,13 @@ class OriginalTablesTests(unittest.TestCase):
         self.assertEqual(result["monsters"]["32"], [32, 2, 3, 4, 5, "怪物32"])
         self.assertEqual(result["base_stats"]["hp"], 1)
 
+    def test_floor_declaration_failure_reports_source_candidates(self):
+        source = fixture().replace(b"mt_line_26 = new Array(11);", b"mt_line_26 = new Array( 11 );")
+        with self.assertRaisesRegex(ValueError, "declaration source candidates") as caught:
+            parse_tables(source, swf_sha256=SWF_HASH)
+        self.assertIn("mt_line_26", str(caught.exception))
+        self.assertIn("missing=['26']", str(caught.exception))
+
     def test_missing_row_rejected(self):
         source = fixture().replace(b"mt_line_01[3] = new Array(", b"ignored_01[3] = new Array(")
         with self.assertRaisesRegex(ValueError, "missing floor rows"):
