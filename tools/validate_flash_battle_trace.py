@@ -36,11 +36,11 @@ def validate(path):
             errors.append(f"line {line_no}: unsupported schema")
         if not isinstance(row["source"], str) or row["source"] not in SOURCES:
             errors.append(f"line {line_no}: invalid source")
-        if not isinstance(row["case_id"], str) or not row["case_id"]:
+        if not isinstance(row["case_id"], str) or not row["case_id"].strip():
             errors.append(f"line {line_no}: invalid case_id")
         if type(row["step"]) is not int or row["step"] != expected_step:
             errors.append(f"line {line_no}: expected step {expected_step}")
-        if not isinstance(row["action"], str) or not row["action"]:
+        if not isinstance(row["action"], str) or not row["action"].strip():
             errors.append(f"line {line_no}: invalid action")
         if type(row["verified"]) is not bool:
             errors.append(f"line {line_no}: verified must be boolean")
