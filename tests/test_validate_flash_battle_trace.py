@@ -29,6 +29,31 @@ class BattleTraceValidationTests(unittest.TestCase):
         self.row["verified"] = True
         self.assertTrue(self.check([self.row]))
 
+    def test_rejects_verified_without_observed_state(self):
+        self.row.update(verified=True, evidence_frame="frames/0001.png",
+                        floor=None, x=None, y=None)
+        self.assertTrue(self.check([self.row]))
+
+    def test_rejects_nonstring_evidence_frame(self):
+        self.row["evidence_frame"] = True
+        self.assertTrue(self.check([self.row]))
+
+    def test_rejects_blank_evidence_frame(self):
+        self.row["evidence_frame"] = "   "
+        self.assertTrue(self.check([self.row]))
+
+    def test_accepts_verified_with_observation_and_frame(self):
+        self.row.update(verified=True, evidence_frame="frames/0001.png", hp=100)
+        self.assertEqual(self.check([self.row]), [])
+
+    def test_rejects_invalid_battle_phase_type(self):
+        self.row["battle_phase"] = []
+        self.assertTrue(self.check([self.row]))
+
+    def test_rejects_boolean_monster_id(self):
+        self.row["monster_id"] = False
+        self.assertTrue(self.check([self.row]))
+
     def test_rejects_skipped_step(self):
         self.assertTrue(self.check([self.row, dict(self.row, step=2)]))
 
