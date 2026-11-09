@@ -44,8 +44,22 @@ def validate(path):
             errors.append(f"line {line_no}: invalid action")
         if type(row["verified"]) is not bool:
             errors.append(f"line {line_no}: verified must be boolean")
-        if row["verified"] is True and not row["evidence_frame"]:
-            errors.append(f"line {line_no}: verified requires evidence_frame")
+        if row["evidence_frame"] is not None and (
+            not isinstance(row["evidence_frame"], str) or not row["evidence_frame"].strip()
+        ):
+            errors.append(f"line {line_no}: evidence_frame must be a nonempty string or null")
+        if row["verified"] is True:
+            if not isinstance(row["evidence_frame"], str) or not row["evidence_frame"].strip():
+                errors.append(f"line {line_no}: verified requires evidence_frame")
+            observed = ("floor", "x", "y", "hp", "money", "exp",
+                        "monster_id", "monster_present", "battle_phase", "game_over")
+            if not any(row[key] is not None for key in observed):
+                errors.append(f"line {line_no}: verified requires at least one observed state")
+        for key in ("monster_id", "battle_phase"):
+            if row[key] is not None and not isinstance(row[key], (str, int)):
+                errors.append(f"line {line_no}: {key} must be string, integer or null")
+            if type(row[key]) is bool:
+                errors.append(f"line {line_no}: {key} must not be boolean")
         for key in ("floor", "x", "y", "hp", "money", "exp"):
             if row[key] is not None and type(row[key]) is not int:
                 errors.append(f"line {line_no}: {key} must be integer or null")
