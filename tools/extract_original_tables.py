@@ -41,7 +41,7 @@ def parse_tables(script: bytes, *, swf_sha256: str) -> dict:
     map_assignments = [
         (line_no, line.strip())
         for line_no, line in enumerate(source.splitlines(), 1)
-        if re.match(r"^\s*mt_line_\d{2}\s*\[\s*\d+\s*\]\s*=", line)
+        if re.match(r"^\s*mt_line_\d{2}\s*\[[^\]\r\n]*\]\s*=", line)
     ]
     unmatched_rows = [(line_no, line[:180]) for line_no, line in map_assignments
                       if FLOOR_ROW.fullmatch(line) is None]
