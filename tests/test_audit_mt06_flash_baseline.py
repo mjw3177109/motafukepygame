@@ -2,6 +2,7 @@
 import copy
 import hashlib
 import json
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -51,6 +52,22 @@ class FlashBaselineTests(unittest.TestCase):
 
     def run_audit(self, baseline=None):
         return audit(self.report, self.anchors, self.root, self.baseline if baseline is None else baseline)
+
+    def test_release_gate_blocks_missing_baseline_without_writing_report(self):
+        from tools.audit_mt06_flash_baseline import main
+        report_path = self.root / 'report.json'
+        anchors_path = self.root / 'anchors.json'
+        out_path = self.root / 'release_gate.json'
+        report_path.write_text('{}', encoding='utf-8')
+        anchors_path.write_text('{}', encoding='utf-8')
+        args = ['audit_mt06_flash_baseline', '--report', str(report_path),
+                '--anchors', str(anchors_path), '--png-dir', str(self.root),
+                '--baseline-dir', str(self.root / 'missing'),
+                '--out', str(out_path), '--require-baseline']
+        with patch.object(sys, 'argv', args):
+            with self.assertRaisesRegex(SystemExit, 'BLOCKED: independent Flash baseline missing'):
+                main()
+        self.assertFalse(out_path.exists())
 
     def test_missing_baseline_is_explicit_not_success(self):
         output = self.run_audit(self.root / 'not-there')
