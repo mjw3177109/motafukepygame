@@ -3,15 +3,22 @@ import argparse
 import json
 from pathlib import Path
 from tools.validate_flash_battle_trace import validate
+from tools.audit_battle_evidence import audit
 
 STATE_FIELDS = ("floor", "x", "y", "hp", "money", "exp", "monster_id",
                 "monster_present", "battle_phase", "game_over")
 
 
-def compare(flash_path, candidate_path):
+def compare(flash_path, candidate_path, flash_evidence_root=None, candidate_evidence_root=None):
     errors = []
     for name, path in (("flash", flash_path), ("candidate", candidate_path)):
         errors.extend(f"{name}: {e}" for e in validate(path))
+    if flash_evidence_root is not None or candidate_evidence_root is not None:
+        if flash_evidence_root is None or candidate_evidence_root is None:
+            errors.append("both evidence roots are required")
+        else:
+            errors.extend(f"flash evidence: {e}" for e in audit(flash_path, flash_evidence_root))
+            errors.extend(f"candidate evidence: {e}" for e in audit(candidate_path, candidate_evidence_root))
     if errors:
         return errors
     flash = [json.loads(line) for line in Path(flash_path).read_text(encoding="utf-8").splitlines()]
@@ -39,8 +46,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("flash", type=Path)
     parser.add_argument("candidate", type=Path)
+    parser.add_argument("--flash-evidence-root", type=Path, required=True)
+    parser.add_argument("--candidate-evidence-root", type=Path, required=True)
     args = parser.parse_args()
-    errors = compare(args.flash, args.candidate)
+    errors = compare(args.flash, args.candidate, args.flash_evidence_root, args.candidate_evidence_root)
     for error in errors:
         print("FAIL:", error)
     if errors:
