@@ -13,12 +13,11 @@ def compare(flash_path, candidate_path, flash_evidence_root=None, candidate_evid
     errors = []
     for name, path in (("flash", flash_path), ("candidate", candidate_path)):
         errors.extend(f"{name}: {e}" for e in validate(path))
-    if flash_evidence_root is not None or candidate_evidence_root is not None:
-        if flash_evidence_root is None or candidate_evidence_root is None:
-            errors.append("both evidence roots are required")
-        else:
-            errors.extend(f"flash evidence: {e}" for e in audit(flash_path, flash_evidence_root))
-            errors.extend(f"candidate evidence: {e}" for e in audit(candidate_path, candidate_evidence_root))
+    if flash_evidence_root is None or candidate_evidence_root is None:
+        errors.append("both evidence roots are required")
+    else:
+        errors.extend(f"flash evidence: {e}" for e in audit(flash_path, flash_evidence_root))
+        errors.extend(f"candidate evidence: {e}" for e in audit(candidate_path, candidate_evidence_root))
     if errors:
         return errors
     flash = [json.loads(line) for line in Path(flash_path).read_text(encoding="utf-8").splitlines()]
