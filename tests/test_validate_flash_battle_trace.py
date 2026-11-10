@@ -90,6 +90,20 @@ class BattleTraceValidationTests(unittest.TestCase):
             path.write_text(raw, encoding="utf-8")
             self.assertTrue(validate(path))
 
+    def test_rejects_duplicate_top_level_state_key(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "trace.jsonl"
+            raw = json.dumps(self.row).replace('"hp": null', '"hp": null, "hp": 100')
+            path.write_text(raw, encoding="utf-8")
+            self.assertTrue(validate(path))
+
+    def test_rejects_duplicate_key_even_with_same_value(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "trace.jsonl"
+            raw = json.dumps(self.row).replace('"step": 0', '"step": 0, "step": 0')
+            path.write_text(raw, encoding="utf-8")
+            self.assertTrue(validate(path))
+
     def test_rejects_empty_trace(self):
         self.assertTrue(self.check([]))
 
