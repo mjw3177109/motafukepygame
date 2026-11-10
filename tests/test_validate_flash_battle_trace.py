@@ -76,6 +76,20 @@ class BattleTraceValidationTests(unittest.TestCase):
         del self.row["hp"]
         self.assertTrue(self.check([self.row]))
 
+    def test_rejects_nonstandard_nan_json_constant(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "trace.jsonl"
+            raw = json.dumps(self.row).replace('"hp": null', '"hp": NaN')
+            path.write_text(raw, encoding="utf-8")
+            self.assertTrue(validate(path))
+
+    def test_rejects_nonstandard_infinity_json_constant(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "trace.jsonl"
+            raw = json.dumps(self.row).replace('"money": null', '"money": Infinity')
+            path.write_text(raw, encoding="utf-8")
+            self.assertTrue(validate(path))
+
     def test_rejects_empty_trace(self):
         self.assertTrue(self.check([]))
 
