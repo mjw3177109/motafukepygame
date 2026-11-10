@@ -21,8 +21,8 @@ def validate(path):
     expected_step = 0
     for line_no, line in enumerate(lines, 1):
         try:
-            row = json.loads(line)
-        except json.JSONDecodeError:
+            row = json.loads(line, parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)))
+        except (json.JSONDecodeError, ValueError):
             errors.append(f"line {line_no}: invalid JSON")
             continue
         if not isinstance(row, dict):
