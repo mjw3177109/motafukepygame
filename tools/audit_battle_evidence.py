@@ -1,4 +1,4 @@
-"""Audit screenshot existence and SHA256 for verified battle observations.
+"""Audit screenshot existence, SHA256, and PNG decodability for verified battle observations.
 
 This does not establish that a screenshot came from the original Flash runtime.
 """
@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+from PIL import Image, UnidentifiedImageError
 from tools.validate_flash_battle_trace import validate
 
 
@@ -33,6 +34,17 @@ def audit(trace_path, evidence_root):
         digest = hashlib.sha256(target.read_bytes()).hexdigest()
         if digest != expected:
             errors.append(f'line {number}: evidence SHA256 mismatch')
+            continue
+        try:
+            with Image.open(target) as frame:
+                if frame.format != 'PNG':
+                    errors.append(f'line {number}: evidence is not PNG')
+                    continue
+                frame.verify()
+            with Image.open(target) as frame:
+                frame.load()
+        except (OSError, ValueError, UnidentifiedImageError):
+            errors.append(f'line {number}: invalid or truncated PNG evidence')
     return errors
 
 
@@ -46,7 +58,7 @@ def main():
         print('FAIL:', error)
     if errors:
         raise SystemExit(1)
-    print('PASS: evidence bytes match declared hashes; Flash provenance NOT VERIFIED')
+    print('PASS: evidence hashes and PNG decode validated; Flash provenance NOT VERIFIED')
 
 
 if __name__ == '__main__':
