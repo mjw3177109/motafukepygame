@@ -4,6 +4,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from PIL import Image
 from tools.audit_battle_evidence import audit
 
 
@@ -15,7 +16,7 @@ class AuditBattleEvidenceTests(unittest.TestCase):
         self.trace = self.root / 'trace.jsonl'
         self.frame = self.root / 'flash' / 'frame.png'
         self.frame.parent.mkdir()
-        self.frame.write_bytes(b'frame evidence')
+        Image.new('RGB', (2, 2), 'white').save(self.frame, format='PNG')
         self.row = dict(schema_version=1, source='flash', case_id='win', step=0,
                         action='initial', floor=0, x=1, y=1, hp=100, money=0,
                         exp=0, monster_id=1, monster_present=True,
@@ -29,6 +30,21 @@ class AuditBattleEvidenceTests(unittest.TestCase):
 
     def test_valid_hash(self):
         self.assertEqual(self.check(), [])
+
+    def test_fake_png_with_matching_hash(self):
+        self.frame.write_bytes(b'not a png')
+        self.row['evidence_sha256'] = hashlib.sha256(self.frame.read_bytes()).hexdigest()
+        self.assertIn('PNG', str(self.check()))
+
+    def test_truncated_png_with_matching_hash(self):
+        self.frame.write_bytes(self.frame.read_bytes()[:35])
+        self.row['evidence_sha256'] = hashlib.sha256(self.frame.read_bytes()).hexdigest()
+        self.assertIn('PNG', str(self.check()))
+
+    def test_jpeg_renamed_png(self):
+        Image.new('RGB', (2, 2), 'white').save(self.frame, format='JPEG')
+        self.row['evidence_sha256'] = hashlib.sha256(self.frame.read_bytes()).hexdigest()
+        self.assertIn('not PNG', str(self.check()))
 
     def test_missing_file(self):
         self.frame.unlink()
