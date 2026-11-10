@@ -43,6 +43,16 @@ class BattleEvidenceIntegrationTests(unittest.TestCase):
             candidate_trace.write_text(json.dumps(candidate) + "\n", encoding="utf-8")
 
             self.assertEqual(compare(flash_trace, candidate_trace, flash_root, candidate_root), [])
+            # Exercise the HTML5 path with real PNG evidence, not a mocked audit.
+            candidate["source"] = "html5"
+            candidate_trace.write_text(json.dumps(candidate) + "\n", encoding="utf-8")
+            self.assertEqual(compare(flash_trace, candidate_trace, flash_root, candidate_root), [])
+            # A valid PNG must not conceal a gameplay-state discrepancy.
+            candidate["hp"] = 99
+            candidate_trace.write_text(json.dumps(candidate) + "\n", encoding="utf-8")
+            self.assertIn("hp differs", str(compare(flash_trace, candidate_trace, flash_root, candidate_root)))
+            candidate["hp"] = 100
+            candidate_trace.write_text(json.dumps(candidate) + "\n", encoding="utf-8")
             candidate_png.write_bytes(b"tampered")
             self.assertIn("evidence SHA256 mismatch",
                           str(compare(flash_trace, candidate_trace, flash_root, candidate_root)))
