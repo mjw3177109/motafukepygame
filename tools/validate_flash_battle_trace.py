@@ -9,6 +9,15 @@ REQUIRED = {"schema_version", "source", "case_id", "step", "action", "floor",
 SOURCES = {"flash", "pygame", "html5"}
 
 
+def _reject_duplicate_keys(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
 def validate(path):
     errors = []
     try:
@@ -21,7 +30,8 @@ def validate(path):
     expected_step = 0
     for line_no, line in enumerate(lines, 1):
         try:
-            row = json.loads(line, parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)))
+            row = json.loads(line, object_pairs_hook=_reject_duplicate_keys,
+                             parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)))
         except (json.JSONDecodeError, ValueError):
             errors.append(f"line {line_no}: invalid JSON")
             continue
