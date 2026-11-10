@@ -140,10 +140,14 @@ def main() -> None:
     parser.add_argument('--png-dir', type=Path, required=True)
     parser.add_argument('--baseline-dir', type=Path)
     parser.add_argument('--out', type=Path, required=True)
+    parser.add_argument('--require-baseline', action='store_true',
+                        help='Fail closed if independent Flash capture is absent (release gate only)')
     args = parser.parse_args()
     result = audit(json.loads(args.report.read_text(encoding='utf-8')),
                    json.loads(args.anchors.read_text(encoding='utf-8')),
                    args.png_dir, args.baseline_dir)
+    if args.require_baseline and result['flash_capture_status'] == 'missing':
+        raise SystemExit('BLOCKED: independent Flash baseline missing; release parity cannot pass')
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
     print(f"PASS: mt_06 Flash baseline {result['flash_capture_status']}; Flash parity NOT VERIFIED")
