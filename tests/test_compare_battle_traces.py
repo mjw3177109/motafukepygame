@@ -21,7 +21,18 @@ class CompareBattleTracesTests(unittest.TestCase):
             a, b = Path(folder) / "flash.jsonl", Path(folder) / "candidate.jsonl"
             a.write_text("\n".join(json.dumps(x) for x in (flash if flash is not None else [self.flash])), encoding="utf-8")
             b.write_text("\n".join(json.dumps(x) for x in (candidate if candidate is not None else [self.candidate])), encoding="utf-8")
-            return compare(a, b)
+            with patch("tools.compare_battle_traces.audit", return_value=[]):
+                return compare(a, b, folder, folder)
+
+    def test_rejects_both_missing_evidence_roots(self):
+        with tempfile.TemporaryDirectory() as folder:
+            a, b = Path(folder) / "flash.jsonl", Path(folder) / "candidate.jsonl"
+            a.write_text(json.dumps(self.flash), encoding="utf-8")
+            b.write_text(json.dumps(self.candidate), encoding="utf-8")
+            with patch("tools.compare_battle_traces.audit") as mocked:
+                errors = compare(a, b)
+            self.assertIn("both evidence roots are required", errors)
+            mocked.assert_not_called()
 
     def test_rejects_missing_evidence_root(self):
         with tempfile.TemporaryDirectory() as folder:
