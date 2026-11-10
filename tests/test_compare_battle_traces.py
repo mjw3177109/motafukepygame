@@ -3,6 +3,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 from tools.compare_battle_traces import compare
 
 
@@ -21,6 +22,24 @@ class CompareBattleTracesTests(unittest.TestCase):
             a.write_text("\n".join(json.dumps(x) for x in (flash if flash is not None else [self.flash])), encoding="utf-8")
             b.write_text("\n".join(json.dumps(x) for x in (candidate if candidate is not None else [self.candidate])), encoding="utf-8")
             return compare(a, b)
+
+    def test_rejects_missing_evidence_root(self):
+        with tempfile.TemporaryDirectory() as folder:
+            a, b = Path(folder) / "flash.jsonl", Path(folder) / "candidate.jsonl"
+            a.write_text(json.dumps(self.flash), encoding="utf-8")
+            b.write_text(json.dumps(self.candidate), encoding="utf-8")
+            self.assertIn("both evidence roots are required",
+                          str(compare(a, b, flash_evidence_root=folder)))
+
+    def test_rejects_tampered_screenshot(self):
+        with tempfile.TemporaryDirectory() as folder:
+            a, b = Path(folder) / "flash.jsonl", Path(folder) / "candidate.jsonl"
+            a.write_text(json.dumps(self.flash), encoding="utf-8")
+            b.write_text(json.dumps(self.candidate), encoding="utf-8")
+            with patch("tools.compare_battle_traces.audit", side_effect=[[], ["evidence SHA256 mismatch"]]) as mocked:
+                errors = compare(a, b, folder, folder)
+            self.assertIn("candidate evidence: evidence SHA256 mismatch", errors)
+            self.assertEqual(mocked.call_count, 2)
 
     def test_matching_observations(self):
         self.assertEqual(self.run_compare(), [])
