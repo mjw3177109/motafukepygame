@@ -83,6 +83,19 @@ class FlashBaselineTests(unittest.TestCase):
         self.assertFalse(output['runtime_binding_approved'])
         self.assertFalse(output['gymnasium_ready'])
 
+    def test_rejects_duplicate_capture_json_keys_including_nested(self):
+        for duplicate in ('"alias": "mt_06", "alias": "mt_06"',
+                          '"nested": {"x": 1, "x": 2}'):
+            with self.subTest(duplicate=duplicate):
+                # Duplicate keys must fail even if a normal JSON parser would keep
+                # the last value and the remaining provenance looks valid.
+                raw = json.dumps(self.meta)
+                raw = raw[:-1] + ', ' + duplicate + '}'
+                (self.baseline / 'capture.json').write_text(raw, encoding='utf-8')
+                with self.assertRaisesRegex(ValueError, 'duplicate JSON key'):
+                    self.run_audit()
+        self.write_meta()
+
     def test_rejects_tampered_original_stage(self):
         (self.baseline / 'original_stage.png').write_bytes(b'corrupt')
         with self.assertRaisesRegex(ValueError, 'hash mismatch'):
