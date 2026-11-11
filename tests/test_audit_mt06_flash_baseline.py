@@ -80,6 +80,8 @@ class FlashBaselineTests(unittest.TestCase):
         self.assertEqual(output['pygame_vs_flash_rgb_different_pixels'], 0)
         self.assertEqual(output['chromium_vs_flash_rgb_different_pixels'], 1)
         self.assertEqual(output['flash_capture_status'], 'captured_unreviewed')
+        self.assertEqual(output['capture_method'], 'synthetic fixture')
+        self.assertEqual(output['scene_id'], 'synthetic-test')
         self.assertFalse(output['runtime_binding_approved'])
         self.assertFalse(output['gymnasium_ready'])
 
