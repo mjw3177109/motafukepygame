@@ -16,10 +16,11 @@ def inspect(data: bytes, expected_sha256: str) -> dict:
     present = {f for f, n in found if n == 11}
     counts = Counter(f for f, _ in found)
     duplicates = sorted(f for f, count in counts.items() if count > 1)
+    unexpected = sorted(f for f, _ in found if f not in range(27))
     digest = hashlib.sha256(data).hexdigest()
     return {'schema_version': 1, 'script_sha256': digest, 'expected_sha256': expected_sha256,
             'bytes': len(data), 'declarations': found, 'missing_floors': sorted(set(range(27)) - present),
-            'duplicate_floors': duplicates, 'anchor_matches': digest == expected_sha256,
+            'duplicate_floors': duplicates, 'unexpected_floors': unexpected, 'anchor_matches': digest == expected_sha256,
             'provenance_verified': False, 'gameplay_parity_verified': False, 'kaggle_started': False}
 
 def main():
@@ -31,7 +32,7 @@ def main():
     result = inspect(args.script.read_bytes(), args.expected_sha256)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
-    if not result['anchor_matches'] or result['missing_floors'] or result['duplicate_floors']:
+    if not result['anchor_matches'] or result['missing_floors'] or result['duplicate_floors'] or result['unexpected_floors']:
         p.exit(2, 'FAIL: map ActionScript incomplete or differs from source anchor\n')
     print('PASS: map declaration diagnostics only; no parity approval')
 
