@@ -18,3 +18,16 @@ class MapExportDiagnosticsTests(unittest.TestCase):
     def test_rejects_invalid_anchor(self):
         with self.assertRaises(ValueError):
             inspect(b'', 'abc')
+
+    def test_duplicate_floor_with_different_array_lengths_is_rejected(self):
+        data = b''.join(f'mt_line_{i:02d} = new Array(11);\n'.encode() for i in range(27))
+        data += b'mt_line_06 = new Array(12);\n'
+        report = inspect(data, hashlib.sha256(data).hexdigest())
+        self.assertEqual(report['missing_floors'], [])
+        self.assertEqual(report['duplicate_floors'], [6])
+        self.assertFalse(report['gameplay_parity_verified'])
+
+    def test_duplicate_floor_with_same_array_length_is_rejected(self):
+        data = b'mt_line_00 = new Array(11);\nmt_line_00 = new Array(11);\n'
+        report = inspect(data, hashlib.sha256(data).hexdigest())
+        self.assertEqual(report['duplicate_floors'], [0])
