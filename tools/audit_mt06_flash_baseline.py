@@ -100,7 +100,8 @@ def audit(report: dict, anchors: dict, png_dir: Path, baseline_dir: Path | None)
     rect = metadata.get('crop_rect')
     bg = metadata.get('background_rgb')
     frame = metadata.get('frame_index')
-    if (metadata.get('schema_version') != 1 or metadata.get('alias') != 'mt_06' or
+    if (type(metadata.get('schema_version')) is not int or metadata['schema_version'] != 1 or
+        metadata.get('alias') != 'mt_06' or
         metadata.get('swf_sha256') != verified['swf_sha256'] or
         metadata.get('source_svg_sha256') != verified['source_svg_sha256'] or
         not _utc_timestamp(metadata.get('capture_utc')) or
