@@ -31,3 +31,10 @@ class MapExportDiagnosticsTests(unittest.TestCase):
         data = b'mt_line_00 = new Array(11);\nmt_line_00 = new Array(11);\n'
         report = inspect(data, hashlib.sha256(data).hexdigest())
         self.assertEqual(report['duplicate_floors'], [0])
+
+    def test_unexpected_floor_is_not_silently_accepted(self):
+        data = b''.join(f'mt_line_{i:02d} = new Array(11);\n'.encode() for i in range(28))
+        report = inspect(data, hashlib.sha256(data).hexdigest())
+        self.assertEqual(report['missing_floors'], [])
+        self.assertEqual(report['unexpected_floors'], [27])
+        self.assertFalse(report['gameplay_parity_verified'])
