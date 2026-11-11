@@ -133,6 +133,8 @@ def audit(report: dict, anchors: dict, png_dir: Path, baseline_dir: Path | None)
         'capture_utc': metadata['capture_utc'],
         'player_name': metadata['player_name'],
         'player_version': metadata['player_version'],
+        'capture_method': metadata['capture_method'],
+        'scene_id': metadata['scene_id'],
         'frame_index': frame,
         'original_stage_sha256': metadata['original_stage_sha256'],
         'reference_crop_sha256': metadata['reference_crop_sha256'],
