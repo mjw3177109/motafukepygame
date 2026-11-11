@@ -3,6 +3,7 @@ import argparse
 import hashlib
 import json
 import re
+from collections import Counter
 from pathlib import Path
 
 DECL = re.compile(r'(?m)^\s*mt_line_(\d{2})\s*=\s*new Array\((\d+)\);\s*$')
@@ -13,7 +14,8 @@ def inspect(data: bytes, expected_sha256: str) -> dict:
     source = data.decode('utf-8-sig')
     found = [(int(f), int(n)) for f, n in DECL.findall(source)]
     present = {f for f, n in found if n == 11}
-    duplicates = sorted({f for f, n in found if found.count((f, n)) > 1})
+    counts = Counter(f for f, _ in found)
+    duplicates = sorted(f for f, count in counts.items() if count > 1)
     digest = hashlib.sha256(data).hexdigest()
     return {'schema_version': 1, 'script_sha256': digest, 'expected_sha256': expected_sha256,
             'bytes': len(data), 'declarations': found, 'missing_floors': sorted(set(range(27)) - present),
