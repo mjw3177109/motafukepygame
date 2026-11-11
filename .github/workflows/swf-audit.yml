@@ -216,6 +216,7 @@ jobs:
           path: |
             .swf_audit/swf_header.json
             .swf_audit/ffdec_script_drift_diagnostic.json
+            .swf_audit/map_export_diagnostic.json
             .swf_audit/manifest.json
             .swf_audit/original_tables.json
             .swf_audit/original_combat_tables_audit.json
