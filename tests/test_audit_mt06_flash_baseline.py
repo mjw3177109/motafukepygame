@@ -98,6 +98,13 @@ class FlashBaselineTests(unittest.TestCase):
                     self.run_audit()
         self.write_meta()
 
+    def test_rejects_boolean_schema_version(self):
+        # bool is an int subclass: True == 1 must not pass the schema gate.
+        self.meta['schema_version'] = True
+        self.write_meta()
+        with self.assertRaisesRegex(ValueError, 'provenance'):
+            self.run_audit()
+
     def test_rejects_tampered_original_stage(self):
         (self.baseline / 'original_stage.png').write_bytes(b'corrupt')
         with self.assertRaisesRegex(ValueError, 'hash mismatch'):
