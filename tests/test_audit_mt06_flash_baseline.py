@@ -141,6 +141,17 @@ class FlashBaselineTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'preapprove'):
             self.run_audit()
 
+    def test_rejects_gameplay_parity_preapproval(self):
+        # Independent screenshots cannot authorize gameplay equivalence.
+        for value in (True, 1, 'true'):
+            with self.subTest(value=value):
+                self.meta['gameplay_parity_verified'] = value
+                self.write_meta()
+                with self.assertRaisesRegex(ValueError, 'preapprove gate: gameplay_parity_verified'):
+                    self.run_audit()
+        self.meta.pop('gameplay_parity_verified')
+        self.write_meta()
+
     def test_rejects_incomplete_existing_capture_directory(self):
         (self.baseline / 'capture.json').unlink()
         with self.assertRaisesRegex(ValueError, 'capture.json'):
