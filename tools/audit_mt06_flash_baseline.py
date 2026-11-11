@@ -12,6 +12,15 @@ from tools.verify_mt06_artifacts import verify
 SIZE = (64, 64)
 
 
+def _reject_duplicate_json_keys(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f'duplicate JSON key: {key}')
+        result[key] = value
+    return result
+
+
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -78,7 +87,8 @@ def audit(report: dict, anchors: dict, png_dir: Path, baseline_dir: Path | None)
     metadata_path = baseline_dir / 'capture.json'
     if not metadata_path.is_file():
         raise ValueError('Flash capture directory exists but capture.json is missing')
-    metadata = json.loads(metadata_path.read_text(encoding='utf-8'))
+    metadata = json.loads(metadata_path.read_text(encoding='utf-8'),
+                          object_pairs_hook=_reject_duplicate_json_keys)
     if not isinstance(metadata, dict):
         raise ValueError('Flash capture metadata must be an object')
     for key in ('player_name', 'player_version', 'capture_method', 'scene_id'):
