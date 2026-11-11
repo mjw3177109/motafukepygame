@@ -94,7 +94,7 @@ def audit(report: dict, anchors: dict, png_dir: Path, baseline_dir: Path | None)
     for key in ('player_name', 'player_version', 'capture_method', 'scene_id'):
         if not isinstance(metadata.get(key), str) or not metadata[key].strip():
             raise ValueError(f'Flash capture missing provenance field: {key}')
-    for key in ('flash_visual_parity_verified', 'runtime_binding_approved', 'gymnasium_ready', 'kaggle_started'):
+    for key in ('flash_visual_parity_verified', 'runtime_binding_approved', 'gameplay_parity_verified', 'gymnasium_ready', 'kaggle_started'):
         if metadata.get(key, False) is not False:
             raise ValueError(f'Flash capture cannot preapprove gate: {key}')
     rect = metadata.get('crop_rect')
