@@ -11,9 +11,9 @@ def _integer(value):
 
 def frame54_handoff(world: dict, battle: dict) -> dict:
     """Sprite mt_other_04 frame54: Display_kill=2 and Now_hp=right_hp."""
-    if not isinstance(world, dict) or world.get("display_kill") != 1 or not _integer(world.get("hp")):
+    if not isinstance(world, dict) or not _integer(world.get("display_kill")) or world["display_kill"] != 1 or not _integer(world.get("hp")):
         raise ValueError("frame54 requires an active battle (display_kill=1)")
-    if not isinstance(battle, dict) or not _integer(battle.get("right_hp")) or battle.get("left_hp") != 0:
+    if not isinstance(battle, dict) or not _integer(battle.get("right_hp")) or not _integer(battle.get("left_hp")) or battle["left_hp"] != 0:
         raise ValueError("frame54 requires a completed monster animation")
     state = deepcopy(world)
     state["display_kill"] = 2
@@ -27,7 +27,7 @@ def consume_battle_completion(world: dict, monster: list) -> dict:
     Boss ids 31/32 clear a 3x3 region [boss_row-2..boss_row,
     boss_col-1..boss_col+1]; ordinary enemies clear one grid cell.
     """
-    if not isinstance(world, dict) or world.get("display_kill") != 2:
+    if not isinstance(world, dict) or not _integer(world.get("display_kill")) or world["display_kill"] != 2:
         raise ValueError("battle settlement requires display_kill=2")
     if not isinstance(monster, list) or len(monster) != 6 or any(not _integer(v) for v in monster[:5]) or not isinstance(monster[5], str):
         raise ValueError("expected original six-field boss_man entry")
