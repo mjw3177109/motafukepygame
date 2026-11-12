@@ -25,6 +25,7 @@ class MapExportDiagnosticsTests(unittest.TestCase):
         report = inspect(data, hashlib.sha256(data).hexdigest())
         self.assertEqual(report['missing_floors'], [])
         self.assertEqual(report['duplicate_floors'], [6])
+        self.assertEqual(report['wrong_array_lengths'], [[6, 12]])
         self.assertFalse(report['gameplay_parity_verified'])
 
     def test_duplicate_floor_with_same_array_length_is_rejected(self):
@@ -37,4 +38,12 @@ class MapExportDiagnosticsTests(unittest.TestCase):
         report = inspect(data, hashlib.sha256(data).hexdigest())
         self.assertEqual(report['missing_floors'], [])
         self.assertEqual(report['unexpected_floors'], [27])
+        self.assertFalse(report['gameplay_parity_verified'])
+
+    def test_wrong_array_length_is_reported_independently(self):
+        data = b''.join(f'mt_line_{i:02d} = new Array({12 if i == 6 else 11});\n'.encode() for i in range(27))
+        report = inspect(data, hashlib.sha256(data).hexdigest())
+        self.assertEqual(report['wrong_array_lengths'], [[6, 12]])
+        self.assertEqual(report['missing_floors'], [6])
+        self.assertEqual(report['duplicate_floors'], [])
         self.assertFalse(report['gameplay_parity_verified'])
