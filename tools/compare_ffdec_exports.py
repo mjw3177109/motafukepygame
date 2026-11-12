@@ -32,7 +32,11 @@ def compare(first, second):
             found[path] = (size, digest)
         return found
 
-    source = first.get("original", {}).get("sha256")
+    if not isinstance(first, dict) or not isinstance(second, dict):
+        raise ValueError("invalid FFDec comparison manifest")
+    if not isinstance(first.get("original"), dict) or not isinstance(second.get("original"), dict):
+        raise ValueError("invalid original SWF metadata")
+    source = first["original"].get("sha256")
     if not isinstance(source, str) or re.fullmatch(r"[0-9a-fA-F]{64}", source) is None or source != second.get("original", {}).get("sha256"):
         raise ValueError("SWF source hash mismatch")
     a, b = inventory(first), inventory(second)
