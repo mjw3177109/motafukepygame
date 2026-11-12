@@ -1,14 +1,15 @@
 /** Evidence-scoped mt_other_04 frame54 -> sprite855 -> Move_arrow(100). */
 const isInt = Number.isSafeInteger;
+const isRecord = value => value !== null && typeof value === 'object' && !Array.isArray(value);
 
 export function frame54Handoff(world, battle) {
-  if (!world || world.display_kill !== 1 || !isInt(world.hp)) throw new Error('frame54 requires an active battle (display_kill=1)');
-  if (!battle || !isInt(battle.right_hp) || battle.left_hp !== 0) throw new Error('frame54 requires a completed monster animation');
+  if (!isRecord(world) || world.display_kill !== 1 || !isInt(world.hp)) throw new Error('frame54 requires an active battle (display_kill=1)');
+  if (!isRecord(battle) || !isInt(battle.right_hp) || battle.left_hp !== 0) throw new Error('frame54 requires a completed monster animation');
   return {state: {...structuredClone(world), display_kill: 2, hp: battle.right_hp}, event: 'frame54_handoff'};
 }
 
 export function consumeBattleCompletion(world, monster) {
-  if (!world || world.display_kill !== 2) throw new Error('battle settlement requires display_kill=2');
+  if (!isRecord(world) || world.display_kill !== 2) throw new Error('battle settlement requires display_kill=2');
   if (!Array.isArray(monster) || monster.length !== 6 || !monster.slice(0, 5).every(isInt) || typeof monster[5] !== 'string') {
     throw new Error('expected original six-field boss_man entry');
   }
