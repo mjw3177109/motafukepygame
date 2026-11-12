@@ -1,6 +1,7 @@
 """Fail-closed comparison of two independently exported FFDec inventories."""
 import argparse
 import json
+import re
 from pathlib import Path
 
 
@@ -19,8 +20,11 @@ def compare(first, second):
             path, size, digest = entry["path"], entry["size"], entry["sha256"]
             if path in found:
                 raise ValueError("duplicate export path: " + path)
-            if not isinstance(size, int) or size < 0 or not isinstance(digest, str) or len(digest) != 64:
-                raise ValueError("invalid export entry: " + path)
+            if (not isinstance(path, str) or not path or path.startswith("/") or chr(92) in path
+                    or any(part in ("", ".", "..") for part in path.split("/"))
+                    or type(size) is not int or size < 0
+                    or not isinstance(digest, str) or re.fullmatch(r"[0-9a-fA-F]{64}", digest) is None):
+                raise ValueError("invalid export entry: " + repr(path))
             found[path] = (size, digest)
         return found
 
