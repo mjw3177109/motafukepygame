@@ -120,7 +120,6 @@ jobs:
         run: |
           python -m tools.diagnose_ffdec_script_drift --committed data/original_floors.json --manifest .swf_audit/manifest.json --swf game.swf --ffdec FFDec/ffdec.jar --export-root .swf_audit/export --out .swf_audit/ffdec_script_drift_diagnostic.json
       - name: Diagnose map ActionScript export against committed source anchor
-        continue-on-error: true
         run: |
           MAP_SHA=$(python -c 'import json; print(json.load(open("data/original_floors.json"))["source"]["actionscript_sha256"])')
           python -m tools.diagnose_map_export --script .swf_audit/export/scripts/frame_4346/DoAction.as --expected-sha256 "$MAP_SHA" --out .swf_audit/map_export_diagnostic.json
