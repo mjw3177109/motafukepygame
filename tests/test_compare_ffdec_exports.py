@@ -33,6 +33,16 @@ class CompareFFDecTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     compare(manifest([("a", 2, "a")], source), valid)
 
+    def test_malformed_top_level_and_original_metadata_rejected(self):
+        valid = manifest([("a", 2, "a")])
+        for malformed in (None, [], "broken", 42, {}, {"original": None},
+                          {"original": []}, {"original": "broken"}):
+            with self.subTest(malformed=malformed):
+                with self.assertRaises(ValueError):
+                    compare(malformed, valid)
+                with self.assertRaises(ValueError):
+                    compare(valid, malformed)
+
     def test_duplicate_rejected(self):
         with self.assertRaises(ValueError):
             compare(manifest([("a", 2, "a"), ("a", 2, "a")]), manifest([("a", 2, "a")]))
