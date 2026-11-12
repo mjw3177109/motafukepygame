@@ -34,6 +34,27 @@ class CompareFFDecTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             compare(manifest([]), manifest([("a", 2, "a")]))
 
+    def test_invalid_manifest_entries_rejected(self):
+        valid = manifest([("safe/file.svg", 2, "a")])
+        for path in ("../escape.svg", "/absolute.svg", "a//b.svg", "a/./b.svg", "a\\b.svg", ""):
+            with self.subTest(path=path):
+                bad = manifest([("safe/file.svg", 2, "a")])
+                bad["files"][0]["path"] = path
+                with self.assertRaises(ValueError):
+                    compare(bad, valid)
+        for size in (True, -1, "2"):
+            with self.subTest(size=size):
+                bad = manifest([("safe/file.svg", 2, "a")])
+                bad["files"][0]["size"] = size
+                with self.assertRaises(ValueError):
+                    compare(bad, valid)
+        for digest in ("z" * 64, "a" * 63, 123):
+            with self.subTest(digest=digest):
+                bad = manifest([("safe/file.svg", 2, "a")])
+                bad["files"][0]["sha256"] = digest
+                with self.assertRaises(ValueError):
+                    compare(bad, valid)
+
     def test_failed_ffdec_rejected(self):
         bad = manifest([("a", 2, "a")])
         bad["ffdec_commands"][0]["exit_code"] = 1
