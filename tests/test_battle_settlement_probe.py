@@ -65,5 +65,25 @@ class SettlementTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'display_kill=2'):
             consume_battle_completion({**case['handoff']['state'], 'display_kill': True}, case['monster'])
 
+    def test_boss32_footprint_at_last_valid_boundary(self):
+        """Boss 32 clears exactly nine tiles at the bottom-right valid footprint."""
+        case = deepcopy(CASES[1])
+        world = case['handoff']['state']
+        world['boss_id'] = 32
+        world['boss_row'] = 10
+        world['boss_col'] = 9
+        original = deepcopy(world)
+        result = consume_battle_completion(world, case['monster'])
+        expected = [[r, c] for r in (8, 9, 10) for c in (8, 9, 10)]
+        self.assertEqual(result['cleared'], expected)
+        self.assertEqual(result['removed_clips'], [f"mt_m_{r}_{c}" for r, c in expected])
+        for r in range(11):
+            for c in range(11):
+                self.assertEqual(result['state']['grid'][r][c],
+                                 0 if [r, c] in expected else original['grid'][r][c])
+        self.assertEqual(result['state']['money'], original['money'] + case['monster'][3])
+        self.assertEqual(result['state']['mp'], original['mp'] + case['monster'][4])
+        self.assertEqual(world, original)
+
 if __name__ == '__main__':
     unittest.main()
