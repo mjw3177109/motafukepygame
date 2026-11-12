@@ -62,6 +62,25 @@ class CompareFFDecTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     compare(bad, valid)
 
+    def test_malformed_command_and_entry_types_rejected(self):
+        valid = manifest([("a", 2, "a")])
+        for commands in ("broken", [None], [True], [{"exit_code": True}]):
+            with self.subTest(commands=commands):
+                bad = manifest([("a", 2, "a")])
+                bad["ffdec_commands"] = commands
+                with self.assertRaises(ValueError):
+                    compare(bad, valid)
+        for entry in (None, 1, ["a", 2, "a"]):
+            with self.subTest(entry=entry):
+                bad = manifest([("a", 2, "a")])
+                bad["files"][0] = entry
+                with self.assertRaises(ValueError):
+                    compare(bad, valid)
+        bad = manifest([("a", 2, "a")])
+        bad["files"][0]["path"] = ["unhashable"]
+        with self.assertRaises(ValueError):
+            compare(bad, valid)
+
     def test_failed_ffdec_rejected(self):
         bad = manifest([("a", 2, "a")])
         bad["ffdec_commands"][0]["exit_code"] = 1
