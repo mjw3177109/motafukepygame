@@ -13,18 +13,22 @@ def compare(first, second):
         if report.get("exported_file_count") != len(files):
             raise ValueError("export count mismatch")
         commands = report.get("ffdec_commands")
-        if not commands or any(c.get("exit_code") != 0 for c in commands):
+        if not isinstance(commands, list) or not commands or any(
+                not isinstance(cmd, dict) or type(cmd.get("exit_code")) is not int
+                or cmd["exit_code"] != 0 for cmd in commands):
             raise ValueError("FFDec command missing or failed")
         found = {}
         for entry in files:
+            if not isinstance(entry, dict):
+                raise ValueError("invalid export entry: " + repr(entry))
             path, size, digest = entry["path"], entry["size"], entry["sha256"]
-            if path in found:
-                raise ValueError("duplicate export path: " + path)
             if (not isinstance(path, str) or not path or path.startswith("/") or chr(92) in path
                     or any(part in ("", ".", "..") for part in path.split("/"))
                     or type(size) is not int or size < 0
                     or not isinstance(digest, str) or re.fullmatch(r"[0-9a-fA-F]{64}", digest) is None):
                 raise ValueError("invalid export entry: " + repr(path))
+            if path in found:
+                raise ValueError("duplicate export path: " + path)
             found[path] = (size, digest)
         return found
 
