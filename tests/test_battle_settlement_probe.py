@@ -52,5 +52,18 @@ class SettlementTests(unittest.TestCase):
                 self.assertEqual(reward['state']['grid'][5][5], 0)
                 self.assertEqual(world, case['world'])
 
+    def test_rejects_boolean_phase_and_monster_death_flags(self):
+        """Python bool is an int subclass; JavaScript rejects these phase values."""
+        case = CASES[0]
+        for phase in (True, False):
+            with self.subTest(phase=phase):
+                world = {**case['world'], 'display_kill': phase}
+                with self.assertRaisesRegex(ValueError, 'active battle'):
+                    frame54_handoff(world, case['battle'])
+        with self.assertRaisesRegex(ValueError, 'completed monster'):
+            frame54_handoff(case['world'], {**case['battle'], 'left_hp': False})
+        with self.assertRaisesRegex(ValueError, 'display_kill=2'):
+            consume_battle_completion({**case['handoff']['state'], 'display_kill': True}, case['monster'])
+
 if __name__ == '__main__':
     unittest.main()
