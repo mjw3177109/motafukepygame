@@ -29,7 +29,7 @@ def compare(first, second):
         return found
 
     source = first.get("original", {}).get("sha256")
-    if not source or source != second.get("original", {}).get("sha256"):
+    if not isinstance(source, str) or re.fullmatch(r"[0-9a-fA-F]{64}", source) is None or source != second.get("original", {}).get("sha256"):
         raise ValueError("SWF source hash mismatch")
     a, b = inventory(first), inventory(second)
     missing = sorted(a.keys() - b.keys())
