@@ -49,19 +49,19 @@ class MapExportDiagnosticsTests(unittest.TestCase):
         self.assertFalse(report['gameplay_parity_verified'])
 
     def test_malformed_array_declaration_is_reported(self):
-        data = b''.join(f'mt_line_{i:02d} = new Array(11);\\n'.encode() for i in range(27))
+        data = b''.join(f'mt_line_{i:02d} = new Array(11);\n'.encode() for i in range(27))
         data = data.replace(b'mt_line_06 = new Array(11);', b'mt_line_06 = new Array(11)')
         report = inspect(data, hashlib.sha256(data).hexdigest())
         self.assertEqual(report['missing_floors'], [6])
         self.assertEqual(report['malformed_array_declarations'], ['mt_line_06 = new Array(11)'])
 
     def test_malformed_declaration_not_hidden_by_valid_duplicate(self):
-        data = b''.join(f'mt_line_{i:02d} = new Array(11);\\n'.encode() for i in range(27))
-        data += b'mt_line_06 = new Array(eleven);\\n'
+        data = b''.join(f'mt_line_{i:02d} = new Array(11);\n'.encode() for i in range(27))
+        data += b'mt_line_06 = new Array(eleven);\n'
         report = inspect(data, hashlib.sha256(data).hexdigest())
         self.assertEqual(report['missing_floors'], [])
         self.assertEqual(report['malformed_array_declarations'], ['mt_line_06 = new Array(eleven);'])
 
     def test_valid_declarations_do_not_trigger_malformed(self):
-        data = b''.join(f'mt_line_{i:02d} = new Array(11);\\n'.encode() for i in range(27))
+        data = b''.join(f'mt_line_{i:02d} = new Array(11);\n'.encode() for i in range(27))
         self.assertEqual(inspect(data, hashlib.sha256(data).hexdigest())['malformed_array_declarations'], [])
