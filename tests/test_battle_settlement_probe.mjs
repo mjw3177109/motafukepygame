@@ -26,6 +26,16 @@ test('frame54 requires monster death', () => {
 });
 
 
+test('rejects array-shaped battle state like Python dict validation', () => {
+  const c = cases[0];
+  const worldArray = Object.assign([], c.world);
+  const battleArray = Object.assign([], c.battle);
+  const settledArray = Object.assign([], c.handoff.state);
+  assert.throws(() => frame54Handoff(worldArray, c.battle), /active battle/);
+  assert.throws(() => frame54Handoff(c.world, battleArray), /completed monster/);
+  assert.throws(() => consumeBattleCompletion(settledArray, c.monster), /display_kill=2/);
+});
+
 test('zero/negative HP reward path is source-scoped, not a Flash death verdict', () => {
   const c = cases[0];
   for (const hp of [0,-15]) {
