@@ -6,7 +6,8 @@ import re
 from collections import Counter
 from pathlib import Path
 
-DECL = re.compile(r'(?m)^\s*mt_line_(\d{2})\s*=\s*new Array\((\d+)\);\s*
+DECL = re.compile(r'(?m)^\s*mt_line_(\d{2})\s*=\s*new Array\((\d+)\);\s*$')
+CANDIDATE = re.compile(r'(?m)^\s*mt_line_\d+\s*=\s*new\s+Array\b[^\r\n]*$')
 
 def inspect(data: bytes, expected_sha256: str) -> dict:
     if not re.fullmatch(r'[0-9a-f]{64}', expected_sha256):
