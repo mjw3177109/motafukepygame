@@ -26,6 +26,13 @@ class CompareFFDecTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             compare(manifest([("a", 2, "a")]), manifest([("a", 2, "a")], "b" * 64))
 
+    def test_malformed_source_digest_rejected(self):
+        valid = manifest([("a", 2, "a")])
+        for source in ("z" * 64, "a" * 63, 123, None):
+            with self.subTest(source=source):
+                with self.assertRaises(ValueError):
+                    compare(manifest([("a", 2, "a")], source), valid)
+
     def test_duplicate_rejected(self):
         with self.assertRaises(ValueError):
             compare(manifest([("a", 2, "a"), ("a", 2, "a")]), manifest([("a", 2, "a")]))
