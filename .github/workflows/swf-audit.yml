@@ -222,6 +222,11 @@ jobs:
             .swf_audit/map_export_diagnostic.json
             .swf_audit/manifest.json
             .swf_audit/ffdec_repeat_comparison.json
+            .swf_audit_repeat/manifest.json
+            .swf_audit/export/scripts/frame_4346/DoAction.as
+            .swf_audit/export/scripts/frame_4346/DoAction_4.as
+            .swf_audit_repeat/export/scripts/frame_4346/DoAction.as
+            .swf_audit_repeat/export/scripts/frame_4346/DoAction_4.as
             .swf_audit/original_tables.json
             .swf_audit/original_combat_tables_audit.json
             .swf_audit/original_combat_semantics_audit.json
