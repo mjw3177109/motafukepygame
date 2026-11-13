@@ -14,6 +14,16 @@ class CompareFFDecTests(unittest.TestCase):
         entries = [("A.svg", 2, "a"), ("a.svg", 3, "b")]
         self.assertTrue(compare(manifest(entries), manifest(entries[::-1]))["identical"])
 
+    def test_casefold_collision_diagnostics_do_not_claim_export_drift(self):
+        first = manifest([("A.svg", 2, "a"), ("a.svg", 3, "b"), ("B.svg", 1, "c")])
+        second = manifest([("B.svg", 1, "c"), ("a.svg", 3, "b"), ("A.svg", 2, "a")])
+        result = compare(first, second)
+        self.assertTrue(result["identical"])
+        self.assertEqual(result["first_casefold_collisions"], [["A.svg", "a.svg"]])
+        self.assertEqual(result["second_casefold_collisions"], [["A.svg", "a.svg"]])
+        self.assertEqual(compare(manifest([("safe.svg", 1, "a")]),
+                                 manifest([("safe.svg", 1, "a")]))["first_casefold_collisions"], [])
+
     def test_export_count_rejects_bool_and_float(self):
         valid = manifest([("a.svg", 2, "a")])
         for count in (True, 1.0, "1", None):
