@@ -10,7 +10,7 @@ def compare(first, second):
         files = report.get("files")
         if not isinstance(files, list) or not files:
             raise ValueError("missing export inventory")
-        if report.get("exported_file_count") != len(files):
+        if (type(report.get("exported_file_count")) is not int\n                or report["exported_file_count"] != len(files)):
             raise ValueError("export count mismatch")
         commands = report.get("ffdec_commands")
         if not isinstance(commands, list) or not commands or any(
