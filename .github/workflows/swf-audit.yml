@@ -227,6 +227,9 @@ jobs:
             .swf_audit/export/scripts/frame_4346/DoAction_4.as
             .swf_audit_repeat/export/scripts/frame_4346/DoAction.as
             .swf_audit_repeat/export/scripts/frame_4346/DoAction_4.as
+            # Preserve the newly observed shop-script drift in both independent exports.
+            .swf_audit/export/scripts/DefineSprite_671_mt_buy/frame_2/DoAction.as
+            .swf_audit_repeat/export/scripts/DefineSprite_671_mt_buy/frame_2/DoAction.as
             .swf_audit/original_tables.json
             .swf_audit/original_combat_tables_audit.json
             .swf_audit/original_combat_semantics_audit.json
