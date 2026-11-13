@@ -69,6 +69,18 @@ class OriginalAuditTriggerTests(unittest.TestCase):
         self.assertEqual(push_paths, pr_paths)
         self.assertEqual(len(push_paths), len(set(push_paths)))
 
+    def test_shop_frame4_drift_evidence_is_preserved_on_failure(self):
+        # The 2026-11-13 failed audit showed a non-deterministic shop
+        # ActionScript export. Both independent copies must remain available.
+        for root in ('.swf_audit', '.swf_audit_repeat'):
+            with self.subTest(root=root):
+                self.assertIn(
+                    root + '/export/scripts/DefineSprite_671_mt_buy/frame_4/DoAction.as',
+                    self.text,
+                )
+        self.assertIn('if: always()', self.text)
+        self.assertIn('if-no-files-found: error', self.text)
+
     def test_provenance_verification_remains_in_job(self):
         self.assertIn('python tools/verify_original_floors.py --committed data/original_floors.json', self.text)
         self.assertIn('python tools/package_swf_audit.py', self.text)
