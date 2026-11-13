@@ -65,6 +65,21 @@ class SettlementTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'display_kill=2'):
             consume_battle_completion({**case['handoff']['state'], 'display_kill': True}, case['monster'])
 
+    def test_rejects_js_unsafe_integer_inputs(self):
+        """Keep Python and JS probe input contracts aligned at 2**53 boundary."""
+        case = CASES[0]
+        for invalid in (2**53, -(2**53)):
+            with self.subTest(value=invalid):
+                with self.assertRaisesRegex(ValueError, 'active battle'):
+                    frame54_handoff({**case['world'], 'hp': invalid}, case['battle'])
+                with self.assertRaisesRegex(ValueError, 'completed monster'):
+                    frame54_handoff(case['world'], {**case['battle'], 'right_hp': invalid})
+                with self.assertRaisesRegex(ValueError, 'invalid battle settlement state'):
+                    consume_battle_completion({**case['handoff']['state'], 'money': invalid}, case['monster'])
+                with self.assertRaisesRegex(ValueError, 'six-field'):
+                    consume_battle_completion(case['handoff']['state'],
+                                              [*case['monster'][:3], invalid, *case['monster'][4:]])
+
     def test_boss32_footprint_at_last_valid_boundary(self):
         """Boss 32 clears exactly nine tiles at the bottom-right valid footprint."""
         case = deepcopy(CASES[1])
