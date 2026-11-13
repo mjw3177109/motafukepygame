@@ -227,6 +227,9 @@ jobs:
             .swf_audit/export/scripts/frame_4346/DoAction_4.as
             .swf_audit_repeat/export/scripts/frame_4346/DoAction.as
             .swf_audit_repeat/export/scripts/frame_4346/DoAction_4.as
+            # Capture the newly observed frame_4346/DoAction_2.as drift from failed run 43364325680.
+            .swf_audit/export/scripts/frame_4346/DoAction_2.as
+            .swf_audit_repeat/export/scripts/frame_4346/DoAction_2.as
             # Preserve the newly observed shop-script drift in both independent exports.
             .swf_audit/export/scripts/DefineSprite_671_mt_buy/frame_2/DoAction.as
             .swf_audit_repeat/export/scripts/DefineSprite_671_mt_buy/frame_2/DoAction.as
