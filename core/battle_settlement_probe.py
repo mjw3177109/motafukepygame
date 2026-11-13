@@ -6,7 +6,7 @@ from copy import deepcopy
 
 
 def _integer(value):
-    return type(value) is int
+    return type(value) is int and -(2**53 - 1) <= value <= 2**53 - 1
 
 
 def frame54_handoff(world: dict, battle: dict) -> dict:
