@@ -41,11 +41,20 @@ def compare(first, second):
     if not isinstance(source, str) or re.fullmatch(r"[0-9a-fA-F]{64}", source) is None or source != second.get("original", {}).get("sha256"):
         raise ValueError("SWF source hash mismatch")
     a, b = inventory(first), inventory(second)
+    def casefold_collisions(inventory):
+        groups = {}
+        for path in inventory:
+            groups.setdefault(path.casefold(), []).append(path)
+        return sorted((sorted(paths) for paths in groups.values() if len(paths) > 1),
+                      key=lambda paths: paths[0])
+
     missing = sorted(a.keys() - b.keys())
     added = sorted(b.keys() - a.keys())
     changed = sorted(k for k in a.keys() & b.keys() if a[k] != b[k])
     return {"source_sha256": source, "first_count": len(a), "second_count": len(b),
             "only_first": missing, "only_second": added, "changed": changed,
+            "first_casefold_collisions": casefold_collisions(a),
+            "second_casefold_collisions": casefold_collisions(b),
             "identical": not (missing or added or changed)}
 
 
