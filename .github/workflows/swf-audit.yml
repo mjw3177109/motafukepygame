@@ -233,6 +233,9 @@ jobs:
             # Preserve the newly observed shop-script drift in both independent exports.
             .swf_audit/export/scripts/DefineSprite_671_mt_buy/frame_2/DoAction.as
             .swf_audit_repeat/export/scripts/DefineSprite_671_mt_buy/frame_2/DoAction.as
+            # Capture the keyPress Up button ActionScript drift seen in run 43392682569.
+            .swf_audit/export/scripts/DefineButton2_856/BUTTONCONDACTION on(keyPress Up).as
+            .swf_audit_repeat/export/scripts/DefineButton2_856/BUTTONCONDACTION on(keyPress Up).as
             .swf_audit/original_tables.json
             .swf_audit/original_combat_tables_audit.json
             .swf_audit/original_combat_semantics_audit.json
