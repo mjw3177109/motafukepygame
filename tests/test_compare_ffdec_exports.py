@@ -14,7 +14,7 @@ class CompareFFDecTests(unittest.TestCase):
         entries = [("A.svg", 2, "a"), ("a.svg", 3, "b")]
         self.assertTrue(compare(manifest(entries), manifest(entries[::-1]))["identical"])
 
-    def test_missing_added_and_changed(self):
+    def test_export_count_rejects_bool_and_float(self):\n        valid = manifest([("a.svg", 2, "a")])\n        for count in (True, 1.0, "1", None):\n            with self.subTest(count=count):\n                bad = manifest([("a.svg", 2, "a")])\n                bad["exported_file_count"] = count\n                with self.assertRaises(ValueError):\n                    compare(bad, valid)\n                with self.assertRaises(ValueError):\n                    compare(valid, bad)\n        self.assertTrue(compare(valid, valid)["identical"])\n\n    def test_missing_added_and_changed(self):
         result = compare(manifest([("a", 2, "a"), ("b", 3, "b")]),
                          manifest([("a", 4, "a"), ("c", 3, "b")]))
         self.assertEqual(result["only_first"], ["b"])
