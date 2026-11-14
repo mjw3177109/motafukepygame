@@ -15,11 +15,17 @@ class ShopTraceCasesTests(unittest.TestCase):
 
     def test_eighteen_boundary_vectors(self):
         cases = build_cases(self.fixture)
-        self.assertEqual(len(cases), 18)
-        self.assertEqual(sum(c['success'] for c in cases), 12)
-        self.assertEqual(len({(c['frame'], c['option'], c['before']['gold']) for c in cases}), 18)
+        self.assertEqual(len(cases), 20)
+        self.assertEqual(sum(c['success'] for c in cases), 14)
+        self.assertEqual(len({(c['frame'], c['option'], c['before']['gold']) for c in cases}), 20)
         for case in cases:
             with self.subTest(frame=case['frame'], option=case['option'], gold=case['before']['gold']):
+                if case['option'] == 4:
+                    self.assertEqual(case['before'], case['after'])
+                    self.assertEqual(case['before']['gold'], 0)
+                    self.assertEqual(case['exit_action'], {2: 'gotoAndPlay', 4: 'gotoAndStop'}[case['frame']])
+                    self.assertEqual(case['exit_label'], 'end')
+                    continue
                 row = next(r for r in self.fixture['transactions']
                            if (r['frame'], r['option']) == (case['frame'], case['option']))
                 before, after = case['before'], case['after']
