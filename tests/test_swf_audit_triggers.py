@@ -81,6 +81,15 @@ class OriginalAuditTriggerTests(unittest.TestCase):
         self.assertIn('if: always()', self.text)
         self.assertIn('if-no-files-found: error', self.text)
 
+    def test_shop_source_audit_is_gated_and_archived(self):
+        # Keep the independently verified shop sources in the CI gate and
+        # preserve the report for later ActionRecord/gameplay investigation.
+        self.assertIn('python -m tools.audit_shop_exports --first .swf_audit/export', self.text)
+        self.assertIn('--second .swf_audit_repeat/export --swf game.swf', self.text)
+        self.assertIn('--out .swf_audit/shop_export_audit.json', self.text)
+        self.assertIn('            .swf_audit/shop_export_audit.json', self.text)
+        self.assertIn('      - name: Audit independent shop frame exports', self.text)
+
     def test_provenance_verification_remains_in_job(self):
         self.assertIn('python tools/verify_original_floors.py --committed data/original_floors.json', self.text)
         self.assertIn('python tools/package_swf_audit.py', self.text)
