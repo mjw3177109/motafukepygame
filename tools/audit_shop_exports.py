@@ -22,8 +22,8 @@ def audit(first: Path, second: Path, swf: Path) -> dict:
         if not a.is_file() or not b.is_file():
             raise ValueError(f"shop frame {frame} missing independent export")
         left, right = a.read_bytes(), b.read_bytes()
-        if not left or not right:
-            raise ValueError(f"shop frame {frame} empty export")
+        if not left.strip() or not right.strip():
+            raise ValueError(f"shop frame {frame} empty or whitespace-only export")
         if left != right:
             raise ValueError(f"shop frame {frame} FFDec exports differ")
         sources.append({"frame": frame, "path": relative, "size": len(left),
