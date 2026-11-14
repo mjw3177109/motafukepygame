@@ -81,6 +81,18 @@ class OriginalAuditTriggerTests(unittest.TestCase):
         self.assertIn('if: always()', self.text)
         self.assertIn('if-no-files-found: error', self.text)
 
+    def test_sprite855_independent_drift_evidence_is_archived(self):
+        # Regression for the 2026-11-14 Sprite 855 FFDec drift:
+        # both raw exports must survive even when comparison fails.
+        for root in ('.swf_audit', '.swf_audit_repeat'):
+            with self.subTest(root=root):
+                self.assertIn(
+                    '            ' + root + '/export/scripts/DefineSprite_855/frame_1/DoAction.as',
+                    self.text,
+                )
+        self.assertIn('if: always()', self.text)
+        self.assertIn('if-no-files-found: error', self.text)
+
     def test_shop_source_audit_is_gated_and_archived(self):
         # Keep the independently verified shop sources in the CI gate and
         # preserve the report for later ActionRecord/gameplay investigation.
