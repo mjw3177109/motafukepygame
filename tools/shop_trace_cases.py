@@ -38,6 +38,21 @@ def build_cases(fixture):
             cases.append({'provenance': 'static_actionscript_expectation_not_runtime',
                           'frame': row['frame'], 'option': row['option'],
                           'before': before, 'after': after, 'success': success})
+    exits = fixture.get('exit', [])
+    if len(exits) != 2 or {e.get('frame') for e in exits} != {2, 4}:
+        raise ValueError('Expected both source-backed exit actions')
+    expected_actions = {2: 'gotoAndPlay', 4: 'gotoAndStop'}
+    for row in sorted(exits, key=lambda e: e['frame']):
+        if (row.get('option') != 4 or row.get('condition') != 'always'
+                or row.get('label') != 'end'
+                or row.get('action') != expected_actions[row['frame']]):
+            raise ValueError('Unexpected source-backed exit instruction')
+        state = {'gold': 0, **BASE}
+        cases.append({'provenance': 'static_actionscript_expectation_not_runtime',
+                      'frame': row['frame'], 'option': 4,
+                      'before': dict(state), 'after': dict(state),
+                      'success': True, 'exit_action': row['action'],
+                      'exit_label': 'end'})
     return cases
 
 
