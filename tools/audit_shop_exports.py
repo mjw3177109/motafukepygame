@@ -42,6 +42,8 @@ def main():
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     try:
+        # A failed rerun must not leave a previous PASS report behind.
+        args.out.unlink(missing_ok=True)
         result = audit(args.first, args.second, args.swf)
         args.out.parent.mkdir(parents=True, exist_ok=True)
         args.out.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
