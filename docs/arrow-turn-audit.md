@@ -1,0 +1,48 @@
+# Original Flash 1.12 arrow input gate / deterministic turn router
+
+Source: game.swf SHA256 04b317b7fd9d32c5b083c993e99a3eea527f392e5fc938d23928e953bb638db9, FFDec/Java 8 exports.
+Verified ActionScript SHA256: frame_4346/DoAction_2.as = 0de19a0338cd966446acb4fd2acb82f82cf77992c8839356e17afc8f3085d034.
+Original button handlers (DefineButton2_856): Left 5f9c3b7e0efbd9487368e28714ebf7e25c7d4505fa8619af0ca8b9b5d67c3392; Right 2ac9f2e928da3e4e2cf31f4c7962917f098e8589cbd8f0944d322f98f3a4461d; Up 9c583c7f5a72caf1a2be23a4c3a41bc095c4e51905c1873ff529f0676ed23dd5; Down 806d8eb01893d30709533d291254619ba66d272bca55ee2777c1db3bfbe4a3fb.
+
+All four arrow handlers call Move_arrow(1/2/3/4) only when Now_key_flag == 1 and Display_list == 0 and Display_jump == 0 and Display_text == 0. Up/down otherwise prioritize Display_buy == 1 then Display_jump == 1, where the original manipulates modal selections. Left/right have no such branches in these four handlers. Unsupported modal navigation fails closed rather than pretending to be a normal movement.
+
+The new core/arrow_turn_probe.py and web/arrow_turn_probe.mjs compose the existing movement and encounter probes. Key, gem and potion pickups apply original Now_key_flag=0 / Display_text=1 side effects. Successful door opening applies Now_key_flag=0 / Open_room=1 and Last_x/Last_y. Monster encounters use the verified encounter pipeline, including explicit critical-roll input and reward text. Non-monster input cannot consume combat rolls.
+
+Replays record state snapshots but never synthesize modal completion. The original text frame32 and sprite855 cleanup, door animation, menus, stairs, save/load, graphics, sound, death and ending remain unimplemented. The hero values and rolls in test fixtures are synthetic test inputs, not original Flash gameplay captures. Passing these tests does not prove complete Pygame/HTML5 1:1 parity. Gymnasium/Kaggle remains gated until full evidence-based signoff.
+
+## 2026-11-02: JavaScript 11×11 grid integrity guard
+
+The HTML5-side movement and arrow-turn probes previously used `Array.prototype.some/every` for grid validation. These skip sparse array holes, so a missing row or cell could pass the preflight (including a value inherited through an array prototype). This creates a real cross-language input-validation gap before any tile-24 event can safely be integrated.
+
+Both JavaScript probes now share `isDenseOriginalGrid`, requiring all 121 cells and all 11 rows to be **own** array indices with safe-integer values. New tests reject missing rows, missing cells, inherited cells, and unsafe integers without mutating the input. Python lists cannot represent JavaScript array holes, so no Python gameplay rule is changed. This is a **fail-closed preflight correction**, not an original Flash gameplay event implementation or 1:1 verification. Tile 24 still fails closed in the movement router; original Flash runtime evidence and actual Pygame/HTML5 event wiring are pending.
+
+## 2026-11-02: Python arrow-router JSON-safe preflight parity
+
+The Python router accepted out-of-range integer keyboard flags and non-target map cells that the JavaScript router rejected with `Number.isSafeInteger`. It also treated `display_kill=False` as idle because Python compares `False == 0`. The Python router now rejects non-JSON-safe integers in every keyboard gate flag and all 121 grid cells, and requires an actual integer zero for the idle battle flag. Regression tests include untouched input checks and JS-side contract checks. These guards prevent silent cross-runtime divergence; they do not establish Flash runtime parity, implement tile-24 gameplay events, or authorize Gymnasium/Kaggle.
+
+## 2026-11-02: Standalone Python Move_arrow grid preflight parity
+
+The Python `step_move_arrow` probe could accept a boolean, float, string or integer outside JavaScript's safe-integer range in a **non-target** grid cell, because it checked only the 11x11 dimensions and then the target tile type. It also accepted tuple/dict rows that the HTML5 `isDenseOriginalGrid` rejects. The arrow-turn composition had already added a stronger guard, but direct calls to the standalone movement probe still diverged from the JavaScript counterpart.
+
+The standalone Python probe now requires a real list of 11 real list rows, with all 121 cells exactly `int` and within ±(2^53−1). Two regression methods reject non-target malformed values and non-list containers while asserting no input mutation. This is a **cross-language input preflight correction only**, not a new Flash tile handler, not Pygame/HTML5 gameplay parity and not a reason to open the Gymnasium/Kaggle gate. Tile 24 still requires a source-verified runtime event handoff and original Flash capture.
+
+## 2026-11-02: HTML5 arrow keyboard flags must be own properties
+
+The JavaScript `classifyArrowInput` previously read inherited flag values from an object's prototype and even accepted an Array with ad-hoc flag properties. Python's `dict.get` does not read JavaScript prototype properties, so a malformed cross-runtime snapshot could enter `move_arrow` in HTML5 while Python rejects it. The five original keyboard flags now require own safe-integer properties on a non-array object. Regression tests cover each inherited flag and an array-shaped world through both the gate and turn router. An isolated Node.js gate regression passed before the change was submitted; repository CI is the authoritative integration test. This is a fail-closed input validation correction, **not** original Flash runtime parity or tile-24 event wiring. Gymnasium/Kaggle remains blocked.
+
+## 2026-11-02: Key inventory type and overflow guard (movement subset)
+
+Before this change, JS `state.keys[color]++` silently coerced strings/booleans and could round values above the JSON-safe integer boundary. Python accepted `True` as an integer count and could increment a count beyond the JS safe range. Both standalone movement probes now require own (JS) safe-integer counts for yellow, blue and red keys before movement and reject pickup overflow without modifying the input. Existing source-review fixture `yellow_door_negative_keys` remains valid: negative inventory is deliberately **not** prohibited without original-source proof. Regression cases cover missing, inherited, coerced and oversized values plus overflow. This only hardens deterministic movement input; it does not implement tile 24, resolve Flash dynamic parity or authorize RL.
+
+
+## 2026-11-02: Hero stat pickup safe-integer guard (movement subset)
+
+A gem/potion pickup (tiles 9, 10, 11, 12) previously performed unchecked addition on the hero's defense, attack or HP. JavaScript could concatenate a string (for example `"10" + 3`), produce `NaN` for a missing stat, or silently lose precision above `Number.MAX_SAFE_INTEGER`; Python could accept `True` as a number or exceed the HTML5 safe-integer range. Both probes now reject missing, coerced, non-integer and out-of-range values, and reject addition overflow **before clearing the pickup tile**. Boundary values that sum to the maximum safe integer remain valid. Python and Node regression cases cover all four pickup tiles and verify no input mutation. This is a deterministic cross-runtime preflight correction only: it is not Flash runtime parity, a new Pygame/HTML5 UI, tile-24 integration or Gymnasium authorization.
+
+## 2026-11-02: Typed tile-24 event handoff boundary
+
+The arrow-turn router previously delegated tile 24 to the generic unsupported-tile error from the movement subset. That was fail-closed but did not distinguish a source-audited, multi-branch story event from arbitrary unknown tiles. Both Python and JavaScript routers now raise a typed `Tile24HandoffRequired` with `tile_id=24`, target row/column and `flash_runtime_verified=false`, after keyboard, idle-battle, grid and non-monster critical-roll preflights. Blocked keyboard input remains blocked rather than triggering a handoff; no world mutation, dialogue, movie playback or movement occurs. Regression tests cover both languages and verify input preservation and the roll gate. This is a **typed integration boundary only**, not the implementation of tile-24 runtime events: actual handoff to a UI/animation lifecycle still requires Flash execution evidence. No 1:1 or Gymnasium/Kaggle claim is made.
+
+## 2026-11-02: Read-only tile-24 movement-to-review bridge
+
+Added `core/tile24_handoff_preview.py` and `web/tile24_handoff_preview.mjs` as **non-executable** adapters. Each first invokes the existing arrow router with zero critical rolls and requires a typed tile-24 handoff; blocked inputs and ordinary tiles fail closed. Only then does it call the existing branch-local review tracer with an **explicit, caller-supplied** nine-field review state. Python independently verifies the supplied ActionScript source; JavaScript does not, and its review flag remains false. Tests assert branch/clip order, rejection paths and unchanged inputs on both sides. The review result explicitly marks `state_mapping_verified=false`, `flash_runtime_verified=false`, `executable=false`, and `gymnasium_ready=false`. No dialogue/animation command is executed and no Pygame/HTML5 gameplay state is written. The mapping from actual Flash runtime fields to the review snapshot, event timing, and full client integration still require real Flash captures and are **not** inferred here.

@@ -1,0 +1,240 @@
+[
+  {
+    "name": "hero_lethal_hit_does_not_finish_animation",
+    "state": {
+      "left_hp": 10,
+      "left_gong": 20,
+      "left_fang": 1,
+      "right_hp": 5,
+      "right_gong": 11,
+      "right_fang": 10,
+      "life": 0,
+      "kill_left": 10,
+      "kill_right": 10,
+      "kill_number": 0
+    },
+    "roll": 199,
+    "expected": {
+      "state": {
+        "left_hp": 0,
+        "left_gong": 20,
+        "left_fang": 1,
+        "right_hp": 5,
+        "right_gong": 11,
+        "right_fang": 10,
+        "life": 0,
+        "kill_left": 10,
+        "kill_right": 10,
+        "kill_number": 1
+      },
+      "event": "hero_attack",
+      "damage": 10,
+      "critical": false,
+      "jump_to_35": false
+    }
+  },
+  {
+    "name": "monster_retaliates_after_lethal_hit_even_if_hero_dies",
+    "state": {
+      "left_hp": 0,
+      "left_gong": 20,
+      "left_fang": 1,
+      "right_hp": 5,
+      "right_gong": 11,
+      "right_fang": 10,
+      "life": 0,
+      "kill_left": 10,
+      "kill_right": 10,
+      "kill_number": 1
+    },
+    "roll": null,
+    "expected": {
+      "state": {
+        "left_hp": 0,
+        "left_gong": 20,
+        "left_fang": 1,
+        "right_hp": -5,
+        "right_gong": 11,
+        "right_fang": 10,
+        "life": 0,
+        "kill_left": 10,
+        "kill_right": 10,
+        "kill_number": 2
+      },
+      "event": "monster_counterattack",
+      "damage": 10,
+      "critical": null,
+      "jump_to_35": true
+    }
+  },
+  {
+    "name": "random_zero_critical_even_at_zero_life",
+    "state": {
+      "left_hp": 50,
+      "left_gong": 20,
+      "left_fang": 1,
+      "right_hp": 100,
+      "right_gong": 11,
+      "right_fang": 10,
+      "life": 0,
+      "kill_left": 10,
+      "kill_right": 10,
+      "kill_number": 0
+    },
+    "roll": 0,
+    "expected": {
+      "state": {
+        "left_hp": 30,
+        "left_gong": 20,
+        "left_fang": 1,
+        "right_hp": 100,
+        "right_gong": 11,
+        "right_fang": 10,
+        "life": 0,
+        "kill_left": 10,
+        "kill_right": 10,
+        "kill_number": 1
+      },
+      "event": "hero_attack",
+      "damage": 20,
+      "critical": true,
+      "jump_to_35": false
+    }
+  },
+  {
+    "name": "random_one_not_critical_at_zero_life",
+    "state": {
+      "left_hp": 50,
+      "left_gong": 20,
+      "left_fang": 1,
+      "right_hp": 100,
+      "right_gong": 11,
+      "right_fang": 10,
+      "life": 0,
+      "kill_left": 10,
+      "kill_right": 10,
+      "kill_number": 0
+    },
+    "roll": 1,
+    "expected": {
+      "state": {
+        "left_hp": 40,
+        "left_gong": 20,
+        "left_fang": 1,
+        "right_hp": 100,
+        "right_gong": 11,
+        "right_fang": 10,
+        "life": 0,
+        "kill_left": 10,
+        "kill_right": 10,
+        "kill_number": 1
+      },
+      "event": "hero_attack",
+      "damage": 10,
+      "critical": false,
+      "jump_to_35": false
+    }
+  },
+  {
+    "name": "critical_roll_equal_to_life",
+    "state": {
+      "left_hp": 50,
+      "left_gong": 20,
+      "left_fang": 1,
+      "right_hp": 100,
+      "right_gong": 11,
+      "right_fang": 10,
+      "life": 7,
+      "kill_left": 10,
+      "kill_right": 10,
+      "kill_number": 0
+    },
+    "roll": 7,
+    "expected": {
+      "state": {
+        "left_hp": 30,
+        "left_gong": 20,
+        "left_fang": 1,
+        "right_hp": 100,
+        "right_gong": 11,
+        "right_fang": 10,
+        "life": 7,
+        "kill_left": 10,
+        "kill_right": 10,
+        "kill_number": 1
+      },
+      "event": "hero_attack",
+      "damage": 20,
+      "critical": true,
+      "jump_to_35": false
+    }
+  },
+  {
+    "name": "monster_zero_damage_defense_clamp",
+    "state": {
+      "left_hp": 0,
+      "left_gong": 20,
+      "left_fang": 1,
+      "right_hp": 100,
+      "right_gong": 11,
+      "right_fang": 10,
+      "life": 0,
+      "kill_left": 0,
+      "kill_right": 10,
+      "kill_number": 1
+    },
+    "roll": null,
+    "expected": {
+      "state": {
+        "left_hp": 0,
+        "left_gong": 20,
+        "left_fang": 1,
+        "right_hp": 100,
+        "right_gong": 11,
+        "right_fang": 10,
+        "life": 0,
+        "kill_left": 0,
+        "kill_right": 10,
+        "kill_number": 2
+      },
+      "event": "monster_counterattack",
+      "damage": 0,
+      "critical": null,
+      "jump_to_35": true
+    }
+  },
+  {
+    "name": "both_dead_frame_no_progress",
+    "state": {
+      "left_hp": 0,
+      "left_gong": 20,
+      "left_fang": 1,
+      "right_hp": 0,
+      "right_gong": 11,
+      "right_fang": 10,
+      "life": 0,
+      "kill_left": 10,
+      "kill_right": 10,
+      "kill_number": 2
+    },
+    "roll": null,
+    "expected": {
+      "state": {
+        "left_hp": 0,
+        "left_gong": 20,
+        "left_fang": 1,
+        "right_hp": 0,
+        "right_gong": 11,
+        "right_fang": 10,
+        "life": 0,
+        "kill_left": 10,
+        "kill_right": 10,
+        "kill_number": 2
+      },
+      "event": "idle",
+      "damage": 0,
+      "critical": null,
+      "jump_to_35": false
+    }
+  }
+]
