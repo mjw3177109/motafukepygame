@@ -1,5 +1,6 @@
 """Fail-closed regression tests for original shop export comparison."""
 import hashlib
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -21,6 +22,17 @@ class ShopExportAuditTests(unittest.TestCase):
                 p = root / RELATIVE.format(frame=frame)
                 p.parent.mkdir(parents=True, exist_ok=True)
                 p.write_bytes(f"frame {frame}".encode())
+
+    def test_failed_rerun_removes_stale_success_report(self):
+        report = self.root / 'shop_export_audit.json'
+        report.write_text('{"independent_exports_identical": true}', encoding='utf-8')
+        argv = ['audit_shop_exports', '--first', str(self.first), '--second', str(self.second),
+                '--swf', str(self.swf), '--out', str(report)]
+        with patch.object(sys, 'argv', argv):
+            with self.assertRaises(SystemExit) as caught:
+                audit_shop_exports.main()
+        self.assertEqual(caught.exception.code, 2)
+        self.assertFalse(report.exists())
 
     def test_rejects_nonoriginal_swf(self):
         with self.assertRaisesRegex(ValueError, "game.swf SHA256 mismatch"):
