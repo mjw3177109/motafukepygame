@@ -42,6 +42,9 @@ class ShopExportAuditTests(unittest.TestCase):
             p.write_bytes(b"")
             with self.assertRaisesRegex(ValueError, "empty export"):
                 audit(self.first, self.second, self.swf)
+            p.write_bytes(b" \t\n")
+            with self.assertRaisesRegex(ValueError, "whitespace-only export"):
+                audit(self.first, self.second, self.swf)
 
 
 if __name__ == "__main__":
