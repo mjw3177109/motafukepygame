@@ -238,9 +238,9 @@ jobs:
             .swf_audit/export/scripts/DefineSprite_671_mt_buy/frame_4/DoAction.as
             .swf_audit_repeat/export/scripts/DefineSprite_671_mt_buy/frame_4/DoAction.as
             # Preserve Sprite 855 frame-1 drift observed in run 43583864217.
-          .swf_audit/export/scripts/DefineSprite_855/frame_1/DoAction.as
-          .swf_audit_repeat/export/scripts/DefineSprite_855/frame_1/DoAction.as
-          # Preserve the newly observed shop-script drift in both independent exports.
+            .swf_audit/export/scripts/DefineSprite_855/frame_1/DoAction.as
+            .swf_audit_repeat/export/scripts/DefineSprite_855/frame_1/DoAction.as
+            # Preserve the newly observed shop-script drift in both independent exports.
             .swf_audit/export/scripts/DefineSprite_671_mt_buy/frame_2/DoAction.as
             .swf_audit_repeat/export/scripts/DefineSprite_671_mt_buy/frame_2/DoAction.as
             # Capture the keyPress Up button ActionScript drift seen in run 43392682569.
