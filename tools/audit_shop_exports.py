@@ -42,6 +42,12 @@ def main():
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     try:
+        # Never let the report destination overwrite an original input or source.
+        protected = [args.swf]
+        for root in (args.first, args.second):
+            protected.extend(root / RELATIVE.format(frame=frame) for frame in FRAMES)
+        if any(args.out.resolve() == path.resolve() for path in protected):
+            raise ValueError("report path aliases original SWF or shop export")
         # A failed rerun must not leave a previous PASS report behind.
         args.out.unlink(missing_ok=True)
         result = audit(args.first, args.second, args.swf)
