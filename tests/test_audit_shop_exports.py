@@ -34,6 +34,19 @@ class ShopExportAuditTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, 2)
         self.assertFalse(report.exists())
 
+    def test_report_path_cannot_destroy_original_inputs(self):
+        for target in (self.swf, self.first / RELATIVE.format(frame=2),
+                       self.second / RELATIVE.format(frame=4)):
+            before = target.read_bytes()
+            argv = ['audit_shop_exports', '--first', str(self.first), '--second', str(self.second),
+                    '--swf', str(self.swf), '--out', str(target)]
+            with self.subTest(target=target):
+                with patch.object(sys, 'argv', argv):
+                    with self.assertRaises(SystemExit) as caught:
+                        audit_shop_exports.main()
+                self.assertEqual(caught.exception.code, 2)
+                self.assertEqual(target.read_bytes(), before)
+
     def test_rejects_nonoriginal_swf(self):
         with self.assertRaisesRegex(ValueError, "game.swf SHA256 mismatch"):
             audit(self.first, self.second, self.swf)
