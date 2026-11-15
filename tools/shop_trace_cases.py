@@ -18,8 +18,13 @@ def build_cases(fixture):
     }:
         raise ValueError('Unexpected verification gates')
     rows = fixture['transactions']
-    if len(rows) != 6 or len({(r['frame'], r['option']) for r in rows}) != 6:
-        raise ValueError('Expected six unique source-backed purchases')
+    expected_slots = {(frame, option) for frame in (2, 4) for option in (1, 2, 3)}
+    if (not isinstance(rows, list) or len(rows) != 6
+            or any(type(r.get('frame')) is not int or type(r.get('option')) is not int
+                   for r in rows if isinstance(r, dict))
+            or any(not isinstance(r, dict) for r in rows)
+            or {(r['frame'], r['option']) for r in rows} != expected_slots):
+        raise ValueError('Expected six source-backed frame/option slots')
     cases = []
     for row in sorted(rows, key=lambda r: (r['frame'], r['option'])):
         cost = row['cost']
