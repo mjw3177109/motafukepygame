@@ -42,6 +42,15 @@ class ShopTraceCasesTests(unittest.TestCase):
             with self.subTest(gate=gate), self.assertRaises(ValueError):
                 build_cases(fixture)
 
+    def test_falsey_non_boolean_gates_rejected(self):
+        # A falsey placeholder is not an audited boolean False.
+        for invalid in (0, None, '', [], {}):
+            for gate in self.fixture['gates']:
+                fixture = copy.deepcopy(self.fixture)
+                fixture['gates'][gate] = invalid
+                with self.subTest(gate=gate, invalid=invalid), self.assertRaises(ValueError):
+                    build_cases(fixture)
+
     def test_boolean_stat_delta_rejected(self):
         # JSON booleans are Python ints; never accept true as a +1 stat gain.
         for invalid in (True, False):
