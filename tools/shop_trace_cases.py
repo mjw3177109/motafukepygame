@@ -13,9 +13,10 @@ BASE = {'hp': 10, 'attack': 3, 'defense': 2, 'yellow_key': 0, 'blue_key': 0, 're
 def build_cases(fixture):
     if fixture.get('verification') != 'static_actionscript_only_not_runtime_parity':
         raise ValueError('Refusing fixture without static-only provenance')
-    if any(fixture.get('gates', {}).values()) or set(fixture.get('gates', {})) != {
+    gates = fixture.get('gates')
+    if not isinstance(gates, dict) or set(gates) != {
         'actionrecord_verified', 'flash_runtime_verified', 'pygame_verified', 'html5_verified'
-    }:
+    } or any(value is not False for value in gates.values()):
         raise ValueError('Unexpected verification gates')
     rows = fixture['transactions']
     expected_slots = {(frame, option) for frame in (2, 4) for option in (1, 2, 3)}
