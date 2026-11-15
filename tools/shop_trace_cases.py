@@ -57,7 +57,10 @@ def build_cases(fixture):
                           'frame': row['frame'], 'option': row['option'],
                           'before': before, 'after': after, 'success': success})
     exits = fixture.get('exit', [])
-    if len(exits) != 2 or {e.get('frame') for e in exits} != {2, 4}:
+    if (not isinstance(exits, list) or len(exits) != 2
+            or any(not isinstance(e, dict) or type(e.get('frame')) is not int
+                   or type(e.get('option')) is not int for e in exits)
+            or {e['frame'] for e in exits} != {2, 4}):
         raise ValueError('Expected both source-backed exit actions')
     expected_actions = {2: 'gotoAndPlay', 4: 'gotoAndStop'}
     for row in sorted(exits, key=lambda e: e['frame']):
