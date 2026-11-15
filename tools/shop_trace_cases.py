@@ -25,6 +25,19 @@ def build_cases(fixture):
             or any(not isinstance(r, dict) for r in rows)
             or {(r['frame'], r['option']) for r in rows} != expected_slots):
         raise ValueError('Expected six source-backed frame/option slots')
+    # Lock each source-backed slot to its observed price and stat effect.
+    # Slot uniqueness alone would permit a silently swapped shop effect.
+    expected_transactions = {
+        (2, 1): (25, {'hp': 800}),
+        (2, 2): (25, {'attack': 4}),
+        (2, 3): (25, {'defense': 4}),
+        (4, 1): (10, {'yellow_key': 1}),
+        (4, 2): (50, {'blue_key': 1}),
+        (4, 3): (100, {'red_key': 1}),
+    }
+    if any((row['cost'], row['delta']) != expected_transactions[(row['frame'], row['option'])]
+           for row in rows):
+        raise ValueError('Shop transaction differs from source-backed slot')
     cases = []
     for row in sorted(rows, key=lambda r: (r['frame'], r['option'])):
         cost = row['cost']
