@@ -51,6 +51,15 @@ class ShopTraceCasesTests(unittest.TestCase):
                 with self.subTest(gate=gate, invalid=invalid), self.assertRaises(ValueError):
                     build_cases(fixture)
 
+    def test_malformed_fixture_root_and_missing_transactions_fail_closed(self):
+        for invalid in (None, [], 'invalid', 0):
+            with self.subTest(root=invalid), self.assertRaises(ValueError):
+                build_cases(invalid)
+        fixture = copy.deepcopy(self.fixture)
+        del fixture['transactions']
+        with self.assertRaises(ValueError):
+            build_cases(fixture)
+
     def test_malformed_transaction_fields_fail_closed(self):
         for field, invalid in (('cost', None), ('cost', True),
                                ('delta', None), ('delta', [])):
