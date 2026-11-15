@@ -72,6 +72,22 @@ class ShopTraceCasesTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             build_cases(fixture)
 
+    def test_invalid_exit_slots_rejected(self):
+        # Python considers bool an int; neither is a valid Flash frame/option slot.
+        for field, invalid in (('frame', True), ('option', True),
+                               ('frame', '2'), ('option', '4')):
+            fixture = copy.deepcopy(self.fixture)
+            fixture['exit'][0][field] = invalid
+            with self.subTest(field=field, invalid=invalid), self.assertRaises(ValueError):
+                build_cases(fixture)
+
+    def test_malformed_exit_entries_rejected(self):
+        for invalid in (None, 'invalid', 2):
+            fixture = copy.deepcopy(self.fixture)
+            fixture['exit'][0] = invalid
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                build_cases(fixture)
+
     def test_fixture_not_mutated(self):
         before = copy.deepcopy(self.fixture)
         build_cases(self.fixture)
