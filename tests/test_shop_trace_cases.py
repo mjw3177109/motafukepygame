@@ -13,7 +13,7 @@ class ShopTraceCasesTests(unittest.TestCase):
     def setUpClass(cls):
         cls.fixture = json.loads(FIXTURE.read_text(encoding='utf-8'))
 
-    def test_eighteen_boundary_vectors(self):
+    def test_twenty_purchase_and_exit_vectors(self):
         cases = build_cases(self.fixture)
         self.assertEqual(len(cases), 20)
         self.assertEqual(sum(c['success'] for c in cases), 14)
@@ -48,6 +48,15 @@ class ShopTraceCasesTests(unittest.TestCase):
             fixture = copy.deepcopy(self.fixture)
             fixture['transactions'][0]['delta']['hp'] = invalid
             with self.subTest(delta=invalid), self.assertRaises(ValueError):
+                build_cases(fixture)
+
+    def test_invalid_purchase_slots_rejected(self):
+        # Six unique entries alone do not prove that they match the source frames.
+        for frame, option in ((3, 1), (2, 4), (True, 1), (2, False)):
+            fixture = copy.deepcopy(self.fixture)
+            fixture['transactions'][0]['frame'] = frame
+            fixture['transactions'][0]['option'] = option
+            with self.subTest(frame=frame, option=option), self.assertRaises(ValueError):
                 build_cases(fixture)
 
     def test_fixture_not_mutated(self):
