@@ -25,7 +25,7 @@ def build_cases(fixture):
         cost = row['cost']
         if not isinstance(cost, int) or isinstance(cost, bool) or cost <= 0:
             raise ValueError('Invalid price')
-        if len(row['delta']) != 1 or any(k not in BASE or not isinstance(v, int) or v <= 0 for k, v in row['delta'].items()):
+        if len(row['delta']) != 1 or any(k not in BASE or type(v) is not int or v <= 0 for k, v in row['delta'].items()):
             raise ValueError('Invalid stat delta')
         for balance in (cost - 1, cost, cost + 1):
             before = {'gold': balance, **BASE}
