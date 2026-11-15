@@ -48,6 +48,20 @@ class CompareFFDecTests(unittest.TestCase):
         })
         self.assertFalse(result["identical"])
 
+    def test_equal_size_different_sha256_rejected(self):
+        """Content drift must fail closed even when exported byte counts match."""
+        first = manifest([("scripts/frame_4346/DoAction.as", 2481, "a")])
+        second = manifest([("scripts/frame_4346/DoAction.as", 2481, "b")])
+        result = compare(first, second)
+        self.assertFalse(result["identical"])
+        self.assertEqual(result["changed"], ["scripts/frame_4346/DoAction.as"])
+        self.assertEqual(result["changed_details"]["scripts/frame_4346/DoAction.as"], {
+            "first_size": 2481, "second_size": 2481,
+            "first_sha256": "a" * 64, "second_sha256": "b" * 64,
+        })
+        self.assertEqual(result["only_first"], [])
+        self.assertEqual(result["only_second"], [])
+
     def test_source_mismatch_rejected(self):
         with self.assertRaises(ValueError):
             compare(manifest([("a", 2, "a")]), manifest([("a", 2, "a")], "b" * 64))
