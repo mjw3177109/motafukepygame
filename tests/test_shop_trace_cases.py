@@ -59,6 +59,19 @@ class ShopTraceCasesTests(unittest.TestCase):
             with self.subTest(frame=frame, option=option), self.assertRaises(ValueError):
                 build_cases(fixture)
 
+    def test_source_backed_price_and_effect_cannot_drift(self):
+        for field, bad_value in (('cost', 26), ('delta', {'attack': 800})):
+            fixture = copy.deepcopy(self.fixture)
+            fixture['transactions'][0][field] = bad_value
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                build_cases(fixture)
+
+    def test_source_backed_key_effect_cannot_be_swapped(self):
+        fixture = copy.deepcopy(self.fixture)
+        fixture['transactions'][3]['delta'] = {'blue_key': 1}
+        with self.assertRaises(ValueError):
+            build_cases(fixture)
+
     def test_fixture_not_mutated(self):
         before = copy.deepcopy(self.fixture)
         build_cases(self.fixture)
