@@ -51,6 +51,19 @@ class ShopTraceCasesTests(unittest.TestCase):
                 with self.subTest(gate=gate, invalid=invalid), self.assertRaises(ValueError):
                     build_cases(fixture)
 
+    def test_malformed_transaction_fields_fail_closed(self):
+        for field, invalid in (('cost', None), ('cost', True),
+                               ('delta', None), ('delta', [])):
+            fixture = copy.deepcopy(self.fixture)
+            fixture['transactions'][0][field] = invalid
+            with self.subTest(field=field, invalid=invalid), self.assertRaises(ValueError):
+                build_cases(fixture)
+        for missing in ('cost', 'delta'):
+            fixture = copy.deepcopy(self.fixture)
+            del fixture['transactions'][0][missing]
+            with self.subTest(missing=missing), self.assertRaises(ValueError):
+                build_cases(fixture)
+
     def test_boolean_stat_delta_rejected(self):
         # JSON booleans are Python ints; never accept true as a +1 stat gain.
         for invalid in (True, False):
