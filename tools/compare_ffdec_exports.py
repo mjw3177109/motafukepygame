@@ -51,8 +51,12 @@ def compare(first, second):
     missing = sorted(a.keys() - b.keys())
     added = sorted(b.keys() - a.keys())
     changed = sorted(k for k in a.keys() & b.keys() if a[k] != b[k])
+    changed_details = {path: {"first_size": a[path][0], "second_size": b[path][0],
+                              "first_sha256": a[path][1], "second_sha256": b[path][1]}
+                       for path in changed}
     return {"source_sha256": source, "first_count": len(a), "second_count": len(b),
             "only_first": missing, "only_second": added, "changed": changed,
+            "changed_details": changed_details,
             "first_casefold_collisions": casefold_collisions(a),
             "second_casefold_collisions": casefold_collisions(b),
             "identical": not (missing or added or changed)}
