@@ -42,6 +42,10 @@ class CompareFFDecTests(unittest.TestCase):
         self.assertEqual(result["only_first"], ["b"])
         self.assertEqual(result["only_second"], ["c"])
         self.assertEqual(result["changed"], ["a"])
+        self.assertEqual(result["changed_details"]["a"], {
+            "first_size": 2, "second_size": 4,
+            "first_sha256": "a" * 64, "second_sha256": "a" * 64,
+        })
         self.assertFalse(result["identical"])
 
     def test_source_mismatch_rejected(self):
