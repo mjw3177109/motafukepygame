@@ -36,6 +36,11 @@ def build_cases(fixture):
         (4, 2): (50, {'blue_key': 1}),
         (4, 3): (100, {'red_key': 1}),
     }
+    if any(set(row) != {'frame', 'option', 'cost', 'delta'}
+           or type(row['cost']) is not int
+           or not isinstance(row['delta'], dict)
+           for row in rows):
+        raise ValueError('Malformed source-backed shop transaction')
     if any((row['cost'], row['delta']) != expected_transactions[(row['frame'], row['option'])]
            for row in rows):
         raise ValueError('Shop transaction differs from source-backed slot')
