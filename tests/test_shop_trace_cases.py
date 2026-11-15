@@ -42,6 +42,14 @@ class ShopTraceCasesTests(unittest.TestCase):
             with self.subTest(gate=gate), self.assertRaises(ValueError):
                 build_cases(fixture)
 
+    def test_boolean_stat_delta_rejected(self):
+        # JSON booleans are Python ints; never accept true as a +1 stat gain.
+        for invalid in (True, False):
+            fixture = copy.deepcopy(self.fixture)
+            fixture['transactions'][0]['delta']['hp'] = invalid
+            with self.subTest(delta=invalid), self.assertRaises(ValueError):
+                build_cases(fixture)
+
     def test_fixture_not_mutated(self):
         before = copy.deepcopy(self.fixture)
         build_cases(self.fixture)
