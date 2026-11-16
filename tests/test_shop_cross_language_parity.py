@@ -20,8 +20,13 @@ import {readFileSync} from 'node:fs';
 import {stepShop} from './web/shop_transition_probe.mjs';
 const vectors = JSON.parse(readFileSync(0, 'utf8'));
 const output = vectors.map(({state, frame, option}) => {
-  try { return {ok:true, value:stepShop(state, frame, option)}; }
-  catch (err) { return {ok:false}; }
+  const before = structuredClone(state);
+  let result;
+  try { result = {ok:true, value:stepShop(state, frame, option)}; }
+  catch (err) { result = {ok:false}; }
+  if (JSON.stringify(state) !== JSON.stringify(before))
+    throw new Error('JavaScript mutated shop input');
+  return result;
 });
 process.stdout.write(JSON.stringify(output));
 """
@@ -62,6 +67,14 @@ class ShopCrossLanguageParityTests(unittest.TestCase):
                     py = {"ok": False}
                 self.assertEqual(vector["state"], before, "Python mutated the input")
                 self.assertEqual(js, py)
+                if index < len(cases):
+                    expected = cases[index]
+                    self.assertTrue(py["ok"], "Source-backed vector unexpectedly rejected")
+                    self.assertEqual(py["value"]["state"], expected["after"])
+                    self.assertEqual(py["value"]["success"], expected["success"])
+                    if expected["option"] == 4:
+                        self.assertEqual(py["value"]["exit_action"], expected["exit_action"])
+                        self.assertEqual(py["value"]["exit_label"], expected["exit_label"])
 
 
 if __name__ == "__main__":
