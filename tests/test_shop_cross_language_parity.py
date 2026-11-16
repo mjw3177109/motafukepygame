@@ -27,9 +27,9 @@ process.stdout.write(JSON.stringify(output));
 """
 
 
-@unittest.skipUnless(shutil.which("node"), "Node.js unavailable; cross-language check not executed")
 class ShopCrossLanguageParityTests(unittest.TestCase):
     def test_source_vectors_and_rejections(self):
+        self.assertIsNotNone(shutil.which("node"), "Node.js is required for cross-language parity; do not silently skip")
         fixture = json.loads(FIXTURE.read_text(encoding="utf-8"))
         self.assertEqual(fixture["verification"], "static_actionscript_only_not_runtime_parity")
         cases = build_cases(fixture)
