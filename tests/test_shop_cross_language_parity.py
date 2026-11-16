@@ -49,6 +49,10 @@ class ShopCrossLanguageParityTests(unittest.TestCase):
             {"state": dict(base), "frame": 3, "option": 1},
             {"state": dict(base, gold=-1), "frame": 2, "option": 1},
             {"state": dict(base, hp=MAX_SAFE_INTEGER), "frame": 2, "option": 1},
+            {"state": dict(base, gold=True), "frame": 2, "option": 1},
+            {"state": dict(base, gold=MAX_SAFE_INTEGER + 1), "frame": 2, "option": 1},
+            {"state": dict(base), "frame": True, "option": 1},
+            {"state": dict(base), "frame": 2, "option": 1.5},
         ])
         proc = subprocess.run(
             ["node", "--input-type=module", "-e", NODE_SCRIPT],
@@ -67,6 +71,8 @@ class ShopCrossLanguageParityTests(unittest.TestCase):
                     py = {"ok": False}
                 self.assertEqual(vector["state"], before, "Python mutated the input")
                 self.assertEqual(js, py)
+                if index >= len(cases):
+                    self.assertFalse(py["ok"], "Invalid input must be rejected by both probes")
                 if index < len(cases):
                     expected = cases[index]
                     self.assertTrue(py["ok"], "Source-backed vector unexpectedly rejected")
