@@ -104,7 +104,9 @@ permissions:
   contents: read
 jobs:
   extract:
-    runs-on: ubuntu-latest
+    # Playwright 1.56 Chromium installer does not support ubuntu26.04 fallback.
+    # Pin a supported runner image instead of following ubuntu-latest.
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v5
