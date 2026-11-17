@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -55,10 +56,16 @@ def main() -> None:
         tasks.append(("export", ["-onerror", "ignore", "-export",
                                  "script,image,shape,sound,text,button,font,binaryData",
                                  str(out / "export"), str(swf)]))
+    # Never count artifacts from an earlier run as fresh FFDec output.
+    # Only remove this tool-owned subdirectory, not the audit root or logs.
+    export = out / "export"
+    if not args.metadata_only and (export.exists() or export.is_symlink()):
+        if export.is_symlink() or not export.is_dir():
+            parser.error("export path must be a real directory, not a file or symlink")
+        shutil.rmtree(export)
     runs = [run_ffdec(jar, argv, out / ("ffdec_" + title + ".log")) for title, argv in tasks]
     inventory = []
-    export = out / "export"
-    if export.exists():
+    if not args.metadata_only and export.exists():
         for file in sorted(x for x in export.rglob("*") if x.is_file()):
             blob = file.read_bytes()
             inventory.append({"path": file.relative_to(export).as_posix(),
