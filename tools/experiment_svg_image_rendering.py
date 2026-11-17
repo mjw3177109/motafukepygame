@@ -199,6 +199,17 @@ def run(manifest_path, registration_path, anchors_path, export_root,
         print(alias, 'registration alpha differences', {
             mode: data['pygame_vs_chromium']['different_alpha_pixels']
             for mode, data in item['registration_probe'].items()})
+    # Expose non-alpha metrics in CI logs as well as the archived JSON report.
+    # Zero alpha differences alone must never be presented as RGB parity.
+    for alias, item in output['sprites'].items():
+        print(alias, 'registration visible RGB / black / white composites', {
+            mode: {
+                'visible_rgb': data['pygame_vs_chromium']['different_visible_rgb_pixels'],
+                'composited_black': data['pygame_vs_chromium']['different_composited_black_pixels'],
+                'composited_white': data['pygame_vs_chromium']['different_composited_white_pixels'],
+            }
+            for mode, data in item['registration_probe'].items()
+        })
     print('PASS: source-hashed sampling/registration experiments; Flash parity NOT VERIFIED')
     return output
 
