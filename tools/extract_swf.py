@@ -18,7 +18,16 @@ def run_ffdec(jar: Path, args: list[str], logfile: Path, timeout: int = 480) -> 
         output = result.stdout + "\n" + result.stderr
         code = result.returncode
     except subprocess.TimeoutExpired as exc:
-        output = str(exc)
+        # TimeoutExpired may carry partial output as bytes even with text=True.
+        def decode_partial(value: bytes | str | None) -> str:
+            if value is None:
+                return ""
+            if isinstance(value, bytes):
+                return value.decode("utf-8", errors="replace")
+            return value
+
+        output = (f"{exc}\n--- partial stdout ---\n{decode_partial(exc.stdout)}"
+                  f"\n--- partial stderr ---\n{decode_partial(exc.stderr)}")
         code = 124
     logfile.parent.mkdir(parents=True, exist_ok=True)
     logfile.write_text(output, encoding="utf-8", errors="replace")
