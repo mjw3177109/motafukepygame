@@ -31,7 +31,10 @@ class ExportIsolationTests(unittest.TestCase):
             jar.write_bytes(b"fake")
             (out / "export").mkdir(parents=True)
             (out / "export" / "stale.as").write_text("old")
-            report = self.invoke(swf, jar, out)
+            # Zero fresh files must still fail closed, but write a clean manifest.
+            with self.assertRaises(SystemExit):
+                self.invoke(swf, jar, out)
+            report = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
             self.assertFalse((out / "export" / "stale.as").exists())
             self.assertEqual(report["exported_file_count"], 0)
             self.assertEqual(report["files"], [])
