@@ -15,13 +15,13 @@ class FFDecTimeoutTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             log = Path(temp) / "ffdec.log"
             timeout = subprocess.TimeoutExpired(
-                ["java"], 3, output=b"partial\\xff", stderr=b"error"
+                ["java"], 3, output=b"partial\xff", stderr=b"error"
             )
             with patch("extract_swf.subprocess.run", side_effect=timeout):
                 result = run_ffdec(Path("ffdec.jar"), [], log)
             self.assertEqual(result["exit_code"], 124)
             text = log.read_text(encoding="utf-8")
-            self.assertIn("partial\\ufffd", text)
+            self.assertIn("partial\ufffd", text)
             self.assertIn("error", text)
 
     def test_timeout_preserves_text_output_with_missing_stderr(self):
