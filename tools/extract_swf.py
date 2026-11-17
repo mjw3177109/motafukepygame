@@ -66,7 +66,13 @@ def main() -> None:
     runs = [run_ffdec(jar, argv, out / ("ffdec_" + title + ".log")) for title, argv in tasks]
     inventory = []
     if not args.metadata_only and export.exists():
-        for file in sorted(x for x in export.rglob("*") if x.is_file()):
+        # A link inside a fresh export can escape the audit directory.
+        # Reject it before opening any content, including dangling links.
+        entries = sorted(export.rglob("*"))
+        for entry in entries:
+            if entry.is_symlink():
+                sys.exit(f"FFDec export contains a symlink: {entry.relative_to(export)}")
+        for file in (entry for entry in entries if entry.is_file()):
             blob = file.read_bytes()
             inventory.append({"path": file.relative_to(export).as_posix(),
                               "size": len(blob), "sha256": hashlib.sha256(blob).hexdigest()})
