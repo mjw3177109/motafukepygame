@@ -256,6 +256,11 @@ jobs:
             # Capture keyPress Down drift observed in SWF Audit run 43702914307.
             .swf_audit/export/scripts/DefineButton2_856/BUTTONCONDACTION on(keyPress Down).as
             .swf_audit_repeat/export/scripts/DefineButton2_856/BUTTONCONDACTION on(keyPress Down).as
+            # Preserve both byte variants of keyPress 2 drift (SWF Audit attempt 2, run 43947792008).
+            .swf_audit/export/scripts/DefineButton2_659/BUTTONCONDACTION on(keyPress 2).as
+            .swf_audit_repeat/export/scripts/DefineButton2_659/BUTTONCONDACTION on(keyPress 2).as
+            .swf_audit/export/scripts/DefineButton2_661/BUTTONCONDACTION on(keyPress 2).as
+            .swf_audit_repeat/export/scripts/DefineButton2_661/BUTTONCONDACTION on(keyPress 2).as
             .swf_audit/original_tables.json
             .swf_audit/original_combat_tables_audit.json
             .swf_audit/original_combat_semantics_audit.json
