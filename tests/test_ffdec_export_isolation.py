@@ -67,5 +67,51 @@ class ExportIsolationTests(unittest.TestCase):
             self.assertEqual((target / "keep.txt").read_text(), "keep")
 
 
+    def test_nested_symlink_file_is_rejected_without_reading_external_content(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            swf, jar, out = root / "game.swf", root / "ffdec.jar", root / "audit"
+            swf.write_bytes(b"fake")
+            jar.write_bytes(b"fake")
+            external = root / "secret.as"
+            external.write_text("not from swf")
+            def fake_ffdec(_jar, argv, _logfile):
+                if "-export" in argv:
+                    nested = out / "export" / "scripts"
+                    nested.mkdir(parents=True)
+                    (nested / "good.as").write_text("fresh")
+                    (nested / "bad.as").symlink_to(external)
+                return {"exit_code": 0}
+            with patch.object(sys, "argv", [
+                "extract_swf.py", "--swf", str(swf), "--ffdec", str(jar), "--out", str(out)
+            ]), patch.object(extract_swf, "probe", return_value={"sha256": "test-source"}), patch.object(
+                extract_swf, "run_ffdec", side_effect=fake_ffdec
+            ):
+                with self.assertRaisesRegex(SystemExit, "symlink"):
+                    extract_swf.main()
+            self.assertEqual(external.read_text(), "not from swf")
+            self.assertFalse((out / "manifest.json").exists())
+
+    def test_dangling_symlink_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            swf, jar, out = root / "game.swf", root / "ffdec.jar", root / "audit"
+            swf.write_bytes(b"fake")
+            jar.write_bytes(b"fake")
+            def fake_ffdec(_jar, argv, _logfile):
+                if "-export" in argv:
+                    folder = out / "export"
+                    folder.mkdir(parents=True)
+                    (folder / "missing.as").symlink_to(root / "nonexistent.as")
+                return {"exit_code": 0}
+            with patch.object(sys, "argv", [
+                "extract_swf.py", "--swf", str(swf), "--ffdec", str(jar), "--out", str(out)
+            ]), patch.object(extract_swf, "probe", return_value={"sha256": "test-source"}), patch.object(
+                extract_swf, "run_ffdec", side_effect=fake_ffdec
+            ):
+                with self.assertRaisesRegex(SystemExit, "symlink"):
+                    extract_swf.main()
+
+
 if __name__ == "__main__":
     unittest.main()
