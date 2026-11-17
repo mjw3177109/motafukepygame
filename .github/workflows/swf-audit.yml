@@ -122,6 +122,10 @@ jobs:
         run: |
           python tools/extract_swf.py --swf game.swf --ffdec FFDec/ffdec.jar --out .swf_audit_repeat
           python -m tools.compare_ffdec_exports --first .swf_audit/manifest.json --second .swf_audit_repeat/manifest.json --out .swf_audit/ffdec_repeat_comparison.json
+      - name: Preserve FFDec script drift diagnosis when repeat comparison fails
+        if: failure()
+        run: |
+          python -m tools.diagnose_ffdec_script_drift --committed data/original_floors.json --manifest .swf_audit/manifest.json --swf game.swf --ffdec FFDec/ffdec.jar --export-root .swf_audit/export --out .swf_audit/ffdec_script_drift_diagnostic.json
       - name: Audit independent shop frame exports (source only; fail closed)
         run: |
           python -m tools.audit_shop_exports --first .swf_audit/export --second .swf_audit_repeat/export --swf game.swf --out .swf_audit/shop_export_audit.json
