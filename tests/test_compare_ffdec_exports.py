@@ -91,6 +91,17 @@ class CompareFFDecTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             compare(manifest([]), manifest([("a", 2, "a")]))
 
+    def test_control_character_paths_rejected(self):
+        valid = manifest([("scripts/safe.as", 2, "a")])
+        for path in ("scripts/bad\\x00name.as", "scripts/line\\nfeed.as",
+                     "scripts/tab\\tname.as", "scripts/delete\\x7fname.as"):
+            with self.subTest(path=repr(path)):
+                bad = manifest([(path, 2, "a")])
+                with self.assertRaises(ValueError):
+                    compare(bad, valid)
+                with self.assertRaises(ValueError):
+                    compare(valid, bad)
+
     def test_invalid_manifest_entries_rejected(self):
         valid = manifest([("safe/file.svg", 2, "a")])
         for path in ("../escape.svg", "/absolute.svg", "a//b.svg", "a/./b.svg", "a\\b.svg", ""):
