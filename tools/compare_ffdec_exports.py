@@ -25,6 +25,7 @@ def compare(first, second):
             path, size, digest = entry["path"], entry["size"], entry["sha256"]
             if (not isinstance(path, str) or not path or path.startswith("/") or chr(92) in path
                     or any(part in ("", ".", "..") for part in path.split("/"))
+                    or any(ord(char) < 32 or ord(char) == 127 for char in path)
                     or type(size) is not int or size < 0
                     or not isinstance(digest, str) or re.fullmatch(r"[0-9a-fA-F]{64}", digest) is None):
                 raise ValueError("invalid export entry: " + repr(path))
