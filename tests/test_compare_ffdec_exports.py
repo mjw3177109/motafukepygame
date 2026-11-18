@@ -93,8 +93,8 @@ class CompareFFDecTests(unittest.TestCase):
 
     def test_control_character_paths_rejected(self):
         valid = manifest([("scripts/safe.as", 2, "a")])
-        for path in ("scripts/bad\\x00name.as", "scripts/line\\nfeed.as",
-                     "scripts/tab\\tname.as", "scripts/delete\\x7fname.as"):
+        for path in ("scripts/bad\x00name.as", "scripts/line\nfeed.as",
+                     "scripts/tab\tname.as", "scripts/delete\x7fname.as"):
             with self.subTest(path=repr(path)):
                 bad = manifest([(path, 2, "a")])
                 with self.assertRaises(ValueError):
