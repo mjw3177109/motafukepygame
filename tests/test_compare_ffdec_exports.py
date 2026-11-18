@@ -142,6 +142,17 @@ class CompareFFDecTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             compare(bad, valid)
 
+    def test_missing_required_entry_fields_fail_closed(self):
+        valid = manifest([("safe/file.svg", 2, "a")])
+        for field in ("path", "size", "sha256"):
+            with self.subTest(field=field):
+                bad = manifest([("safe/file.svg", 2, "a")])
+                del bad["files"][0][field]
+                with self.assertRaises(ValueError):
+                    compare(bad, valid)
+                with self.assertRaises(ValueError):
+                    compare(valid, bad)
+
     def test_failed_ffdec_rejected(self):
         bad = manifest([("a", 2, "a")])
         bad["ffdec_commands"][0]["exit_code"] = 1
