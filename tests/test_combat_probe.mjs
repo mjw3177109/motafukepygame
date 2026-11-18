@@ -61,3 +61,13 @@ test('all 33 original monster tiles across four synthetic hero profiles (132 cas
     }
   }
 });
+
+test('unsafe integer inputs fail closed (synthetic precision guard, not Flash parity)', () => {
+  const monster = [1, 0, 0, 0, 0, 'probe'];
+  const hero = {hp: 1, attack: 1, defense: 0};
+  const unsafe = 2 ** 53; // First positive integer outside Number.isSafeInteger.
+  assert.throws(() => previewEncounter(40, [unsafe, 0, 0, 0, 0, 'probe'], hero), /six-field/);
+  for (const field of ['hp', 'attack', 'defense']) {
+    assert.throws(() => previewEncounter(40, monster, {...hero, [field]: unsafe}), /hero must/);
+  }
+});
