@@ -67,6 +67,13 @@ test('unsafe integer inputs fail closed (synthetic precision guard, not Flash pa
   const hero = {hp: 1, attack: 1, defense: 0};
   const unsafe = 2 ** 53; // First positive integer outside Number.isSafeInteger.
   assert.throws(() => previewEncounter(40, [unsafe, 0, 0, 0, 0, 'probe'], hero), /six-field/);
+  // All numeric monster fields are validated, not only HP. These are
+  // synthetic input-domain guards; they are not Flash gameplay evidence.
+  for (const index of [0, 1, 2, 3, 4]) {
+    const mutated = [...monster];
+    mutated[index] = unsafe;
+    assert.throws(() => previewEncounter(40, mutated, hero), /six-field/);
+  }
   for (const field of ['hp', 'attack', 'defense']) {
     assert.throws(() => previewEncounter(40, monster, {...hero, [field]: unsafe}), /hero must/);
   }
