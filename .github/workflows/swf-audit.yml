@@ -125,6 +125,7 @@ jobs:
       - name: Preserve FFDec script drift diagnosis when repeat comparison fails
         if: failure()
         run: |
+          python -m tools.preserve_ffdec_drift --report .swf_audit/ffdec_repeat_comparison.json --first .swf_audit/export --second .swf_audit_repeat/export --out .swf_audit/drift_preserved
           python -m tools.diagnose_ffdec_script_drift --committed data/original_floors.json --manifest .swf_audit/manifest.json --swf game.swf --ffdec FFDec/ffdec.jar --export-root .swf_audit/export --out .swf_audit/ffdec_script_drift_diagnostic.json
       - name: Audit independent shop frame exports (source only; fail closed)
         run: |
@@ -231,6 +232,7 @@ jobs:
             .swf_audit/map_export_diagnostic.json
             .swf_audit/manifest.json
             .swf_audit/ffdec_repeat_comparison.json
+            .swf_audit/drift_preserved/
             .swf_audit/shop_export_audit.json
             .swf_audit_repeat/manifest.json
             .swf_audit/export/scripts/frame_4346/DoAction.as
