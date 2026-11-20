@@ -22,6 +22,10 @@ class EvidenceFilesTests(unittest.TestCase):
         (self.root / "frames" / "a.png").write_bytes(b"example")
         self.assertEqual(self.verify("frames/a.png"), [])
 
+    def test_empty_file_rejected(self):
+        (self.root / "empty.png").write_bytes(b"")
+        self.assertTrue(self.verify("empty.png"))
+
     def test_missing_file(self):
         self.assertTrue(self.verify("frames/missing.png"))
 
