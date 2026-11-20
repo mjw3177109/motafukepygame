@@ -4,6 +4,15 @@ import json
 from pathlib import Path
 
 
+def _reject_duplicate_keys(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON key: {key}")
+        result[key] = value
+    return result
+
+
 def check(trace, evidence_root):
     root = Path(evidence_root).resolve()
     errors = []
@@ -15,7 +24,13 @@ def check(trace, evidence_root):
         return ["empty trace"]
     for index, line in enumerate(rows, 1):
         try:
-            row = json.loads(line)
+            row = json.loads(
+                line,
+                object_pairs_hook=_reject_duplicate_keys,
+                parse_constant=lambda value: (_ for _ in ()).throw(
+                    ValueError(f"invalid JSON constant: {value}")
+                ),
+            )
         except (ValueError, TypeError):
             errors.append(f"line {index}: invalid JSON")
             continue
