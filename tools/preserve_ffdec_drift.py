@@ -1,4 +1,4 @@
-"""Preserve both sides of every changed FFDec export without weakening fail-closed audit."""
+"""Preserve all differing FFDec exports, including files present on only one side."""
 import argparse
 import json
 import shutil
@@ -7,36 +7,46 @@ from pathlib import Path, PurePosixPath
 
 def preserve(report_path: Path, first: Path, second: Path, out: Path) -> int:
     report = json.loads(report_path.read_text(encoding="utf-8"))
-    changed = report.get("changed")
-    if not isinstance(changed, list) or any(not isinstance(p, str) for p in changed):
-        raise ValueError("invalid changed paths")
-    if len(changed) != len(set(changed)):
-        raise ValueError("duplicate changed paths")
+    categories = ("changed", "only_first", "only_second")
+    for category in categories:
+        paths = report.get(category, [] if category != "changed" else None)
+        if not isinstance(paths, list) or any(not isinstance(p, str) for p in paths):
+            raise ValueError("invalid " + category + " paths")
+        if len(paths) != len(set(paths)):
+            raise ValueError("duplicate " + category + " paths")
+    if any(set(report[a]) & set(report[b]) for i, a in enumerate(categories)
+           for b in categories[i + 1:] if a in report and b in report):
+        raise ValueError("overlapping drift categories")
     roots = [first.resolve(strict=True), second.resolve(strict=True)]
     dest = out.resolve()
     if any(dest == root or dest.is_relative_to(root) or root.is_relative_to(dest) for root in roots):
         raise ValueError("output overlaps source tree")
-    pairs = []
-    for path in changed:
-        pure = PurePosixPath(path)
-        if (not path or "\\" in path or ":" in path or pure.is_absolute()
-                or any(part in ("", ".", "..") for part in path.split("/"))):
-            raise ValueError("unsafe changed path: " + path)
-        sources = []
-        for root in roots:
-            source = root.joinpath(*pure.parts)
-            if source.is_symlink() or not source.resolve().is_relative_to(root) or not source.is_file():
-                raise ValueError("missing or unsafe source: " + path)
-            sources.append(source)
-        pairs.append((pure, sources))
-    for pure, sources in pairs:
-        for label, source in zip(("first", "second"), sources):
-            target = dest / label / pure
-            target.parent.mkdir(parents=True, exist_ok=True)
-            if target.is_symlink():
-                raise ValueError("unsafe target: " + str(target))
-            shutil.copyfile(source, target)
-    return len(pairs)
+    copies = []
+    for category in categories:
+        for path in report.get(category, []):
+            pure = PurePosixPath(path)
+            if (not path or "\\" in path or ":" in path or pure.is_absolute()
+                    or any(part in ("", ".", "..") for part in path.split("/"))
+                    or any(ord(char) < 32 or ord(char) == 127 for char in path)):
+                raise ValueError("unsafe drift path: " + path)
+            sides = (0, 1) if category == "changed" else ((0,) if category == "only_first" else (1,))
+            for side in sides:
+                root = roots[side]
+                source = root.joinpath(*pure.parts)
+                if (source.is_symlink() or not source.resolve().is_relative_to(root)
+                        or not source.is_file()):
+                    raise ValueError("missing or unsafe source: " + path)
+                copies.append((side, pure, source))
+    # Preflight all inputs before writing evidence, including destination symlinks.
+    for side, pure, _ in copies:
+        target = dest / ("first" if side == 0 else "second") / pure
+        if any(part.is_symlink() for part in (target, *target.parents) if part != dest.parent):
+            raise ValueError("unsafe target: " + str(target))
+    for side, pure, source in copies:
+        target = dest / ("first" if side == 0 else "second") / pure
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(source, target)
+    return sum(len(report.get(category, [])) for category in categories)
 
 
 def main():
