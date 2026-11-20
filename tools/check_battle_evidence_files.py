@@ -50,6 +50,12 @@ def check(trace, evidence_root):
         target = (root / relative).resolve()
         if not target.is_relative_to(root) or not target.is_file():
             errors.append(f"line {index}: evidence_frame not found within root")
+            continue
+        try:
+            if target.stat().st_size == 0:
+                errors.append(f"line {index}: evidence_frame is empty")
+        except OSError as exc:
+            errors.append(f"line {index}: cannot stat evidence_frame: {exc}")
     return errors
 
 
