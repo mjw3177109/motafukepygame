@@ -45,5 +45,17 @@ class EvidenceFilesTests(unittest.TestCase):
         self.assertTrue(check(self.trace, self.root))
 
 
+    def test_duplicate_verified_key_rejected(self):
+        self.trace.write_text('{"verified":true,"verified":false,"evidence_frame":"missing.png"}')
+        self.assertTrue(check(self.trace, self.root))
+
+    def test_duplicate_nested_key_rejected(self):
+        self.trace.write_text('{"verified":false,"metadata":{"a":1,"a":2}}')
+        self.assertTrue(check(self.trace, self.root))
+
+    def test_nonfinite_json_rejected(self):
+        self.trace.write_text('{"verified":false,"value":NaN}')
+        self.assertTrue(check(self.trace, self.root))
+
 if __name__ == "__main__":
     unittest.main()
