@@ -102,6 +102,25 @@ class OriginalAuditTriggerTests(unittest.TestCase):
         self.assertIn('            .swf_audit/shop_export_audit.json', self.text)
         self.assertIn('      - name: Audit independent shop frame exports', self.text)
 
+    def test_drift_preservation_and_diagnosis_are_independent_failure_steps(self):
+        # A failed evidence copy must not prevent the root-cause diagnostic.
+        # Keep both failure handlers before the next fail-closed source audit.
+        preserve = '      - name: Preserve FFDec drift file evidence when repeat comparison fails'
+        diagnose = '      - name: Diagnose FFDec drift independently of evidence preservation'
+        shop = '      - name: Audit independent shop frame exports'
+        self.assertEqual(self.text.count(preserve), 1)
+        self.assertEqual(self.text.count(diagnose), 1)
+        self.assertLess(self.text.index(preserve), self.text.index(diagnose))
+        self.assertLess(self.text.index(diagnose), self.text.index(shop))
+        preserve_block = self.text.split(preserve, 1)[1].split(diagnose, 1)[0]
+        diagnose_block = self.text.split(diagnose, 1)[1].split(shop, 1)[0]
+        self.assertIn('        if: failure()', preserve_block)
+        self.assertIn('        if: failure()', diagnose_block)
+        self.assertIn('python -m tools.preserve_ffdec_drift', preserve_block)
+        self.assertIn('python -m tools.diagnose_ffdec_script_drift', diagnose_block)
+        self.assertIn('            .swf_audit/drift_preserved/', self.text)
+        self.assertIn('            .swf_audit/ffdec_script_drift_diagnostic.json', self.text)
+
     def test_provenance_verification_remains_in_job(self):
         self.assertIn('python tools/verify_original_floors.py --committed data/original_floors.json', self.text)
         self.assertIn('python tools/package_swf_audit.py', self.text)
