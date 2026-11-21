@@ -81,6 +81,17 @@ class OriginalAuditTriggerTests(unittest.TestCase):
         self.assertIn('if: always()', self.text)
         self.assertIn('if-no-files-found: error', self.text)
 
+    def test_shop_frame3_drift_survives_generic_preservation_failure(self):
+        # Regression for audit run 44865267723; keep both copies explicitly.
+        for root in ('.swf_audit', '.swf_audit_repeat'):
+            with self.subTest(root=root):
+                self.assertIn(
+                    root + '/export/scripts/DefineSprite_671_mt_buy/frame_3/DoAction.as',
+                    self.text,
+                )
+        self.assertIn('if: always()', self.text)
+        self.assertIn('if-no-files-found: error', self.text)
+
     def test_sprite855_independent_drift_evidence_is_archived(self):
         # Regression for the 2026-11-14 Sprite 855 FFDec drift:
         # both raw exports must survive even when comparison fails.
