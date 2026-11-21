@@ -53,6 +53,26 @@ class DriftSummaryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'incomplete or contradictory'):
                 summarize({'changed': ['x.as']}, a, b)
 
+    def test_duplicate_path_across_categories_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            a, b = Path(tmp) / 'a', Path(tmp) / 'b'
+            a.mkdir()
+            b.mkdir()
+            (a / 'x.as').write_bytes(b'first')
+            (b / 'x.as').write_bytes(b'second')
+            with self.assertRaisesRegex(ValueError, 'duplicate drift evidence path'):
+                summarize({'changed': ['x.as'], 'only_first': ['x.as']}, a, b)
+
+    def test_duplicate_path_within_category_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            a, b = Path(tmp) / 'a', Path(tmp) / 'b'
+            a.mkdir()
+            b.mkdir()
+            (a / 'x.as').write_bytes(b'first')
+            (b / 'x.as').write_bytes(b'second')
+            with self.assertRaisesRegex(ValueError, 'duplicate drift evidence path'):
+                summarize({'changed': ['x.as', 'x.as']}, a, b)
+
     def test_traversal_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             with self.assertRaises(ValueError):
