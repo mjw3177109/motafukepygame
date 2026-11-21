@@ -27,6 +27,7 @@ def _read(root, name):
 
 def summarize(report, first_root, second_root):
     result = []
+    seen_paths = set()
     for category in ('changed', 'only_first', 'only_second'):
         entries = report.get(category, [])
         if not isinstance(entries, list):
@@ -34,6 +35,9 @@ def summarize(report, first_root, second_root):
         for entry in entries:
             name = entry if isinstance(entry, str) else entry.get('path') if isinstance(entry, dict) else None
             _safe_path(name)
+            if name in seen_paths:
+                raise ValueError(f'duplicate drift evidence path: {name}')
+            seen_paths.add(name)
             first, second = _read(first_root, name), _read(second_root, name)
             # A reported difference without its expected evidence must not look like a valid summary.
             if (category == 'changed' and (first is None or second is None or first == second)) or \
