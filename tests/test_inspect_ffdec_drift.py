@@ -78,7 +78,7 @@ class DriftSummaryTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 summarize({'changed': ['../secret']}, Path(tmp), Path(tmp))
 
-    def test_unknown_category_rejected(self):
+    def test_missing_export_root_rejected_even_for_empty_report(self):\n        with tempfile.TemporaryDirectory() as tmp:\n            a, b = Path(tmp) / 'a', Path(tmp) / 'b'\n            a.mkdir()\n            with self.assertRaisesRegex(ValueError, 'missing FFDec export directory'):\n                summarize({'changed': []}, a, b)\n            b.mkdir()\n            self.assertEqual(summarize({'changed': []}, a, b)['drift'], [])\n\n    def test_unknown_category_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             with self.assertRaisesRegex(ValueError, 'unknown drift report categories'):
                 summarize({'changed': [], 'unexpected': ['ignored.as']}, Path(tmp), Path(tmp))
