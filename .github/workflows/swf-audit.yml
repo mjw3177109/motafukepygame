@@ -241,6 +241,9 @@ jobs:
             .swf_audit/ffdec_repeat_comparison.json
             .swf_audit/ffdec_drift_byte_summary.json
             .swf_audit/drift_preserved/
+            # Preserve the frame-3 shop script even if generic drift preservation fails.
+            .swf_audit/export/scripts/DefineSprite_671_mt_buy/frame_3/DoAction.as
+            .swf_audit_repeat/export/scripts/DefineSprite_671_mt_buy/frame_3/DoAction.as
             .swf_audit/shop_export_audit.json
             .swf_audit_repeat/manifest.json
             .swf_audit/export/scripts/frame_4346/DoAction.as
