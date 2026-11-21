@@ -22,6 +22,27 @@ class DriftSummaryTests(unittest.TestCase):
             self.assertIsNone(rows[2]['first'])
             self.assertFalse(rows[0]['actionrecord_semantics_verified'])
 
+    def test_missing_changed_evidence_fails_closed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            a, b = Path(tmp) / 'a', Path(tmp) / 'b'
+            a.mkdir()
+            b.mkdir()
+            (a / 'x.as').write_bytes(b'first')
+            with self.assertRaisesRegex(ValueError, 'incomplete or contradictory'):
+                summarize({'changed': ['x.as']}, a, b)
+
+    def test_contradictory_one_sided_evidence_fails_closed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            a, b = Path(tmp) / 'a', Path(tmp) / 'b'
+            a.mkdir()
+            b.mkdir()
+            (a / 'x.as').write_bytes(b'first')
+            (b / 'x.as').write_bytes(b'second')
+            with self.assertRaisesRegex(ValueError, 'incomplete or contradictory'):
+                summarize({'only_first': ['x.as']}, a, b)
+            with self.assertRaisesRegex(ValueError, 'incomplete or contradictory'):
+                summarize({'only_second': ['x.as']}, a, b)
+
     def test_traversal_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             with self.assertRaises(ValueError):
