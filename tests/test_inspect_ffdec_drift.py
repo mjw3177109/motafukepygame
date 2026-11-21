@@ -78,6 +78,16 @@ class DriftSummaryTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 summarize({'changed': ['../secret']}, Path(tmp), Path(tmp))
 
+    def test_unknown_category_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaisesRegex(ValueError, 'unknown drift report categories'):
+                summarize({'changed': [], 'unexpected': ['ignored.as']}, Path(tmp), Path(tmp))
+
+    def test_non_object_report_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaisesRegex(ValueError, 'invalid drift report object'):
+                summarize(['changed'], Path(tmp), Path(tmp))
+
 
 if __name__ == '__main__':
     unittest.main()
