@@ -28,7 +28,10 @@ def _read(root, name):
 def summarize(report, first_root, second_root):
     if not isinstance(report, dict):
         raise ValueError('invalid drift report object')
-    # An empty comparison must not pass if either export root is missing.\n    if not first_root.is_dir() or not second_root.is_dir():\n        raise ValueError('missing FFDec export directory')\n    allowed = {'changed', 'only_first', 'only_second'}
+    # An empty comparison must not pass if either export root is missing.
+    if not first_root.is_dir() or not second_root.is_dir():
+        raise ValueError('missing FFDec export directory')
+    allowed = {'changed', 'only_first', 'only_second'}
     unknown = set(report) - allowed
     if unknown:
         raise ValueError(f'unknown drift report categories: {sorted(unknown)}')
@@ -71,7 +74,8 @@ def main():
     args = p.parse_args()
     result = summarize(json.loads(args.report.read_text(encoding='utf-8')), args.first_root, args.second_root)
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+    args.out.write_text(json.dumps(result, ensure_ascii=False, indent=2) + '
+', encoding='utf-8')
 
 
 if __name__ == '__main__':
