@@ -28,7 +28,7 @@ def _read(root, name):
 def summarize(report, first_root, second_root):
     if not isinstance(report, dict):
         raise ValueError('invalid drift report object')
-    allowed = {'changed', 'only_first', 'only_second'}
+    # An empty comparison must not pass if either export root is missing.\n    if not first_root.is_dir() or not second_root.is_dir():\n        raise ValueError('missing FFDec export directory')\n    allowed = {'changed', 'only_first', 'only_second'}
     unknown = set(report) - allowed
     if unknown:
         raise ValueError(f'unknown drift report categories: {sorted(unknown)}')
