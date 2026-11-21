@@ -43,6 +43,16 @@ class DriftSummaryTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'incomplete or contradictory'):
                 summarize({'only_second': ['x.as']}, a, b)
 
+    def test_identical_changed_evidence_fails_closed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            a, b = Path(tmp) / 'a', Path(tmp) / 'b'
+            a.mkdir()
+            b.mkdir()
+            (a / 'x.as').write_bytes(b'same')
+            (b / 'x.as').write_bytes(b'same')
+            with self.assertRaisesRegex(ValueError, 'incomplete or contradictory'):
+                summarize({'changed': ['x.as']}, a, b)
+
     def test_traversal_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             with self.assertRaises(ValueError):
