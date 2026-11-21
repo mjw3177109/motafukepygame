@@ -18,13 +18,13 @@ export function stepShop(state, frame, option) {
   const after = structuredClone(state);
   const provenance = 'static_actionscript_expectation_not_runtime';
   if (option === 4)
-    return {state:after, success:true, event:'shop_exit', exit_action:EXITS[frame],
+    return {state:after, success:true, event:'shop_exit', sound:'music_07', exit_action:EXITS[frame],
       exit_label:'end', provenance};
   const [cost,field,delta] = RULES.get(frame + ':' + option);
   if (after.gold < cost)
-    return {state:after, success:false, event:'shop_insufficient_gold', provenance};
+    return {state:after, success:false, event:'shop_insufficient_gold', sound:'music_09', provenance};
   if (after[field] > MAX - delta) throw new Error('shop stat overflow');
   after.gold -= cost;
   after[field] += delta;
-  return {state:after, success:true, event:'shop_purchase', provenance};
+  return {state:after, success:true, event:'shop_purchase', sound:'music_11', provenance};
 }
