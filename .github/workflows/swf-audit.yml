@@ -126,6 +126,10 @@ jobs:
         if: failure()
         run: |
           python -m tools.preserve_ffdec_drift --report .swf_audit/ffdec_repeat_comparison.json --first .swf_audit/export --second .swf_audit_repeat/export --out .swf_audit/drift_preserved
+      - name: Summarize arbitrary FFDec export drift bytes independently
+        if: failure()
+        run: |
+          python -m tools.inspect_ffdec_drift --report .swf_audit/ffdec_repeat_comparison.json --first-root .swf_audit/export --second-root .swf_audit_repeat/export --out .swf_audit/ffdec_drift_byte_summary.json
       - name: Diagnose FFDec drift independently of evidence preservation
         if: failure()
         run: |
@@ -235,6 +239,7 @@ jobs:
             .swf_audit/map_export_diagnostic.json
             .swf_audit/manifest.json
             .swf_audit/ffdec_repeat_comparison.json
+            .swf_audit/ffdec_drift_byte_summary.json
             .swf_audit/drift_preserved/
             .swf_audit/shop_export_audit.json
             .swf_audit_repeat/manifest.json
