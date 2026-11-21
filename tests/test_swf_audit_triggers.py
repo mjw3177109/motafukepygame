@@ -121,6 +121,22 @@ class OriginalAuditTriggerTests(unittest.TestCase):
         self.assertIn('            .swf_audit/drift_preserved/', self.text)
         self.assertIn('            .swf_audit/ffdec_script_drift_diagnostic.json', self.text)
 
+    def test_arbitrary_drift_byte_diagnostic_is_independent_and_archived(self):
+        # Keep byte-level evidence for any changed/one-sided FFDec script.
+        # It must not depend on the renderer-only diagnosis succeeding.
+        name = '      - name: Summarize arbitrary FFDec export drift bytes independently'
+        next_step = '      - name: Diagnose FFDec drift independently of evidence preservation'
+        self.assertEqual(self.text.count(name), 1)
+        section = self.text.split(name, 1)[1].split(next_step, 1)[0]
+        self.assertIn('        if: failure()', section)
+        self.assertIn('python -m tools.inspect_ffdec_drift', section)
+        self.assertIn('--report .swf_audit/ffdec_repeat_comparison.json', section)
+        self.assertIn('--first-root .swf_audit/export', section)
+        self.assertIn('--second-root .swf_audit_repeat/export', section)
+        self.assertIn('--out .swf_audit/ffdec_drift_byte_summary.json', section)
+        self.assertIn('            .swf_audit/ffdec_drift_byte_summary.json', self.text)
+        self.assertLess(self.text.index(name), self.text.index(next_step))
+
     def test_provenance_verification_remains_in_job(self):
         self.assertIn('python tools/verify_original_floors.py --committed data/original_floors.json', self.text)
         self.assertIn('python tools/package_swf_audit.py', self.text)
