@@ -74,8 +74,7 @@ def main():
     args = p.parse_args()
     result = summarize(json.loads(args.report.read_text(encoding='utf-8')), args.first_root, args.second_root)
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    args.out.write_text(json.dumps(result, ensure_ascii=False, indent=2) + '
-', encoding='utf-8')
+    args.out.write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
 
 
 if __name__ == '__main__':
