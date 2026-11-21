@@ -32,16 +32,16 @@ def step_shop(state: dict, frame: int, option: int) -> dict:
     after = deepcopy(state)
     if option == 4:
         return {"state": after, "success": True, "event": "shop_exit",
-                "exit_action": EXITS[frame], "exit_label": "end",
+                "sound": "music_07", "exit_action": EXITS[frame], "exit_label": "end",
                 "provenance": "static_actionscript_expectation_not_runtime"}
     cost, field, delta = TRANSACTIONS[(frame, option)]
     if after["gold"] < cost:
-        event, success = "shop_insufficient_gold", False
+        event, success, sound = "shop_insufficient_gold", False, "music_09"
     else:
         if after[field] > MAX_SAFE_INTEGER - delta:
             raise ValueError("shop stat overflow")
         after["gold"] -= cost
         after[field] += delta
-        event, success = "shop_purchase", True
-    return {"state": after, "success": success, "event": event,
+        event, success, sound = "shop_purchase", True, "music_11"
+    return {"state": after, "success": success, "event": event, "sound": sound,
             "provenance": "static_actionscript_expectation_not_runtime"}
