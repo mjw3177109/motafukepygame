@@ -35,6 +35,11 @@ def summarize(report, first_root, second_root):
             name = entry if isinstance(entry, str) else entry.get('path') if isinstance(entry, dict) else None
             _safe_path(name)
             first, second = _read(first_root, name), _read(second_root, name)
+            # A reported difference without its expected evidence must not look like a valid summary.
+            if (category == 'changed' and (first is None or second is None)) or \
+               (category == 'only_first' and (first is None or second is not None)) or \
+               (category == 'only_second' and (second is None or first is not None)):
+                raise ValueError(f'incomplete or contradictory drift evidence: {category}: {name}')
 
             def info(data):
                 return None if data is None else {'size': len(data), 'sha256': hashlib.sha256(data).hexdigest()}
