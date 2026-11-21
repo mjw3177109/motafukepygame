@@ -26,6 +26,12 @@ def _read(root, name):
 
 
 def summarize(report, first_root, second_root):
+    if not isinstance(report, dict):
+        raise ValueError('invalid drift report object')
+    allowed = {'changed', 'only_first', 'only_second'}
+    unknown = set(report) - allowed
+    if unknown:
+        raise ValueError(f'unknown drift report categories: {sorted(unknown)}')
     result = []
     seen_paths = set()
     for category in ('changed', 'only_first', 'only_second'):
