@@ -36,7 +36,7 @@ def summarize(report, first_root, second_root):
             _safe_path(name)
             first, second = _read(first_root, name), _read(second_root, name)
             # A reported difference without its expected evidence must not look like a valid summary.
-            if (category == 'changed' and (first is None or second is None)) or \
+            if (category == 'changed' and (first is None or second is None or first == second)) or \
                (category == 'only_first' and (first is None or second is not None)) or \
                (category == 'only_second' and (second is None or first is not None)):
                 raise ValueError(f'incomplete or contradictory drift evidence: {category}: {name}')
