@@ -1,0 +1,10 @@
+[
+  {"name":"up_wrap_1_to_20","arrow_id":3,"start":1,"end":20,"dx":80,"dy":150},
+  {"name":"up_column_8_to_7","arrow_id":3,"start":8,"end":7,"dx":-40,"dy":180},
+  {"name":"up_column_15_to_14","arrow_id":3,"start":15,"end":14,"dx":-40,"dy":180},
+  {"name":"up_normal","arrow_id":3,"start":5,"end":4,"dx":0,"dy":-30},
+  {"name":"down_wrap_20_to_1","arrow_id":4,"start":20,"end":1,"dx":-80,"dy":-150},
+  {"name":"down_column_7_to_8","arrow_id":4,"start":7,"end":8,"dx":40,"dy":-180},
+  {"name":"down_column_14_to_15","arrow_id":4,"start":14,"end":15,"dx":40,"dy":-180},
+  {"name":"down_normal","arrow_id":4,"start":5,"end":6,"dx":0,"dy":30}
+]

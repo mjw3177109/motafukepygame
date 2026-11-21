@@ -1,0 +1,158 @@
+"""Regression guard: SWF provenance CI must run when its source inputs change.
+
+Only stdlib is used so this test runs in the existing Python tooling CI.
+"""
+import unittest
+from pathlib import Path
+
+WORKFLOW = Path(__file__).resolve().parents[1] / '.github/workflows/swf-audit.yml'
+REQUIRED_PATHS = (
+    'game.swf',
+    'FFDec/**',
+    'data/original_floors.json',
+    'data/original_combat_tables.json',
+    'data/original_sprite_symbol_anchors.json',
+    'data/original_sprite_frame_anchors.json',
+    'data/original_sprite_placement_anchors.json',
+    'data/original_shape_registration_anchors.json',
+    'data/flash_baselines/**',
+    'core/initial_spawn_probe.py',
+    'web/initial_spawn_probe.mjs',
+    'tests/test_initial_spawn_probe.py',
+    'tests/test_initial_spawn_probe.mjs',
+    'tests/test_initial_spawn_committed_floor.py',
+    'tests/test_initial_spawn_cross_runtime.py',
+    'tests/test_initial_spawn_original_cross_runtime.py',
+    'core/floor_tile_plan.py',
+    'core/floor_render.py',
+    'core/static_svg_assets.py',
+    'core/verified_static_preview.py',
+    'tests/test_floor_render.py',
+    'tests/test_static_svg_assets.py',
+    'tests/test_verified_static_preview.py',
+    'tests/test_smoke_original_static_render.py',
+    'tests/test_smoke_original_browser_static.py',
+    'tools/**',
+    '.github/workflows/swf-audit.yml',
+)
+
+
+class OriginalAuditTriggerTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.text = WORKFLOW.read_text(encoding='utf-8')
+
+    def test_pull_requests_run_original_source_audit(self):
+        self.assertRegex(self.text, r'(?m)^  pull_request:\s*$')
+        self.assertRegex(self.text, r'(?m)^    paths:\s*$')
+
+    def test_push_and_pr_share_required_source_paths(self):
+        trigger_block = self.text.split('\npermissions:', 1)[0]
+        push = trigger_block.split('\n  push:', 1)[1].split('\n  pull_request:', 1)[0]
+        pr = trigger_block.split('\n  pull_request:', 1)[1]
+        for path in REQUIRED_PATHS:
+            with self.subTest(path=path):
+                self.assertIn(f"      - '{path}'", push)
+                self.assertIn(f"      - '{path}'", pr)
+
+    def test_push_and_pr_filters_are_identical_and_unique(self):
+        # A source-only change must never silently skip one of the two audits.
+        trigger_block = self.text.split('\npermissions:', 1)[0]
+        push = trigger_block.split('\n  push:', 1)[1].split('\n  pull_request:', 1)[0]
+        pr = trigger_block.split('\n  pull_request:', 1)[1]
+
+        def paths(section):
+            return [line.strip()[3:-1] for line in section.splitlines()
+                    if line.strip().startswith("- '") and line.strip().endswith("'")]
+
+        push_paths, pr_paths = paths(push), paths(pr)
+        self.assertEqual(push_paths, pr_paths)
+        self.assertEqual(len(push_paths), len(set(push_paths)))
+
+    def test_shop_frame4_drift_evidence_is_preserved_on_failure(self):
+        # The 2026-11-13 failed audit showed a non-deterministic shop
+        # ActionScript export. Both independent copies must remain available.
+        for root in ('.swf_audit', '.swf_audit_repeat'):
+            with self.subTest(root=root):
+                self.assertIn(
+                    root + '/export/scripts/DefineSprite_671_mt_buy/frame_4/DoAction.as',
+                    self.text,
+                )
+        self.assertIn('if: always()', self.text)
+        self.assertIn('if-no-files-found: error', self.text)
+
+    def test_shop_frame3_drift_survives_generic_preservation_failure(self):
+        # Regression for audit run 44865267723; keep both copies explicitly.
+        for root in ('.swf_audit', '.swf_audit_repeat'):
+            with self.subTest(root=root):
+                self.assertIn(
+                    root + '/export/scripts/DefineSprite_671_mt_buy/frame_3/DoAction.as',
+                    self.text,
+                )
+        self.assertIn('if: always()', self.text)
+        self.assertIn('if-no-files-found: error', self.text)
+
+    def test_sprite855_independent_drift_evidence_is_archived(self):
+        # Regression for the 2026-11-14 Sprite 855 FFDec drift:
+        # both raw exports must survive even when comparison fails.
+        for root in ('.swf_audit', '.swf_audit_repeat'):
+            with self.subTest(root=root):
+                self.assertIn(
+                    '            ' + root + '/export/scripts/DefineSprite_855/frame_1/DoAction.as',
+                    self.text,
+                )
+        self.assertIn('if: always()', self.text)
+        self.assertIn('if-no-files-found: error', self.text)
+
+    def test_shop_source_audit_is_gated_and_archived(self):
+        # Keep the independently verified shop sources in the CI gate and
+        # preserve the report for later ActionRecord/gameplay investigation.
+        self.assertIn('python -m tools.audit_shop_exports --first .swf_audit/export', self.text)
+        self.assertIn('--second .swf_audit_repeat/export --swf game.swf', self.text)
+        self.assertIn('--out .swf_audit/shop_export_audit.json', self.text)
+        self.assertIn('            .swf_audit/shop_export_audit.json', self.text)
+        self.assertIn('      - name: Audit independent shop frame exports', self.text)
+
+    def test_drift_preservation_and_diagnosis_are_independent_failure_steps(self):
+        # A failed evidence copy must not prevent the root-cause diagnostic.
+        # Keep both failure handlers before the next fail-closed source audit.
+        preserve = '      - name: Preserve FFDec drift file evidence when repeat comparison fails'
+        diagnose = '      - name: Diagnose FFDec drift independently of evidence preservation'
+        shop = '      - name: Audit independent shop frame exports'
+        self.assertEqual(self.text.count(preserve), 1)
+        self.assertEqual(self.text.count(diagnose), 1)
+        self.assertLess(self.text.index(preserve), self.text.index(diagnose))
+        self.assertLess(self.text.index(diagnose), self.text.index(shop))
+        preserve_block = self.text.split(preserve, 1)[1].split(diagnose, 1)[0]
+        diagnose_block = self.text.split(diagnose, 1)[1].split(shop, 1)[0]
+        self.assertIn('        if: failure()', preserve_block)
+        self.assertIn('        if: failure()', diagnose_block)
+        self.assertIn('python -m tools.preserve_ffdec_drift', preserve_block)
+        self.assertIn('python -m tools.diagnose_ffdec_script_drift', diagnose_block)
+        self.assertIn('            .swf_audit/drift_preserved/', self.text)
+        self.assertIn('            .swf_audit/ffdec_script_drift_diagnostic.json', self.text)
+
+    def test_arbitrary_drift_byte_diagnostic_is_independent_and_archived(self):
+        # Keep byte-level evidence for any changed/one-sided FFDec script.
+        # It must not depend on the renderer-only diagnosis succeeding.
+        name = '      - name: Summarize arbitrary FFDec export drift bytes independently'
+        next_step = '      - name: Diagnose FFDec drift independently of evidence preservation'
+        self.assertEqual(self.text.count(name), 1)
+        section = self.text.split(name, 1)[1].split(next_step, 1)[0]
+        self.assertIn('        if: failure()', section)
+        self.assertIn('python -m tools.inspect_ffdec_drift', section)
+        self.assertIn('--report .swf_audit/ffdec_repeat_comparison.json', section)
+        self.assertIn('--first-root .swf_audit/export', section)
+        self.assertIn('--second-root .swf_audit_repeat/export', section)
+        self.assertIn('--out .swf_audit/ffdec_drift_byte_summary.json', section)
+        self.assertIn('            .swf_audit/ffdec_drift_byte_summary.json', self.text)
+        self.assertLess(self.text.index(name), self.text.index(next_step))
+
+    def test_provenance_verification_remains_in_job(self):
+        self.assertIn('python tools/verify_original_floors.py --committed data/original_floors.json', self.text)
+        self.assertIn('python tools/package_swf_audit.py', self.text)
+        self.assertIn("java-version: '8'", self.text)
+
+
+if __name__ == '__main__':
+    unittest.main()
