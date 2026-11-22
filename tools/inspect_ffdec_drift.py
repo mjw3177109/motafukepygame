@@ -31,7 +31,11 @@ def summarize(report, first_root, second_root):
     # An empty comparison must not pass if either export root is missing.
     if not first_root.is_dir() or not second_root.is_dir():
         raise ValueError('missing FFDec export directory')
-    allowed = {'changed', 'only_first', 'only_second'}
+    # compare_ffdec_exports emits inventory metadata alongside the three drift lists.
+    # Accept only its documented metadata keys; unknown fields still fail closed.
+    allowed = {'changed', 'only_first', 'only_second', 'changed_details',
+               'source_sha256', 'first_count', 'second_count',
+               'first_casefold_collisions', 'second_casefold_collisions', 'identical'}
     unknown = set(report) - allowed
     if unknown:
         raise ValueError(f'unknown drift report categories: {sorted(unknown)}')
