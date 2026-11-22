@@ -87,6 +87,26 @@ class DriftSummaryTests(unittest.TestCase):
             b.mkdir()
             self.assertEqual(summarize({'changed': []}, a, b)['drift'], [])
 
+    def test_real_comparison_metadata_is_accepted(self):
+        # compare_ffdec_exports emits these keys even when a drift is present.
+        with tempfile.TemporaryDirectory() as tmp:
+            a, b = Path(tmp) / 'a', Path(tmp) / 'b'
+            a.mkdir()
+            b.mkdir()
+            (a / 'script.as').write_bytes(b'first')
+            (b / 'script.as').write_bytes(b'second')
+            report = {
+                'source_sha256': 'a' * 64, 'first_count': 1, 'second_count': 1,
+                'only_first': [], 'only_second': [], 'changed': ['script.as'],
+                'changed_details': {'script.as': {'first_size': 5, 'second_size': 6}},
+                'first_casefold_collisions': [], 'second_casefold_collisions': [],
+                'identical': False,
+            }
+            result = summarize(report, a, b)
+            self.assertEqual(len(result['drift']), 1)
+            self.assertEqual(result['drift'][0]['path'], 'script.as')
+            self.assertFalse(result['gameplay_parity_verified'])
+
     def test_unknown_category_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             with self.assertRaisesRegex(ValueError, 'unknown drift report categories'):
