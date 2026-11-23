@@ -1,0 +1,11 @@
+[
+  {"name":"pickup_text_frame32","phase":"frame32","state":{"display_text":1,"key_flag":0,"boss_kills":0},"event":"text_ready_for_cleanup","expected":{"display_text":2,"key_flag":1},"effects":[]},
+  {"name":"boss_text_frame32_keeps_lock","phase":"frame32","state":{"display_text":1,"key_flag":0,"boss_kills":1},"event":"text_ready_for_cleanup","expected":{"display_text":2,"key_flag":0},"effects":[]},
+  {"name":"text_cleanup_nonzero_floor26","phase":"cleanup","state":{"display_text":2,"key_flag":1,"floor26_cell_3_5":188},"event":"text_removed","expected":{"display_text":0,"key_flag":1},"effects":["remove_text_sprite"]},
+  {"name":"boss_text_cleanup_does_not_unlock","phase":"cleanup","state":{"display_text":2,"key_flag":0,"floor26_cell_3_5":188},"event":"text_removed","expected":{"display_text":0,"key_flag":0},"effects":["remove_text_sprite"]},
+  {"name":"floor26_zero_requests_game_over","phase":"cleanup","state":{"display_text":2,"key_flag":1,"floor26_cell_3_5":0},"event":"game_over_requested","expected":{"display_text":0,"key_flag":1},"effects":["remove_text_sprite","clear_base_display","clear_line_display","goto_game_over"]},
+  {"name":"cleanup_without_floor26_rejected","phase":"cleanup","state":{"display_text":2,"key_flag":1},"error":"floor26 cell"},
+  {"name":"premature_cleanup_rejected","phase":"cleanup","state":{"display_text":1,"key_flag":0,"floor26_cell_3_5":188},"error":"display_text=2"},
+  {"name":"frame32_without_boss_flag_rejected","phase":"frame32","state":{"display_text":1,"key_flag":0},"error":"boss_kills"},
+  {"name":"frame32_wrong_phase_rejected","phase":"frame32","state":{"display_text":2,"key_flag":0,"boss_kills":0},"error":"display_text=1"}
+]

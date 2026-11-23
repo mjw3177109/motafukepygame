@@ -1,0 +1,12 @@
+[
+  {"name":"ordinary_entry","tile":40,"monster":[50,20,1,1,1,"绿头怪"],"hero":{"hp":100,"attack":11,"defense":10,"life":0,"line":1},"event":"encounter_started","hp_after":100,"sound":null,"enemy_id":0},
+  {"name":"ordinary_blocked_attack","tile":40,"monster":[50,20,1,1,1,"绿头怪"],"hero":{"hp":100,"attack":1,"defense":10,"life":0,"line":1},"event":"encounter_blocked","hp_after":100,"sound":"music_10","enemy_id":0},
+  {"name":"ordinary_blocked_hp","tile":40,"monster":[50,20,1,1,1,"绿头怪"],"hero":{"hp":49,"attack":11,"defense":10,"life":0,"line":1},"event":"encounter_blocked","hp_after":49,"sound":"music_10","enemy_id":0},
+  {"name":"mage_100","tile":60,"monster":[250,120,70,20,17,"麻衣法师"],"hero":{"hp":1000,"attack":170,"defense":100,"life":0,"line":1},"event":"encounter_started","hp_after":900,"sound":"music_20","enemy_id":20},
+  {"name":"red_mage_300","tile":52,"monster":[500,400,260,47,45,"红衣法师"],"hero":{"hp":1000,"attack":360,"defense":300,"life":0,"line":1},"event":"encounter_started","hp_after":700,"sound":"music_24","enemy_id":12},
+  {"name":"white_warrior_quarter","tile":50,"monster":[1300,300,150,40,35,"白衣武士"],"hero":{"hp":2000,"attack":250,"defense":200,"life":0,"line":1},"event":"encounter_started","hp_after":1500,"sound":"music_22","enemy_id":10},
+  {"name":"spirit_mage_third","tile":57,"monster":[1500,830,730,80,70,"灵法师"],"hero":{"hp":900,"attack":830,"defense":800,"life":0,"line":1},"event":"encounter_started","hp_after":600,"sound":"music_23","enemy_id":17},
+  {"name":"boss19_early_flag_even_blocked","tile":59,"monster":[30000,1700,1500,250,220,"冥灵魔王"],"hero":{"hp":1000,"attack":1000,"defense":500,"life":0,"line":21},"event":"encounter_blocked","hp_after":1000,"sound":"music_10","enemy_id":19,"boss_kills":1},
+  {"name":"boss19_no_early_flag_line22","tile":59,"monster":[30000,1700,1500,250,220,"冥灵魔王"],"hero":{"hp":1000,"attack":1000,"defense":500,"life":0,"line":22},"event":"encounter_blocked","hp_after":1000,"sound":"music_10","enemy_id":19},
+  {"name":"special_boss188","tile":188,"monster":[99999,5000,4000,0,0,"血影"],"hero":{"hp":100000,"attack":5000,"defense":5000,"life":1,"line":25},"event":"encounter_started","hp_after":100000,"sound":null,"enemy_id":31}
+]

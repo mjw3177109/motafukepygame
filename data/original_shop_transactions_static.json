@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "verification": "static_actionscript_only_not_runtime_parity",
+  "source": {
+    "swf_sha256": "04b317b7fd9d32c5b083c993e99a3eea527f392e5fc938d23928e953bb638db9",
+    "sprite": "DefineSprite_671_mt_buy",
+    "frame_2_sha256": "084e459b77dba8a44c9643669ae48394964b8e278fe44ff282998c3468092b3e",
+    "frame_4_sha256": "56c0d0f39984abc6651a8346b7c24c6e85da678d54d7875fe91cef4b18455405",
+    "evidence": "docs/SHOP_ACTIONSCRIPT_SOURCE_EVIDENCE_20261114.md"
+  },
+  "transactions": [
+    {
+      "frame": 2,
+      "option": 1,
+      "cost": 25,
+      "delta": {
+        "hp": 800
+      }
+    },
+    {
+      "frame": 2,
+      "option": 2,
+      "cost": 25,
+      "delta": {
+        "attack": 4
+      }
+    },
+    {
+      "frame": 2,
+      "option": 3,
+      "cost": 25,
+      "delta": {
+        "defense": 4
+      }
+    },
+    {
+      "frame": 4,
+      "option": 1,
+      "cost": 10,
+      "delta": {
+        "yellow_key": 1
+      }
+    },
+    {
+      "frame": 4,
+      "option": 2,
+      "cost": 50,
+      "delta": {
+        "blue_key": 1
+      }
+    },
+    {
+      "frame": 4,
+      "option": 3,
+      "cost": 100,
+      "delta": {
+        "red_key": 1
+      }
+    }
+  ],
+  "exit": [
+    {
+      "frame": 2,
+      "option": 4,
+      "condition": "always",
+      "action": "gotoAndPlay",
+      "label": "end"
+    },
+    {
+      "frame": 4,
+      "option": 4,
+      "condition": "always",
+      "action": "gotoAndStop",
+      "label": "end"
+    }
+  ],
+  "boundary_cases": [
+    "balance_equals_cost",
+    "balance_one_below_cost",
+    "balance_above_cost",
+    "zero_balance_exit",
+    "invalid_option"
+  ],
+  "gates": {
+    "actionrecord_verified": false,
+    "flash_runtime_verified": false,
+    "pygame_verified": false,
+    "html5_verified": false
+  }
+}

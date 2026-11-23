@@ -1,0 +1,269 @@
+[
+  {
+    "name": "empty_right",
+    "tile": 0,
+    "arrow": 2,
+    "expected": {
+      "event": "move",
+      "position": [
+        5,
+        6
+      ],
+      "key_flag": 1,
+      "display_text": 0
+    }
+  },
+  {
+    "name": "wall_right",
+    "tile": 1,
+    "arrow": 2,
+    "expected": {
+      "event": "wall",
+      "position": [
+        5,
+        5
+      ],
+      "key_flag": 1
+    }
+  },
+  {
+    "name": "yellow_key_modal",
+    "tile": 6,
+    "arrow": 2,
+    "expected": {
+      "event": "pickup_yellow_key",
+      "position": [
+        5,
+        5
+      ],
+      "key_flag": 0,
+      "display_text": 1,
+      "yellow": 1,
+      "target_tile": 0
+    }
+  },
+  {
+    "name": "yellow_door_opens_animation",
+    "tile": 2,
+    "arrow": 2,
+    "keys": {
+      "yellow": 1
+    },
+    "expected": {
+      "event": "open_yellow_door",
+      "position": [
+        5,
+        5
+      ],
+      "key_flag": 0,
+      "open_room": 1,
+      "yellow": 0,
+      "target_tile": 0
+    }
+  },
+  {
+    "name": "yellow_door_locked",
+    "tile": 2,
+    "arrow": 2,
+    "expected": {
+      "event": "locked_yellow_door",
+      "position": [
+        5,
+        5
+      ],
+      "key_flag": 1,
+      "yellow": 0,
+      "target_tile": 2
+    }
+  },
+  {
+    "name": "red_gem_text_modal",
+    "tile": 10,
+    "arrow": 2,
+    "expected": {
+      "event": "pickup_attack_3",
+      "position": [
+        5,
+        5
+      ],
+      "key_flag": 0,
+      "display_text": 1,
+      "attack": 54
+    }
+  },
+  {
+    "name": "monster_one_hit_and_reward_modal",
+    "tile": 40,
+    "arrow": 2,
+    "rolls": [
+      199
+    ],
+    "expected": {
+      "event": "battle_reward",
+      "position": [
+        5,
+        5
+      ],
+      "key_flag": 0,
+      "display_text": 1,
+      "hp": 100,
+      "money": 1,
+      "mp": 1,
+      "target_tile": 0,
+      "rolls_used": 1
+    }
+  },
+  {
+    "name": "monster_blocked",
+    "tile": 40,
+    "arrow": 2,
+    "hero": {
+      "attack": 1
+    },
+    "expected": {
+      "event": "encounter_blocked",
+      "position": [
+        5,
+        5
+      ],
+      "key_flag": 1,
+      "target_tile": 40,
+      "rolls_used": 0
+    }
+  },
+  {
+    "name": "blocked_key_flag",
+    "tile": 0,
+    "arrow": 2,
+    "flags": {
+      "key_flag": 0
+    },
+    "expected": {
+      "event": "input_blocked",
+      "position": [
+        5,
+        5
+      ],
+      "key_flag": 0
+    }
+  },
+  {
+    "name": "blocked_text_modal",
+    "tile": 0,
+    "arrow": 2,
+    "flags": {
+      "display_text": 1
+    },
+    "expected": {
+      "event": "input_blocked",
+      "position": [
+        5,
+        5
+      ],
+      "display_text": 1
+    }
+  },
+  {
+    "name": "blocked_list_modal",
+    "tile": 0,
+    "arrow": 3,
+    "flags": {
+      "display_list": 1
+    },
+    "expected": {
+      "event": "input_blocked",
+      "position": [
+        5,
+        5
+      ]
+    }
+  },
+  {
+    "name": "buy_flag_does_not_override_open_gate",
+    "tile": 0,
+    "arrow": 2,
+    "flags": {
+      "display_buy": 1
+    },
+    "expected": {
+      "event": "move",
+      "position": [
+        5,
+        6
+      ]
+    }
+  },
+  {
+    "name": "up_buy_modal_unimplemented",
+    "tile": 0,
+    "arrow": 3,
+    "flags": {
+      "key_flag": 0,
+      "display_buy": 1
+    },
+    "error": "buy_modal_unimplemented"
+  },
+  {
+    "name": "down_jump_modal_unimplemented",
+    "tile": 0,
+    "arrow": 4,
+    "flags": {
+      "key_flag": 0,
+      "display_jump": 1
+    },
+    "error": "jump_modal_unimplemented"
+  },
+  {
+    "name": "up_buy_priority_over_jump",
+    "tile": 0,
+    "arrow": 3,
+    "flags": {
+      "key_flag": 0,
+      "display_buy": 1,
+      "display_jump": 1
+    },
+    "error": "buy_modal_unimplemented"
+  },
+  {
+    "name": "stairs_unverified",
+    "tile": 13,
+    "arrow": 2,
+    "error": "needs original"
+  },
+  {
+    "name": "monster_missing_roll",
+    "tile": 40,
+    "arrow": 2,
+    "error": "missing"
+  },
+  {
+    "name": "nonmonster_rejects_roll",
+    "tile": 0,
+    "arrow": 2,
+    "rolls": [
+      199
+    ],
+    "error": "non-monster"
+  },
+  {
+    "name": "blocked_rejects_roll",
+    "tile": 0,
+    "arrow": 2,
+    "flags": {
+      "key_flag": 0
+    },
+    "rolls": [
+      199
+    ],
+    "error": "blocked input"
+  },
+  {
+    "name": "busy_battle_rejected",
+    "tile": 0,
+    "arrow": 2,
+    "flags": {
+      "display_kill": 1
+    },
+    "error": "idle"
+  }
+]

@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "swf_sha256": "04b317b7fd9d32c5b083c993e99a3eea527f392e5fc938d23928e953bb638db9",
+  "anchors": {
+    "mt_00": {"character_id": 223, "shape_ids": [222]},
+    "mt_01": {"character_id": 220, "shape_ids": [219]},
+    "mt_02": {"character_id": 217, "shape_ids": [199, 215, 216]},
+    "mt_03": {"character_id": 213, "shape_ids": [199, 211, 212]},
+    "mt_99": {"character_id": 491, "shape_ids": [468, 470, 472, 474, 476, 478, 480, 482, 484, 486, 488, 490]}
+  }
+}
