@@ -115,6 +115,9 @@ def audit(report: dict, anchors: dict, png_dir: Path, baseline_dir: Path | None)
 
     stage = _read_image(baseline_dir / 'original_stage.png', metadata.get('original_stage_sha256'))
     crop = _read_image(baseline_dir / 'reference_crop.png', metadata.get('reference_crop_sha256'))
+    # The original SWF stage is 570x410; resized captures are not raw evidence.
+    if stage.size != (570, 410):
+        raise ValueError('Flash capture original stage must be 570x410 pixels')
     x, y, w, h = rect
     if x + w > stage.width or y + h > stage.height or crop.size != SIZE:
         raise ValueError('Flash capture crop outside original stage or wrong size')
