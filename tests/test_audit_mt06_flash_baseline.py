@@ -6,10 +6,11 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from datetime import datetime, timezone, timedelta
 from unittest.mock import patch
 
 from PIL import Image
-from tools.audit_mt06_flash_baseline import audit
+from tools.audit_mt06_flash_baseline import audit, _utc_timestamp
 
 
 class FlashBaselineTests(unittest.TestCase):
@@ -146,6 +147,17 @@ class FlashBaselineTests(unittest.TestCase):
                     self.run_audit()
                 self.meta = orig
         self.write_meta()
+
+    def test_capture_timestamp_rejects_future_and_preserves_history(self):
+        now = datetime.now(timezone.utc)
+        self.assertTrue(_utc_timestamp('2026-11-01T07:00:00Z'))
+        self.assertTrue(_utc_timestamp((now + timedelta(minutes=4)).isoformat().replace('+00:00', 'Z')))
+        future = (now + timedelta(days=1)).isoformat().replace('+00:00', 'Z')
+        self.assertFalse(_utc_timestamp(future))
+        self.meta['capture_utc'] = future
+        self.write_meta()
+        with self.assertRaisesRegex(ValueError, 'provenance'):
+            self.run_audit()
 
     def test_rejects_capture_preapproval(self):
         self.meta['flash_visual_parity_verified'] = True
