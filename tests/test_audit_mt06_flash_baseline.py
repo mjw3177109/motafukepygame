@@ -32,7 +32,7 @@ class FlashBaselineTests(unittest.TestCase):
             'frame_index': 12, 'crop_rect': [5, 6, 64, 64],
             'background_rgb': [255, 255, 255],
         }
-        stage = Image.new('RGB', (80, 80), (255, 255, 255))
+        stage = Image.new('RGB', (570, 410), (255, 255, 255))
         stage.putpixel((5, 6), (100, 90, 80))
         stage.save(self.baseline / 'original_stage.png')
         stage.crop((5, 6, 69, 70)).save(self.baseline / 'reference_crop.png')
@@ -103,6 +103,18 @@ class FlashBaselineTests(unittest.TestCase):
         self.meta['schema_version'] = True
         self.write_meta()
         with self.assertRaisesRegex(ValueError, 'provenance'):
+            self.run_audit()
+
+    def test_rejects_resized_stage_even_with_valid_hashes_and_crop(self):
+        # A scaled screenshot must not pass as a raw 570x410 SWF stage.
+        stage = Image.new('RGB', (80, 80), (255, 255, 255))
+        stage.putpixel((5, 6), (100, 90, 80))
+        stage.save(self.baseline / 'original_stage.png')
+        stage.crop((5, 6, 69, 70)).save(self.baseline / 'reference_crop.png')
+        self.meta['original_stage_sha256'] = self.sha('original_stage.png')
+        self.meta['reference_crop_sha256'] = self.sha('reference_crop.png')
+        self.write_meta()
+        with self.assertRaisesRegex(ValueError, '570x410'):
             self.run_audit()
 
     def test_rejects_tampered_original_stage(self):
