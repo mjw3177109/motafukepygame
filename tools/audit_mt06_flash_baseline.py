@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import argparse
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import hashlib
 import json
 from pathlib import Path
@@ -51,7 +51,9 @@ def _utc_timestamp(value: object) -> bool:
         parsed = datetime.fromisoformat(value.replace('Z', '+00:00'))
     except ValueError:
         return False
-    return parsed.tzinfo is not None and parsed.utcoffset().total_seconds() == 0
+    # Permit minor clock skew, but reject captures dated beyond the collection time.
+    return (parsed.tzinfo is not None and parsed.utcoffset().total_seconds() == 0
+            and parsed <= datetime.now(timezone.utc) + timedelta(minutes=5))
 
 
 def _rgb_differences(left, right) -> int:
